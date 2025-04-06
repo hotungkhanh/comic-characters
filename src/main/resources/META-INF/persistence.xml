@@ -4,7 +4,7 @@
              version="3.0">
 
     <persistence-unit name="comicPU" transaction-type="RESOURCE_LOCAL">
-        <class>com.tuka.comiccharacters.model.ComicBook</class>
+        <class>com.tuka.comiccharacters.model.Series</class>
         <class>com.tuka.comiccharacters.model.Character</class>
 
         <properties>
