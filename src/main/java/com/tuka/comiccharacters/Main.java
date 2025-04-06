@@ -1,4 +1,4 @@
-package com.tuka;
+package com.tuka.comiccharacters;
 
 public class Main {
     public static void main(String[] args) {
