@@ -6,7 +6,7 @@ import jakarta.persistence.EntityManager;
 
 public class SeriesDao {
     public void save(Series book) {
-        EntityManager em = JPAUtil.getEntityManagerFactory().createEntityManager();
+        EntityManager em = JPAUtil.getEntityManager();
         em.getTransaction().begin();
         em.persist(book);
         em.getTransaction().commit();

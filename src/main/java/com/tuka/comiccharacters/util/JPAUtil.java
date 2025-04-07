@@ -1,6 +1,7 @@
 package com.tuka.comiccharacters.util;
 
 import io.github.cdimascio.dotenv.Dotenv;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 
@@ -25,4 +26,15 @@ public class JPAUtil {
         }
         return emf;
     }
+
+    public static EntityManager getEntityManager() {
+        return getEntityManagerFactory().createEntityManager();
+    }
+
+    public static void shutdown() {
+        if (emf != null && emf.isOpen()) {
+            emf.close();
+        }
+    }
+
 }
