@@ -1,38 +1,39 @@
 package com.tuka.comiccharacters.dao;
 
-import com.tuka.comiccharacters.model.Series;
+import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.util.JPAUtil;
 import jakarta.persistence.EntityManager;
 
 import java.util.List;
 
-public class SeriesDaoImpl implements SeriesDao {
-    public void save(Series series) {
+public class IssueDaoImpl implements IssueDao {
+    @Override
+    public void save(Issue issue) {
         EntityManager em = JPAUtil.getEntityManager();
         em.getTransaction().begin();
-        em.persist(series);
+        em.persist(issue);
         em.getTransaction().commit();
         em.close();
     }
 
     @Override
-    public Series findById(Long id) {
+    public Issue findById(Long id) {
         try (EntityManager em = JPAUtil.getEntityManager()) {
-            return em.find(Series.class, id);
+            return em.find(Issue.class, id);
         }
     }
 
     @Override
-    public List<Series> findAll() {
+    public List<Issue> findAll() {
         try (EntityManager em = JPAUtil.getEntityManager()) {
-            return em.createQuery("SELECT c FROM Series c", Series.class).getResultList();
+            return em.createQuery("SELECT c FROM Issue c", Issue.class).getResultList();
         }
     }
 
     @Override
     public void deleteById(Long id) {
         try (EntityManager em = JPAUtil.getEntityManager()) {
-            Series c = em.find(Series.class, id);
+            Issue c = em.find(Issue.class, id);
             if (c != null) {
                 em.getTransaction().begin();
                 em.remove(c);

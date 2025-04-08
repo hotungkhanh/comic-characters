@@ -1,111 +1,148 @@
 package com.tuka.comiccharacters.ui;
 
-import com.tuka.comiccharacters.service.SeriesService;
 import com.tuka.comiccharacters.service.CharacterService;
+import com.tuka.comiccharacters.service.IssueService;
+import com.tuka.comiccharacters.service.SeriesService;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class MainApp {
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Comic Book Tracker");
-        frame.setLayout(new GridLayout(2, 1)); // 2 rows: Comic Book panel + Character panel
+        JFrame frame = new JFrame("Comic Book Database");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new GridLayout(1, 3, 10, 10)); // 3 vertical panels side-by-side
 
-        // ================= Comic Book Form ===================
-        JPanel comicPanel = new JPanel(new FlowLayout());
-
-        JLabel titleLabel = new JLabel("Title:");
-        JTextField titleField = new JTextField(15);
-
-        JLabel startYearLabel = new JLabel("Start Year:");
-        JTextField startYearField = new JTextField(5);
-
-        JButton addComicButton = new JButton("Add Comic Book");
-        SeriesService seriesService = new SeriesService();
-
-        addComicButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String title = titleField.getText();
-                String startYearText = startYearField.getText();
-
-                if (title.trim().isEmpty() || startYearText.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(frame, "Please enter both title and start year.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                try {
-                    int startYear = Integer.parseInt(startYearText);
-                    seriesService.addComicBook(title, startYear);
-                    JOptionPane.showMessageDialog(frame, "Comic Book added!");
-                    titleField.setText("");
-                    startYearField.setText("");
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(frame, "Start Year must be a valid number.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    startYearField.setText("");
-                }
-            }
-        });
-
-        comicPanel.add(new JLabel("Comic Book"));
-        comicPanel.add(titleLabel);
-        comicPanel.add(titleField);
-        comicPanel.add(startYearLabel);
-        comicPanel.add(startYearField);
-        comicPanel.add(addComicButton);
-
-        // ================= Character Form ===================
-        JPanel characterPanel = new JPanel(new FlowLayout());
-
-        JLabel nameLabel = new JLabel("Name:");
-        JTextField nameField = new JTextField(10);
-
-        JLabel aliasLabel = new JLabel("Alias:");
-        JTextField aliasField = new JTextField(10);
-
-        JLabel publisherLabel = new JLabel("Publisher:");
-        JTextField publisherField = new JTextField(10);
-
-        JButton addCharacterButton = new JButton("Add Character");
-        CharacterService characterService = new CharacterService();
-
-        addCharacterButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String name = nameField.getText();
-                String alias = aliasField.getText();
-                String publisher = publisherField.getText();
-
-                if (name.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(frame, "Character name is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                characterService.addCharacter(name, alias, publisher);
-                JOptionPane.showMessageDialog(frame, "Character added!");
-                nameField.setText("");
-                aliasField.setText("");
-                publisherField.setText("");
-            }
-        });
-
-        characterPanel.add(new JLabel("Character"));
-        characterPanel.add(nameLabel);
-        characterPanel.add(nameField);
-        characterPanel.add(aliasLabel);
-        characterPanel.add(aliasField);
-        characterPanel.add(publisherLabel);
-        characterPanel.add(publisherField);
-        characterPanel.add(addCharacterButton);
-
-        // Add both panels to frame
-        frame.add(comicPanel);
-        frame.add(characterPanel);
+        frame.add(createComicFormPanel());
+        frame.add(createCharacterFormPanel());
+        frame.add(createIssueFormPanel());
 
         frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null); // Center on screen
         frame.setVisible(true);
+    }
+
+    private static JPanel createComicFormPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createTitledBorder("Series"));
+
+        JTextField titleField = new JTextField(15);
+        JTextField yearField = new JTextField(5);
+        SeriesService service = new SeriesService();
+
+        panel.add(new JLabel("Title:"));
+        panel.add(titleField);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(new JLabel("Start Year:"));
+        panel.add(yearField);
+        panel.add(Box.createVerticalStrut(10));
+
+        JButton addButton = new JButton("Add Series");
+        addButton.addActionListener(e -> {
+            String title = titleField.getText();
+            String yearText = yearField.getText();
+            if (title.isEmpty() || yearText.isEmpty()) {
+                showError("Please enter both title and start year.");
+                return;
+            }
+            try {
+                int year = Integer.parseInt(yearText);
+                service.addSeries(title, year);
+                showSuccess("Comic Book added!");
+                titleField.setText("");
+                yearField.setText("");
+            } catch (NumberFormatException ex) {
+                showError("Start Year must be a number.");
+            }
+        });
+
+        panel.add(addButton);
+        return panel;
+    }
+
+    private static JPanel createCharacterFormPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createTitledBorder("Character"));
+
+        JTextField nameField = new JTextField(10);
+        JTextField aliasField = new JTextField(10);
+        JTextField publisherField = new JTextField(10);
+        CharacterService service = new CharacterService();
+
+        panel.add(new JLabel("Name:"));
+        panel.add(nameField);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(new JLabel("Alias:"));
+        panel.add(aliasField);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(new JLabel("Publisher:"));
+        panel.add(publisherField);
+        panel.add(Box.createVerticalStrut(10));
+
+        JButton addButton = new JButton("Add Character");
+        addButton.addActionListener(e -> {
+            String name = nameField.getText();
+            if (name.isEmpty()) {
+                showError("Character name is required.");
+                return;
+            }
+            service.addCharacter(name, aliasField.getText(), publisherField.getText());
+            showSuccess("Character added!");
+            nameField.setText("");
+            aliasField.setText("");
+            publisherField.setText("");
+        });
+
+        panel.add(addButton);
+        return panel;
+    }
+
+    private static JPanel createIssueFormPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createTitledBorder("Issue"));
+
+        JTextField seriesField = new JTextField(10);
+        JTextField issueNumberField = new JTextField(10);
+        IssueService service = new IssueService();
+
+        panel.add(new JLabel("Series Title:"));
+        panel.add(seriesField);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(new JLabel("Issue Number:"));
+        panel.add(issueNumberField);
+        panel.add(Box.createVerticalStrut(10));
+
+        JButton addButton = new JButton("Add Issue");
+        addButton.addActionListener(e -> {
+            String series = seriesField.getText();
+            String issueText = issueNumberField.getText();
+            if (series.isEmpty() || issueText.isEmpty()) {
+                showError("Please fill in both fields.");
+                return;
+            }
+            try {
+                int number = Integer.parseInt(issueText);
+                service.addIssue(series, number);
+                showSuccess("Issue added!");
+                seriesField.setText("");
+                issueNumberField.setText("");
+            } catch (NumberFormatException ex) {
+                showError("Issue number must be a number.");
+            }
+        });
+
+        panel.add(addButton);
+        return panel;
+    }
+
+    private static void showError(String message) {
+        JOptionPane.showMessageDialog(null, message, "Input Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private static void showSuccess(String message) {
+        JOptionPane.showMessageDialog(null, message, "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 }

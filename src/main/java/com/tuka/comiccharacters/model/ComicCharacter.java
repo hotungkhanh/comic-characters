@@ -25,8 +25,6 @@ public class ComicCharacter {
         this.publisher = publisher;
     }
 
-    // Getters and Setters
-
     public Long getId() {
         return id;
     }
