@@ -1,5 +1,6 @@
 package com.tuka.comiccharacters.ui;
 
+import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.CharacterService;
 import com.tuka.comiccharacters.service.IssueService;
 import com.tuka.comiccharacters.service.SeriesService;
@@ -13,7 +14,7 @@ public class MainApp {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new GridLayout(1, 3, 10, 10)); // 3 vertical panels side-by-side
 
-        frame.add(createComicFormPanel());
+        frame.add(createSeriesFormPanel());
         frame.add(createCharacterFormPanel());
         frame.add(createIssueFormPanel());
 
@@ -22,7 +23,7 @@ public class MainApp {
         frame.setVisible(true);
     }
 
-    private static JPanel createComicFormPanel() {
+    private static JPanel createSeriesFormPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createTitledBorder("Series"));
@@ -104,12 +105,17 @@ public class MainApp {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createTitledBorder("Issue"));
 
-        JTextField seriesField = new JTextField(10);
-        JTextField issueNumberField = new JTextField(10);
-        IssueService service = new IssueService();
+        SeriesService seriesService = new SeriesService();
+        IssueService issueService = new IssueService();
 
-        panel.add(new JLabel("Series Title:"));
-        panel.add(seriesField);
+        // Dropdown for selecting Series
+        java.util.List<Series> allSeries = seriesService.getAllSeries();
+        JComboBox<Series> seriesDropdown = new JComboBox<>(allSeries.toArray(new Series[0]));
+
+        JTextField issueNumberField = new JTextField(10);
+
+        panel.add(new JLabel("Select Series:"));
+        panel.add(seriesDropdown);
         panel.add(Box.createVerticalStrut(5));
         panel.add(new JLabel("Issue Number:"));
         panel.add(issueNumberField);
@@ -117,17 +123,18 @@ public class MainApp {
 
         JButton addButton = new JButton("Add Issue");
         addButton.addActionListener(e -> {
-            String series = seriesField.getText();
+            Series selectedSeries = (Series) seriesDropdown.getSelectedItem();
             String issueText = issueNumberField.getText();
-            if (series.isEmpty() || issueText.isEmpty()) {
-                showError("Please fill in both fields.");
+
+            if (selectedSeries == null || issueText.isEmpty()) {
+                showError("Please select a series and enter an issue number.");
                 return;
             }
+
             try {
                 int number = Integer.parseInt(issueText);
-                service.addIssue(series, number);
+                issueService.addIssue(selectedSeries, number);
                 showSuccess("Issue added!");
-                seriesField.setText("");
                 issueNumberField.setText("");
             } catch (NumberFormatException ex) {
                 showError("Issue number must be a number.");
@@ -137,6 +144,7 @@ public class MainApp {
         panel.add(addButton);
         return panel;
     }
+
 
     private static void showError(String message) {
         JOptionPane.showMessageDialog(null, message, "Input Error", JOptionPane.ERROR_MESSAGE);

@@ -9,13 +9,16 @@ public class Issue {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    private String series;
+    @ManyToOne
+    @JoinColumn(name = "series_id", nullable = false)
+    private Series series;
+
     private int issueNumber;
 
     public Issue() {
     }
 
-    public Issue(String series, int issueNumber) {
+    public Issue(Series series, int issueNumber) {
         this.series = series;
         this.issueNumber = issueNumber;
     }
@@ -24,7 +27,7 @@ public class Issue {
         return id;
     }
 
-    public String getSeries() {
+    public Series getSeries() {
         return series;
     }
 
