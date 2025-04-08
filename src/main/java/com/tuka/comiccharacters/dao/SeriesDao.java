@@ -1,15 +1,15 @@
 package com.tuka.comiccharacters.dao;
 
 import com.tuka.comiccharacters.model.Series;
-import com.tuka.comiccharacters.util.JPAUtil;
-import jakarta.persistence.EntityManager;
 
-public class SeriesDao {
-    public void save(Series book) {
-        EntityManager em = JPAUtil.getEntityManager();
-        em.getTransaction().begin();
-        em.persist(book);
-        em.getTransaction().commit();
-        em.close();
-    }
+import java.util.List;
+
+public interface SeriesDao {
+    void save(Series series);
+
+    Series findById(Long id);
+
+    List<Series> findAll();
+
+    void deleteById(Long id);
 }

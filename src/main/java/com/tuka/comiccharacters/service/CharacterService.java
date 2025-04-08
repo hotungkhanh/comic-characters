@@ -1,13 +1,13 @@
 package com.tuka.comiccharacters.service;
 
-import com.tuka.comiccharacters.dao.CharacterDao;
-import com.tuka.comiccharacters.model.Character;
+import com.tuka.comiccharacters.dao.ComicCharacterDaoImpl;
+import com.tuka.comiccharacters.model.ComicCharacter;
 
 public class CharacterService {
-    private final CharacterDao characterDao = new CharacterDao();
+    private final ComicCharacterDaoImpl characterDao = new ComicCharacterDaoImpl();
 
     public void addCharacter(String name, String alias, String publisher) {
-        Character character = new Character(name, alias, publisher);
-        characterDao.save(character);
+        ComicCharacter comicCharacter = new ComicCharacter(name, alias, publisher);
+        characterDao.save(comicCharacter);
     }
 }
