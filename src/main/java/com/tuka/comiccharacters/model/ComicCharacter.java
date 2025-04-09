@@ -15,11 +15,13 @@ public class ComicCharacter {
 
     private String alias;
 
-    private String publisher;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "publisher_id", nullable = false)
+    private Publisher publisher;
 
     public ComicCharacter() {}
 
-    public ComicCharacter(String name, String alias, String publisher) {
+    public ComicCharacter(String name, String alias, Publisher publisher) {
         this.name = name;
         this.alias = alias;
         this.publisher = publisher;
@@ -45,16 +47,17 @@ public class ComicCharacter {
         this.alias = alias;
     }
 
-    public String getPublisher() {
+    public Publisher getPublisher() {
         return publisher;
     }
 
-    public void setPublisher(String publisher) {
+    public void setPublisher(Publisher publisher) {
         this.publisher = publisher;
     }
 
     @Override
     public String toString() {
-        return "Character{id=" + id + ", name='" + name + "', alias='" + alias + "', publisher='" + publisher + "'}";
+        return "Character{id=" + id + ", name='" + name + "', alias='" + alias +
+                "', publisher=" + (publisher != null ? publisher.getName() : "null") + "}";
     }
 }
