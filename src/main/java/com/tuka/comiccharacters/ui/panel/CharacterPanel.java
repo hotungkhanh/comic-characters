@@ -40,8 +40,8 @@ public class CharacterPanel extends JPanel {
             String alias = aliasField.getText();
             Publisher selectedPublisher = (Publisher) publisherDropdown.getSelectedItem();
 
-            if (name.isEmpty() || selectedPublisher == null) {
-                showError("Character name and publisher are required.");
+            if (name.isEmpty()) {
+                showError("Character name is required.");
                 return;
             }
 
