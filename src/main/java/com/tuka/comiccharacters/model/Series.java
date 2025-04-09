@@ -15,6 +15,10 @@ public class Series {
     private String title;
     private int startYear;
 
+    @ManyToOne
+    @JoinColumn(name = "publisher_id")
+    private Publisher publisher;
+
     @OneToMany(mappedBy = "series", cascade = CascadeType.ALL)
     private List<Issue> issues = new ArrayList<>();
 
@@ -24,6 +28,12 @@ public class Series {
     public Series(String title, int startYear) {
         this.title = title;
         this.startYear = startYear;
+    }
+
+    public Series(String title, int startYear, Publisher publisher) {
+        this.title = title;
+        this.startYear = startYear;
+        this.publisher = publisher;
     }
 
     @Override
@@ -49,5 +59,21 @@ public class Series {
 
     public void setStartYear(int startYear) {
         this.startYear = startYear;
+    }
+
+    public Publisher getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(Publisher publisher) {
+        this.publisher = publisher;
+    }
+
+    public List<Issue> getIssues() {
+        return issues;
+    }
+
+    public void setIssues(List<Issue> issues) {
+        this.issues = issues;
     }
 }
