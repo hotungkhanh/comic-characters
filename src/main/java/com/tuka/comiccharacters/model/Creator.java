@@ -50,4 +50,9 @@ public class Creator {
     public void setOverview(String overview) {
         this.overview = overview;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
