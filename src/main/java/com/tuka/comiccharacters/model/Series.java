@@ -36,11 +36,6 @@ public class Series {
         this.publisher = publisher;
     }
 
-    @Override
-    public String toString() {
-        return title + " (" + startYear + ")";
-    }
-
     public int getId() {
         return id;
     }
@@ -75,5 +70,10 @@ public class Series {
 
     public void setIssues(List<Issue> issues) {
         this.issues = issues;
+    }
+
+    @Override
+    public String toString() {
+        return title + " (" + startYear + ")";
     }
 }

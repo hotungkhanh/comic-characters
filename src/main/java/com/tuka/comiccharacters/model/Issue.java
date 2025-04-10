@@ -54,4 +54,9 @@ public class Issue {
     public int getIssueNumber() {
         return issueNumber;
     }
+
+    @Override
+    public String toString() {
+        return series + " #" + issueNumber;
+    }
 }
