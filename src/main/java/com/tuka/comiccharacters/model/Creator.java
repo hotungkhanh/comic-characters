@@ -15,6 +15,9 @@ public class Creator {
 
     private String overview;
 
+    public Creator() {
+    }
+
     public Creator(String name) {
         this.name = name;
     }
