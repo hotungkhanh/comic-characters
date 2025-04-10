@@ -1,9 +1,6 @@
 package com.tuka.comiccharacters.ui;
 
-import com.tuka.comiccharacters.ui.panel.CharacterPanel;
-import com.tuka.comiccharacters.ui.panel.IssuePanel;
-import com.tuka.comiccharacters.ui.panel.PublisherPanel;
-import com.tuka.comiccharacters.ui.panel.SeriesPanel;
+import com.tuka.comiccharacters.ui.panel.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,12 +10,14 @@ public class MainApp {
     public static void main(String[] args) {
         JFrame frame = new JFrame("Comic Book Database");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new GridLayout(1, 4, 10, 10)); // 4 vertical panels
+        frame.setLayout(new GridLayout(1, 5, 10, 10)); // 4 vertical panels
 
         frame.add(new PublisherPanel());
         frame.add(new SeriesPanel());
-        frame.add(new CharacterPanel());
         frame.add(new IssuePanel());
+        frame.add(new CreatorPanel());
+        frame.add(new CharacterPanel());
+
 
         frame.pack();
         frame.setLocationRelativeTo(null);
