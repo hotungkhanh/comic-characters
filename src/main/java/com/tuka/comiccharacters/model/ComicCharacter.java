@@ -34,6 +34,10 @@ public class ComicCharacter {
     @ManyToMany(mappedBy = "characters", fetch = FetchType.EAGER)
     private Set<Issue> issues = new HashSet<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "first_appearance_issue_id")
+    private Issue firstAppearance;
+
     public ComicCharacter() {
     }
 
@@ -48,10 +52,6 @@ public class ComicCharacter {
         this.alias = alias;
         this.publisher = publisher;
         this.creators.addAll(creatorList);
-    }
-
-    public Set<Issue> getIssues() {
-        return issues;
     }
 
     public Long getId() {
@@ -90,12 +90,32 @@ public class ComicCharacter {
         this.creators = creators;
     }
 
+    public Set<Issue> getIssues() {
+        return issues;
+    }
+
+    public void setIssues(Set<Issue> issues) {
+        this.issues = issues;
+    }
+
     public void addCreator(Creator creator) {
         this.creators.add(creator);
     }
 
+    public Issue getFirstAppearance() {
+        return firstAppearance;
+    }
+
+    public void setFirstAppearance(Issue firstAppearance) {
+        this.firstAppearance = firstAppearance;
+    }
+
     @Override
     public String toString() {
+        if (alias == null || alias.isEmpty()) {
+            return name;
+        }
         return name + " (" + alias + ")";
     }
 }
+

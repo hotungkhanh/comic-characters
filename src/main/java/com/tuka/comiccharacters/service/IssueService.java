@@ -34,8 +34,7 @@ public class IssueService {
         issueDao.save(issue);
     }
 
-    // Overload for minimal info (no creators, no characters)
-    public void addIssue(Series series, int issueNumber) {
-        addIssue(series, issueNumber, null, null);
+    public List<Issue> getAllIssues() {
+        return issueDao.findAll();
     }
 }
