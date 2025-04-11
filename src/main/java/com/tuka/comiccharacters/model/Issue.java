@@ -16,10 +16,19 @@ public class Issue {
     @ManyToOne
     @JoinColumn(name = "series_id", nullable = false)
     private Series series;
+
     private int issueNumber;
 
     @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<IssueCreator> issueCreators = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "issue_characters",
+            joinColumns = @JoinColumn(name = "issue_id"),
+            inverseJoinColumns = @JoinColumn(name = "character_id")
+    )
+    private Set<ComicCharacter> characters = new HashSet<>();
 
     public Issue() {
     }
@@ -35,14 +44,6 @@ public class Issue {
         this.issueCreators.addAll(issueCreators);
     }
 
-    public Set<IssueCreator> getIssueCreators() {
-        return issueCreators;
-    }
-
-    public void setIssueCreators(Set<IssueCreator> issueCreators) {
-        this.issueCreators = issueCreators;
-    }
-
     public int getId() {
         return id;
     }
@@ -55,8 +56,35 @@ public class Issue {
         return issueNumber;
     }
 
+    public Set<IssueCreator> getIssueCreators() {
+        return issueCreators;
+    }
+
+    public void setIssueCreators(Set<IssueCreator> issueCreators) {
+        this.issueCreators = issueCreators;
+    }
+
+    public Set<ComicCharacter> getCharacters() {
+        return characters;
+    }
+
+    public void setCharacters(Set<ComicCharacter> characters) {
+        this.characters = characters;
+    }
+
+    public void addCharacter(ComicCharacter character) {
+        characters.add(character);
+        character.getIssues().add(this);
+    }
+
+    public void removeCharacter(ComicCharacter character) {
+        characters.remove(character);
+        character.getIssues().remove(this);
+    }
+
     @Override
     public String toString() {
         return series + " #" + issueNumber;
     }
 }
+

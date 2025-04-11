@@ -1,6 +1,7 @@
 package com.tuka.comiccharacters.model;
 
 import jakarta.persistence.*;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +31,11 @@ public class ComicCharacter {
     )
     private Set<Creator> creators = new HashSet<>();
 
-    public ComicCharacter() {}
+    @ManyToMany(mappedBy = "characters", fetch = FetchType.EAGER)
+    private Set<Issue> issues = new HashSet<>();
+
+    public ComicCharacter() {
+    }
 
     public ComicCharacter(String name, String alias, Publisher publisher) {
         this.name = name;
@@ -43,6 +48,10 @@ public class ComicCharacter {
         this.alias = alias;
         this.publisher = publisher;
         this.creators.addAll(creatorList);
+    }
+
+    public Set<Issue> getIssues() {
+        return issues;
     }
 
     public Long getId() {
@@ -87,8 +96,6 @@ public class ComicCharacter {
 
     @Override
     public String toString() {
-        return "Character{id=" + id + ", name='" + name + "', alias='" + alias +
-                "', publisher=" + (publisher != null ? publisher.getName() : "null") +
-                ", creators=" + creators.size() + "}";
+        return name + " (" + alias + ")";
     }
 }

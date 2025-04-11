@@ -1,9 +1,7 @@
 package com.tuka.comiccharacters.ui.panel;
 
-import com.tuka.comiccharacters.model.Creator;
-import com.tuka.comiccharacters.model.IssueCreator;
-import com.tuka.comiccharacters.model.Role;
-import com.tuka.comiccharacters.model.Series;
+import com.tuka.comiccharacters.model.*;
+import com.tuka.comiccharacters.service.CharacterService;
 import com.tuka.comiccharacters.service.CreatorService;
 import com.tuka.comiccharacters.service.IssueService;
 import com.tuka.comiccharacters.service.SeriesService;
@@ -25,6 +23,7 @@ public class IssuePanel extends JPanel {
 
         SeriesService seriesService = new SeriesService();
         CreatorService creatorService = new CreatorService();
+        CharacterService characterService = new CharacterService();
         IssueService issueService = new IssueService();
 
         JComboBox<Series> seriesDropdown = new JComboBox<>(seriesService.getAllSeries().toArray(new Series[0]));
@@ -35,6 +34,12 @@ public class IssuePanel extends JPanel {
         roleList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         roleList.setVisibleRowCount(3);
         JScrollPane roleScroll = new JScrollPane(roleList);
+
+        // Character support
+        JList<ComicCharacter> characterList = new JList<>(characterService.getAllCharacters().toArray(new ComicCharacter[0]));
+        characterList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        characterList.setVisibleRowCount(5);
+        JScrollPane characterScroll = new JScrollPane(characterList);
 
         DefaultTableModel creatorTableModel = new DefaultTableModel(new Object[]{"Creator", "Roles"}, 0);
         JTable creatorTable = new JTable(creatorTableModel);
@@ -84,10 +89,16 @@ public class IssuePanel extends JPanel {
         add(new JScrollPane(creatorTable));
         add(Box.createVerticalStrut(10));
 
+        // Character selection UI
+        add(new JLabel("Select Characters:"));
+        add(characterScroll);
+        add(Box.createVerticalStrut(10));
+
         JButton addButton = new JButton("Add Issue");
         addButton.addActionListener(e -> {
             Series selectedSeries = (Series) seriesDropdown.getSelectedItem();
             String issueText = issueNumberField.getText();
+            List<ComicCharacter> selectedCharacters = characterList.getSelectedValuesList();
 
             if (selectedSeries == null || issueText.isEmpty()) {
                 showError("Please select a series and enter an issue number.");
@@ -96,11 +107,14 @@ public class IssuePanel extends JPanel {
 
             try {
                 int number = Integer.parseInt(issueText);
-                issueService.addIssue(selectedSeries, number, selectedCreators);
-                showSuccess("Issue added with creators!");
+                issueService.addIssue(selectedSeries, number, selectedCreators, selectedCharacters);
+                showSuccess("Issue added with creators and characters!");
+
+                // Reset UI
                 issueNumberField.setText("");
                 creatorTableModel.setRowCount(0);
                 selectedCreators.clear();
+                characterList.clearSelection();
             } catch (NumberFormatException ex) {
                 showError("Issue number must be a number.");
             }

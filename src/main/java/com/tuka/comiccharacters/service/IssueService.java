@@ -1,30 +1,41 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.IssueDaoImpl;
+import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.IssueCreator;
 import com.tuka.comiccharacters.model.Series;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class IssueService {
     private final IssueDaoImpl issueDao = new IssueDaoImpl();
 
-    public void addIssue(Series series, int number) {
-        Issue issue = new Issue(series, number);
-        issueDao.save(issue);
-    }
-
-    public void addIssue(Series series, int issueNumber, List<IssueCreator> issueCreators) {
+    public void addIssue(Series series, int issueNumber, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
         Issue issue = new Issue(series, issueNumber);
 
-        for (IssueCreator ic : issueCreators) {
-            ic.setIssue(issue);
+        if (issueCreators != null && !issueCreators.isEmpty()) {
+            for (IssueCreator ic : issueCreators) {
+                ic.setIssue(issue);
+            }
+            issue.setIssueCreators(new HashSet<>(issueCreators));
         }
 
-        issue.setIssueCreators(new HashSet<>(issueCreators));
+        if (characters != null && !characters.isEmpty()) {
+            Set<ComicCharacter> characterSet = new HashSet<>(characters);
+            issue.setCharacters(characterSet);
+            for (ComicCharacter c : characters) {
+                c.getIssues().add(issue);
+            }
+        }
+
         issueDao.save(issue);
     }
 
+    // Overload for minimal info (no creators, no characters)
+    public void addIssue(Series series, int issueNumber) {
+        addIssue(series, issueNumber, null, null);
+    }
 }

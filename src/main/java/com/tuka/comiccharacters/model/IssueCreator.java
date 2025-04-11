@@ -1,6 +1,7 @@
 package com.tuka.comiccharacters.model;
 
 import jakarta.persistence.*;
+
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -27,7 +28,8 @@ public class IssueCreator {
     @Column(name = "role")
     private Set<Role> roles = EnumSet.noneOf(Role.class);
 
-    public IssueCreator() {}
+    public IssueCreator() {
+    }
 
     public IssueCreator(Issue issue, Creator creator, Set<Role> roles) {
         this.issue = issue;

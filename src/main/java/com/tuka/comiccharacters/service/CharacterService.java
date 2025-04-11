@@ -5,6 +5,7 @@ import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.model.Publisher;
 
+import java.util.Collection;
 import java.util.List;
 
 public class CharacterService {
@@ -18,5 +19,9 @@ public class CharacterService {
     public void addCharacter(String name, String alias, Publisher publisher, List<Creator> creatorList) {
         ComicCharacter comicCharacter = new ComicCharacter(name, alias, publisher, creatorList);
         characterDao.save(comicCharacter);
+    }
+
+    public List<ComicCharacter> getAllCharacters() {
+        return characterDao.findAll();
     }
 }
