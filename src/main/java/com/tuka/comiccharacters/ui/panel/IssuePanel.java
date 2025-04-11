@@ -35,7 +35,6 @@ public class IssuePanel extends JPanel {
         roleList.setVisibleRowCount(3);
         JScrollPane roleScroll = new JScrollPane(roleList);
 
-        // Character support
         JList<ComicCharacter> characterList = new JList<>(characterService.getAllCharacters().toArray(new ComicCharacter[0]));
         characterList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         characterList.setVisibleRowCount(5);

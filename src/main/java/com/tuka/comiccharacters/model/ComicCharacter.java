@@ -20,7 +20,7 @@ public class ComicCharacter {
     private String alias;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "publisher_id", nullable = false)
+    @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
     @ManyToMany

@@ -22,17 +22,32 @@ public class CharacterPanel extends JPanel {
 
         JTextField nameField = new JTextField(10);
         JTextField aliasField = new JTextField(10);
-        JComboBox<Publisher> publisherDropdown = new JComboBox<>(
-                new PublisherService().getAllPublishers().toArray(new Publisher[0])
-        );
 
+        PublisherService publisherService = new PublisherService();
+        List<Publisher> allPublishers = publisherService.getAllPublishers();
+        List<Publisher> publishersWithNull = new ArrayList<>();
+        publishersWithNull.add(null); // represents 'None'
+        publishersWithNull.addAll(allPublishers);
+
+        JComboBox<Publisher> publisherDropdown = new JComboBox<>(publishersWithNull.toArray(new Publisher[0]));
+        publisherDropdown.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public java.awt.Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                                   boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                setText(value == null ? "None" : value.toString());
+                return this;
+            }
+        });
+
+        // Creator list
         CreatorService creatorService = new CreatorService();
         List<Creator> allCreators = creatorService.getAllCreators();
         JList<Creator> creatorList = new JList<>(allCreators.toArray(new Creator[0]));
         creatorList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         JScrollPane scrollPane = new JScrollPane(creatorList);
 
-        // First Appearance dropdown
+        // First Appearance dropdown with null option
         IssueService issueService = new IssueService();
         List<Issue> allIssues = issueService.getAllIssues();
         List<Issue> issuesWithNull = new ArrayList<>();
@@ -45,11 +60,7 @@ public class CharacterPanel extends JPanel {
             public java.awt.Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                                    boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value == null) {
-                    setText("None");
-                } else {
-                    setText(value.toString());
-                }
+                setText(value == null ? "None" : value.toString());
                 return this;
             }
         });
@@ -68,7 +79,7 @@ public class CharacterPanel extends JPanel {
         add(publisherDropdown);
         add(Box.createVerticalStrut(10));
 
-        add(new JLabel("Creator:"));
+        add(new JLabel("Creator(s):"));
         add(scrollPane);
         add(Box.createVerticalStrut(10));
 
@@ -78,11 +89,11 @@ public class CharacterPanel extends JPanel {
 
         JButton addButton = new JButton("Add Character");
         addButton.addActionListener(e -> {
-            String name = nameField.getText();
-            String alias = aliasField.getText();
-            Publisher selectedPublisher = (Publisher) publisherDropdown.getSelectedItem();
+            String name = nameField.getText().trim();
+            String alias = aliasField.getText().trim();
+            Publisher selectedPublisher = (Publisher) publisherDropdown.getSelectedItem(); // can be null
             List<Creator> selectedCreators = creatorList.getSelectedValuesList();
-            Issue selectedIssue = (Issue) issueDropdown.getSelectedItem(); // could be null
+            Issue selectedIssue = (Issue) issueDropdown.getSelectedItem(); // can be null
 
             if (name.isEmpty()) {
                 showError("Character name is required.");
@@ -91,8 +102,13 @@ public class CharacterPanel extends JPanel {
 
             service.addCharacter(name, alias, selectedPublisher, selectedCreators, selectedIssue);
             showSuccess("Character added!");
+
+            // Reset form
             nameField.setText("");
             aliasField.setText("");
+            publisherDropdown.setSelectedIndex(0);
+            creatorList.clearSelection();
+            issueDropdown.setSelectedIndex(0);
         });
 
         add(addButton);
