@@ -25,6 +25,7 @@ public class IssuePanel extends JPanel {
     private final List<IssueCreator> selectedCreators = new ArrayList<>();
     private final JList<ComicCharacter> characterList;
 
+    private final SeriesService seriesService = new SeriesService();
     private final CharacterService characterService = new CharacterService();
     private final IssueService issueService = new IssueService();
 
@@ -32,7 +33,6 @@ public class IssuePanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Issue"));
 
-        SeriesService seriesService = new SeriesService();
         seriesDropdown = new JComboBox<>(seriesService.getAllSeries().toArray(new Series[0]));
         issueNumberField = new JTextField(10);
 
@@ -123,6 +123,13 @@ public class IssuePanel extends JPanel {
         creatorTableModel.setRowCount(0);
         selectedCreators.clear();
         characterList.clearSelection();
+    }
+
+    public void refreshSeries() {
+        seriesDropdown.removeAllItems();
+        for (Series s : seriesService.getAllSeries()) {
+            seriesDropdown.addItem(s);
+        }
     }
 
     public void refreshCharacters() {

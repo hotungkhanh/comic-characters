@@ -12,7 +12,7 @@ import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
 public class SeriesPanel extends JPanel {
-    public SeriesPanel(Runnable onSeriesAdded) {
+    public SeriesPanel(List<Runnable> refreshCallbacks) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Series"));
 
@@ -72,8 +72,9 @@ public class SeriesPanel extends JPanel {
                 showError("Start Year must be a number.");
             }
 
-            // Refresh Publisher panel
-            onSeriesAdded.run();
+            for (Runnable callback : refreshCallbacks) {
+                callback.run();
+            }
         });
 
         add(addButton);

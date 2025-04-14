@@ -4,6 +4,7 @@ import com.tuka.comiccharacters.ui.panel.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class MainApp {
 
@@ -16,7 +17,7 @@ public class MainApp {
         IssuePanel issuePanel = new IssuePanel();
 
         frame.add(publisherPanel);
-        frame.add(new SeriesPanel(publisherPanel::refreshSeries));
+        frame.add(new SeriesPanel(List.of(publisherPanel::refreshSeries, issuePanel::refreshSeries)));
         frame.add(issuePanel);
         frame.add(new CreatorPanel());
         frame.add(new CharacterPanel(issuePanel::refreshCharacters));
