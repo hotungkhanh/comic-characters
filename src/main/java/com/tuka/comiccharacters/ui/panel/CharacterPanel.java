@@ -16,7 +16,7 @@ import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
 public class CharacterPanel extends JPanel {
-    public CharacterPanel() {
+    public CharacterPanel(Runnable onCharacterAdded) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Character"));
 
@@ -109,6 +109,9 @@ public class CharacterPanel extends JPanel {
             publisherDropdown.setSelectedIndex(0);
             creatorList.clearSelection();
             issueDropdown.setSelectedIndex(0);
+
+            // Refresh Issue panel
+            onCharacterAdded.run();
         });
 
         add(addButton);

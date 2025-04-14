@@ -12,11 +12,13 @@ public class MainApp {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new GridLayout(1, 5, 10, 10)); // 4 vertical panels
 
+        IssuePanel issuePanel = new IssuePanel();
+
         frame.add(new PublisherPanel());
         frame.add(new SeriesPanel());
-        frame.add(new IssuePanel());
+        frame.add(issuePanel);
         frame.add(new CreatorPanel());
-        frame.add(new CharacterPanel());
+        frame.add(new CharacterPanel(issuePanel::refreshCharacters));
 
 
         frame.pack();
