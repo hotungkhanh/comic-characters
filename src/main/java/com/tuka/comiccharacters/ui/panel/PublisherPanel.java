@@ -11,17 +11,20 @@ import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
 public class PublisherPanel extends JPanel {
+
+    public final SeriesService seriesService = new SeriesService();
+    public final JList<Series> seriesList;
+
     public PublisherPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Publisher"));
 
         JTextField nameField = new JTextField(15);
-        SeriesService seriesService = new SeriesService();
         PublisherService publisherService = new PublisherService();
 
-        List<Series> allSeries = seriesService.getAllSeries();
-        JList<Series> seriesList = new JList<>(allSeries.toArray(new Series[0]));
+        seriesList = new JList<>();
         seriesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        refreshSeries();
         JScrollPane scrollPane = new JScrollPane(seriesList);
 
         add(new JLabel("Publisher Name:"));
@@ -46,5 +49,10 @@ public class PublisherPanel extends JPanel {
         });
 
         add(addButton);
+    }
+
+    public void refreshSeries() {
+        List<Series> updatedSeries = seriesService.getAllSeries();
+        seriesList.setListData(updatedSeries.toArray(new Series[0]));
     }
 }
