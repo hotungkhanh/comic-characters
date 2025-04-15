@@ -1,27 +1,38 @@
 package com.tuka.comiccharacters.ui;
 
+import com.tuka.comiccharacters.ui.display.CreatorDisplay;
 import com.tuka.comiccharacters.ui.panel.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 public class MainApp {
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("Comic Book Database");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new GridLayout(1, 5, 10, 10)); // 4 vertical panels
+        frame.setLayout(new BorderLayout(10, 10));
 
-        PublisherPanel publisherPanel = new PublisherPanel();
-        IssuePanel issuePanel = new IssuePanel();
+        JPanel mainPanel = new JPanel(new GridLayout(1, 1, 10, 10));
 
-        frame.add(publisherPanel);
-        frame.add(new SeriesPanel(List.of(publisherPanel::refreshSeries, issuePanel::refreshSeries)));
-        frame.add(issuePanel);
-        frame.add(new CreatorPanel());
-        frame.add(new CharacterPanel(issuePanel::refreshCharacters));
+        // Display panels
+        CreatorDisplay creatorDisplay = new CreatorDisplay();
+        mainPanel.add(creatorDisplay);
 
+        JButton addCreatorButton = new JButton("Add Creator");
+        addCreatorButton.addActionListener(e -> {
+            JDialog dialog = new JDialog(frame, "Add Creator", true);
+            dialog.setContentPane(new CreatorPanel());
+            dialog.pack();
+            dialog.setLocationRelativeTo(frame);
+            dialog.setVisible(true);
+
+            // Optionally refresh UI after closing dialog
+            creatorDisplay.refreshCreators();
+        });
+
+
+        frame.add(mainPanel, BorderLayout.SOUTH);
 
         frame.pack();
         frame.setLocationRelativeTo(null);

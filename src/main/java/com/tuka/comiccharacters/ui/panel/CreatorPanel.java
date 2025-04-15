@@ -1,49 +1,49 @@
 package com.tuka.comiccharacters.ui.panel;
 
+import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.service.CreatorService;
+import com.tuka.comiccharacters.ui.MainApp;
 
 import javax.swing.*;
-
-import static com.tuka.comiccharacters.ui.MainApp.showError;
-import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
+import java.awt.*;
 
 public class CreatorPanel extends JPanel {
-    public CreatorPanel() {
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBorder(BorderFactory.createTitledBorder("Creator"));
 
-        JTextField nameField = new JTextField(15);
-        JTextArea overviewArea = new JTextArea(5, 15);
+    private final JTextField nameField = new JTextField(20);
+    private final JTextArea overviewArea = new JTextArea(5, 20);
+    private final CreatorService creatorService = new CreatorService();
+
+    public CreatorPanel() {
+        setLayout(new BorderLayout());
+
+        JPanel formPanel = new JPanel(new GridLayout(0, 1));
+        formPanel.setBorder(BorderFactory.createTitledBorder("Add Creator"));
+
+        formPanel.add(new JLabel("Name:"));
+        formPanel.add(nameField);
+
+        formPanel.add(new JLabel("Overview:"));
         overviewArea.setLineWrap(true);
         overviewArea.setWrapStyleWord(true);
-        JScrollPane scrollPane = new JScrollPane(overviewArea);
+        formPanel.add(new JScrollPane(overviewArea));
 
-        CreatorService service = new CreatorService();
-
-        add(new JLabel("Name:"));
-        add(nameField);
-        add(Box.createVerticalStrut(5));
-
-        add(new JLabel("Overview:"));
-        add(scrollPane);
-        add(Box.createVerticalStrut(10));
-
-        JButton addButton = new JButton("Add Creator");
-        addButton.addActionListener(e -> {
-            String name = nameField.getText();
-            String overview = overviewArea.getText();
+        JButton submitButton = new JButton("Add Creator");
+        submitButton.addActionListener(e -> {
+            String name = nameField.getText().trim();
+            String overview = overviewArea.getText().trim();
 
             if (name.isEmpty()) {
-                showError("Name is required.");
+                MainApp.showError("Name is required.");
                 return;
             }
 
-            service.addCreator(name, overview);
-            showSuccess("Creator added!");
+            creatorService.addCreator(name, overview);
+            MainApp.showSuccess("Creator added!");
             nameField.setText("");
             overviewArea.setText("");
         });
 
-        add(addButton);
+        add(formPanel, BorderLayout.CENTER);
+        add(submitButton, BorderLayout.SOUTH);
     }
 }
