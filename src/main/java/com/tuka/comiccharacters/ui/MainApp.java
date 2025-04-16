@@ -9,7 +9,7 @@ import java.awt.*;
 public class MainApp {
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Comic Book Database");
+        JFrame frame = new JFrame("Tuka's Comic Book Database");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout(10, 10));
 

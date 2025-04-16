@@ -1,25 +1,34 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.CreatorDaoImpl;
+import com.tuka.comiccharacters.dao.Dao;
 import com.tuka.comiccharacters.model.Creator;
 
-import java.util.Collection;
 import java.util.List;
 
 public class CreatorService {
-    private final CreatorDaoImpl creatorDao = new CreatorDaoImpl();
+    private final Dao<Creator> creatorDao = new CreatorDaoImpl();
 
     public void addCreator(String name) {
-        Creator creator = new Creator(name);
-        creatorDao.save(creator);
+        creatorDao.save(new Creator(name));
     }
 
     public void addCreator(String name, String overview) {
-        Creator creator = new Creator(name, overview);
-        creatorDao.save(creator);
+        creatorDao.save(new Creator(name, overview));
     }
 
     public List<Creator> getAllCreators() {
         return creatorDao.findAll();
+    }
+
+    public void updateCreator(Creator creator) {
+        creatorDao.save(creator);
+    }
+
+    public void deleteCreator(Long id) {
+        Creator creator = creatorDao.findById(id);
+        if (creator != null) {
+            creatorDao.delete(creator);
+        }
     }
 }

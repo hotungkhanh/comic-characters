@@ -2,6 +2,8 @@ package com.tuka.comiccharacters.dao;
 
 import com.tuka.comiccharacters.util.JPAUtil;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 import java.util.List;
 
 public abstract class AbstractJpaDao<T> implements Dao<T> {
@@ -13,38 +15,47 @@ public abstract class AbstractJpaDao<T> implements Dao<T> {
 
     @Override
     public void save(T entity) {
-        var em = JPAUtil.getEntityManagerFactory().createEntityManager();
-        em.getTransaction().begin();
-        em.persist(entity);
-        em.getTransaction().commit();
-        em.close();
+        try (EntityManager em = JPAUtil.getEntityManagerFactory().createEntityManager()) {
+            EntityTransaction tx = em.getTransaction();
+            try {
+                tx.begin();
+                em.merge(entity); // merge handles both insert and update
+                tx.commit();
+            } catch (RuntimeException e) {
+                if (tx.isActive()) tx.rollback();
+                throw e;
+            }
+        }
     }
 
     @Override
-    public T findById(int id) {
-        var em = JPAUtil.getEntityManagerFactory().createEntityManager();
-        T entity = em.find(entityClass, id);
-        em.close();
-        return entity;
+    public T findById(Long id) {
+        try (EntityManager em = JPAUtil.getEntityManagerFactory().createEntityManager()) {
+            return em.find(entityClass, id);
+        }
     }
 
     @Override
     public List<T> findAll() {
-        var em = JPAUtil.getEntityManagerFactory().createEntityManager();
-        var query = em.createQuery("FROM " + entityClass.getSimpleName(), entityClass);
-        List<T> result = query.getResultList();
-        em.close();
-        return result;
+        try (EntityManager em = JPAUtil.getEntityManagerFactory().createEntityManager()) {
+            return em.createQuery("FROM " + entityClass.getSimpleName(), entityClass)
+                    .getResultList();
+        }
     }
 
     @Override
     public void delete(T entity) {
-        var em = JPAUtil.getEntityManagerFactory().createEntityManager();
-        em.getTransaction().begin();
-        entity = em.merge(entity);
-        em.remove(entity);
-        em.getTransaction().commit();
-        em.close();
+        try (EntityManager em = JPAUtil.getEntityManagerFactory().createEntityManager()) {
+            EntityTransaction tx = em.getTransaction();
+            try {
+                tx.begin();
+                T managedEntity = em.merge(entity); // ensure attached to context
+                em.remove(managedEntity);
+                tx.commit();
+            } catch (RuntimeException e) {
+                if (tx.isActive()) tx.rollback();
+                throw e;
+            }
+        }
     }
 }
-
