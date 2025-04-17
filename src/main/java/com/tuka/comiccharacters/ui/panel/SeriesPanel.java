@@ -1,6 +1,7 @@
 package com.tuka.comiccharacters.ui.panel;
 
 import com.tuka.comiccharacters.model.Publisher;
+import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.PublisherService;
 import com.tuka.comiccharacters.service.SeriesService;
 
@@ -13,6 +14,10 @@ import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
 public class SeriesPanel extends JPanel {
     public SeriesPanel() {
+        this(null, null, null);
+    }
+
+    public SeriesPanel(Series existingSeries, Runnable refreshCallback, JDialog parentDialog) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Series"));
 
@@ -22,7 +27,7 @@ public class SeriesPanel extends JPanel {
         PublisherService publisherService = new PublisherService();
         List<Publisher> allPublishers = publisherService.getAllPublishers();
         List<Publisher> publishersWithNull = new ArrayList<>();
-        publishersWithNull.add(null); // represents 'None'
+        publishersWithNull.add(null);
         publishersWithNull.addAll(allPublishers);
 
         JComboBox<Publisher> publisherDropdown = new JComboBox<>(publishersWithNull.toArray(new Publisher[0]));
@@ -36,7 +41,11 @@ public class SeriesPanel extends JPanel {
             }
         });
 
-        SeriesService service = new SeriesService();
+        if (existingSeries != null) {
+            titleField.setText(existingSeries.getTitle());
+            yearField.setText(String.valueOf(existingSeries.getStartYear()));
+            publisherDropdown.setSelectedItem(existingSeries.getPublisher());
+        }
 
         add(new JLabel("Title:"));
         add(titleField);
@@ -50,11 +59,12 @@ public class SeriesPanel extends JPanel {
         add(publisherDropdown);
         add(Box.createVerticalStrut(10));
 
-        JButton addButton = new JButton("Add Series");
-        addButton.addActionListener(e -> {
+        JButton saveButton = new JButton(existingSeries == null ? "Add Series" : "Save Changes");
+
+        saveButton.addActionListener(e -> {
             String title = titleField.getText().trim();
             String yearText = yearField.getText().trim();
-            Publisher selectedPublisher = (Publisher) publisherDropdown.getSelectedItem(); // can be null
+            Publisher selectedPublisher = (Publisher) publisherDropdown.getSelectedItem();
 
             if (title.isEmpty() || yearText.isEmpty()) {
                 showError("Please fill in title and start year.");
@@ -63,17 +73,27 @@ public class SeriesPanel extends JPanel {
 
             try {
                 int year = Integer.parseInt(yearText);
-                service.addSeries(title, year, selectedPublisher); // pass null if no publisher
-                showSuccess("Series added!");
-                titleField.setText("");
-                yearField.setText("");
-                publisherDropdown.setSelectedIndex(0);
+                SeriesService service = new SeriesService();
+
+                if (existingSeries == null) {
+                    service.addSeries(title, year, selectedPublisher);
+                    showSuccess("Series added!");
+                } else {
+                    existingSeries.setTitle(title);
+                    existingSeries.setStartYear(year);
+                    existingSeries.setPublisher(selectedPublisher);
+                    service.updateSeries(existingSeries);
+                    showSuccess("Series updated!");
+                }
+
+                if (refreshCallback != null) refreshCallback.run();
+                if (parentDialog != null) parentDialog.dispose();
+
             } catch (NumberFormatException ex) {
                 showError("Start Year must be a number.");
             }
-
         });
 
-        add(addButton);
+        add(saveButton);
     }
 }

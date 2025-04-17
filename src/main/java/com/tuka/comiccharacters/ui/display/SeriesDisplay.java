@@ -18,7 +18,6 @@ public class SeriesDisplay extends JPanel {
         this.seriesListModel = new DefaultListModel<>();
         this.seriesJList = new JList<>(seriesListModel);
         this.seriesJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        this.seriesJList.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createTitledBorder("Series"));
@@ -31,11 +30,10 @@ public class SeriesDisplay extends JPanel {
                 Series selected = seriesJList.getSelectedValue();
                 if (selected != null) {
                     Series fullSeries = seriesService.getByIdWithIssues(selected.getId());
-                    MainApp.showSeriesPopup(fullSeries);
+                    MainApp.showSeriesPopup(fullSeries, this::refreshSeries);
                 }
             }
         });
-
 
         refreshSeries();
     }

@@ -10,7 +10,7 @@ import java.util.List;
 public class Series {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     private String title;
     private int startYear;
@@ -36,7 +36,7 @@ public class Series {
         this.publisher = publisher;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 

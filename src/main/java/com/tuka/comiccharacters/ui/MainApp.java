@@ -2,6 +2,7 @@ package com.tuka.comiccharacters.ui;
 
 import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.Series;
+import com.tuka.comiccharacters.service.SeriesService;
 import com.tuka.comiccharacters.ui.display.CreatorDisplay;
 import com.tuka.comiccharacters.ui.display.SeriesDisplay;
 import com.tuka.comiccharacters.ui.panel.CreatorPanel;
@@ -77,17 +78,55 @@ public class MainApp {
         JOptionPane.showMessageDialog(null, message, "Issue Details", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public static void showSeriesPopup(Series series) {
-        StringBuilder message = new StringBuilder();
-        message.append("Publisher: ").append(series.getPublisher().getName()).append("\n")
-                .append("Title: ").append(series.getTitle()).append("\n")
-                .append("Start Year: ").append(series.getStartYear()).append("\n\n")
-                .append("Issues:\n");
+    public static void showSeriesPopup(Series series, Runnable refreshCallback) {
+        JDialog dialog = new JDialog((Frame) null, "Series Details", true);
+        dialog.setLayout(new BorderLayout());
 
-        for (Issue issue : series.getIssues()) {
-            message.append("- Issue #").append(issue.getIssueNumber()).append("\n");
-        }
+        String publisherText = series.getPublisher() != null ? series.getPublisher().toString() : "None";
+        String message = series +
+                "\nPublisher: " + publisherText +
+                "\nIssues: " + series.getIssues().size();
 
-        JOptionPane.showMessageDialog(null, message.toString(), "Series Details", JOptionPane.INFORMATION_MESSAGE);
+        JTextArea textArea = new JTextArea(message);
+        textArea.setEditable(false);
+        textArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        dialog.add(new JScrollPane(textArea), BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+        JButton editBtn = new JButton("Edit");
+        JButton deleteBtn = new JButton("Delete");
+
+        editBtn.addActionListener(e -> {
+            dialog.dispose();
+            showEditSeriesDialog(series, refreshCallback);
+        });
+
+        deleteBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(dialog, "Delete this series?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                new SeriesService().deleteSeries(series.getId());
+                showSuccess("Series deleted.");
+                dialog.dispose();
+                refreshCallback.run();
+            }
+        });
+
+        buttonPanel.add(editBtn);
+        buttonPanel.add(deleteBtn);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.setSize(350, 220);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+    }
+
+
+    public static void showEditSeriesDialog(Series series, Runnable refreshCallback) {
+        JDialog dialog = new JDialog((Frame) null, "Edit Series", true);
+        SeriesPanel panel = new SeriesPanel(series, refreshCallback, dialog);
+        dialog.setContentPane(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
     }
 }
