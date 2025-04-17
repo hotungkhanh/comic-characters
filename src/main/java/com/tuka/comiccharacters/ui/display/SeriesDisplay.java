@@ -12,11 +12,13 @@ public class SeriesDisplay extends JPanel {
     private final DefaultListModel<Series> seriesListModel;
     private final JList<Series> seriesJList;
     private final SeriesService seriesService;
+    private final List<Series> allSeries; // Full list for filtering
 
     public SeriesDisplay() {
         this.seriesService = new SeriesService();
         this.seriesListModel = new DefaultListModel<>();
         this.seriesJList = new JList<>(seriesListModel);
+        this.allSeries = seriesService.getAllSeries(); // Get all series initially
         this.seriesJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         setLayout(new BorderLayout(10, 10));
@@ -25,6 +27,7 @@ public class SeriesDisplay extends JPanel {
         JScrollPane scrollPane = new JScrollPane(seriesJList);
         add(scrollPane, BorderLayout.CENTER);
 
+        // Double-click to view series details
         seriesJList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 Series selected = seriesJList.getSelectedValue();
@@ -38,9 +41,18 @@ public class SeriesDisplay extends JPanel {
         refreshSeries();
     }
 
+    public void filter(String query) {
+        seriesListModel.clear();
+
+        for (Series s : allSeries) {
+            if (s.getTitle().toLowerCase().contains(query.toLowerCase())) {
+                seriesListModel.addElement(s);
+            }
+        }
+    }
+
     public void refreshSeries() {
         seriesListModel.clear();
-        List<Series> allSeries = seriesService.getAllSeries();
         for (Series s : allSeries) {
             seriesListModel.addElement(s);
         }

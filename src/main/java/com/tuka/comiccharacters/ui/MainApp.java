@@ -18,45 +18,72 @@ public class MainApp {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout(10, 10));
 
-        JPanel mainPanel = new JPanel(new GridLayout(1, 2, 10, 10)); // Two columns
+        // Search bar
+        JTextField searchField = new JTextField();
+        searchField.setPreferredSize(new Dimension(400, 30));
 
+        // Displays
         CreatorDisplay creatorDisplay = new CreatorDisplay();
-        mainPanel.add(creatorDisplay);
-
         SeriesDisplay seriesDisplay = new SeriesDisplay();
+
+        // Main panel with 2 columns
+        JPanel mainPanel = new JPanel(new GridLayout(1, 2, 10, 10));
+        mainPanel.add(creatorDisplay);
         mainPanel.add(seriesDisplay);
+
+        // Search logic (filter both displays)
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                filter();
+            }
+
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                filter();
+            }
+
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                filter();
+            }
+
+            private void filter() {
+                String query = searchField.getText().trim();
+                creatorDisplay.filter(query);
+                seriesDisplay.filter(query);
+            }
+        });
 
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         JButton addCreatorButton = new JButton("Add Creator");
         JButton addSeriesButton = new JButton("Add Series");
 
-        // Add Creator logic
         addCreatorButton.addActionListener(e -> {
             JDialog dialog = new JDialog(frame, "Add Creator", true);
             dialog.setContentPane(new CreatorPanel());
             dialog.pack();
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
-
             creatorDisplay.refreshCreators();
         });
 
-        // Add Series logic
         addSeriesButton.addActionListener(e -> {
             JDialog dialog = new JDialog(frame, "Add Series", true);
             dialog.setContentPane(new SeriesPanel());
             dialog.pack();
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
-
             seriesDisplay.refreshSeries();
         });
 
         buttonPanel.add(addCreatorButton);
         buttonPanel.add(addSeriesButton);
 
-        frame.add(mainPanel, BorderLayout.CENTER);
+        // Wrap everything in the frame
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(searchField, BorderLayout.NORTH);
+        topPanel.add(mainPanel, BorderLayout.CENTER);
+
+        frame.add(topPanel, BorderLayout.CENTER);
         frame.add(buttonPanel, BorderLayout.SOUTH);
 
         frame.pack();

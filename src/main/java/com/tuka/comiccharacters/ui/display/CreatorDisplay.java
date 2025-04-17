@@ -5,11 +5,9 @@ import com.tuka.comiccharacters.service.CreatorService;
 import com.tuka.comiccharacters.ui.panel.CreatorPanel;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CreatorDisplay extends JPanel {
 
@@ -24,11 +22,6 @@ public class CreatorDisplay extends JPanel {
 
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createTitledBorder("Creators"));
-
-        // Search bar
-        JTextField searchField = new JTextField();
-        searchField.setToolTipText("Search creators...");
-        add(searchField, BorderLayout.NORTH);
 
         // Creator list
         JList<Creator> creatorList = new JList<>(listModel);
@@ -46,35 +39,6 @@ public class CreatorDisplay extends JPanel {
                     }
                 }
             }
-        });
-
-        // Add Creator button
-        JButton addButton = new JButton("Add Creator");
-        addButton.addActionListener(e -> {
-            JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Add Creator", true);
-            dialog.setContentPane(new CreatorPanel());
-            dialog.pack();
-            dialog.setLocationRelativeTo(this);
-            dialog.setVisible(true);
-            refreshCreators();
-        });
-        add(addButton, BorderLayout.SOUTH);
-
-        // Filter logic on typing
-        searchField.getDocument().addDocumentListener(new DocumentListener() {
-            private void filter() {
-                String query = searchField.getText().trim().toLowerCase();
-                listModel.clear();
-                for (Creator creator : allCreators) {
-                    if (creator.getName().toLowerCase().contains(query)) {
-                        listModel.addElement(creator);
-                    }
-                }
-            }
-
-            public void insertUpdate(DocumentEvent e) { filter(); }
-            public void removeUpdate(DocumentEvent e) { filter(); }
-            public void changedUpdate(DocumentEvent e) { filter(); }
         });
 
         refreshCreators();
@@ -136,7 +100,6 @@ public class CreatorDisplay extends JPanel {
         dialog.setVisible(true);
     }
 
-
     public void refreshCreators() {
         listModel.clear();
         allCreators.clear();
@@ -149,4 +112,14 @@ public class CreatorDisplay extends JPanel {
             listModel.addElement(creator);
         }
     }
+
+    public void filter(String query) {
+        listModel.clear();
+        for (Creator creator : allCreators) {
+            if (creator.getName().toLowerCase().contains(query.toLowerCase())) {
+                listModel.addElement(creator);
+            }
+        }
+    }
 }
+
