@@ -22,4 +22,9 @@ public class SeriesService {
     public List<Series> getAllSeries() {
         return seriesDao.findAll();
     }
+
+    public Series getByIdWithIssues(int id) {
+        return seriesDao.findByIdWithIssues(id);
+    }
+
 }
