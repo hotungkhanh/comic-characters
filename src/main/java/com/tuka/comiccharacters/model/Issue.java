@@ -11,13 +11,13 @@ import java.util.Set;
 public class Issue {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "series_id", nullable = false)
     private Series series;
 
-    private int issueNumber;
+    private Integer issueNumber;
 
     @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<IssueCreator> issueCreators = new HashSet<>();
@@ -44,7 +44,7 @@ public class Issue {
         this.issueCreators.addAll(issueCreators);
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 

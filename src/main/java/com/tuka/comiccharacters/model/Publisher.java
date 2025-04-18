@@ -10,7 +10,7 @@ public class Publisher {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     private String name;
 
@@ -29,7 +29,7 @@ public class Publisher {
         this.seriesList = seriesList;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
@@ -65,7 +65,7 @@ public class Publisher {
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(id);
+        return Long.hashCode(id);
     }
 
     @Override
