@@ -1,4 +1,4 @@
-package com.tuka.comiccharacters.ui.panel;
+package com.tuka.comiccharacters.ui.form;
 
 import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.model.Issue;
@@ -15,8 +15,8 @@ import java.util.List;
 import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
-public class CharacterPanel extends JPanel {
-    public CharacterPanel(Runnable onCharacterAdded) {
+public class CharacterForm extends JPanel {
+    public CharacterForm(Runnable onCharacterAdded) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Character"));
 

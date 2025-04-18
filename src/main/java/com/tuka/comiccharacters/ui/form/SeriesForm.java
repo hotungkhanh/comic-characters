@@ -1,4 +1,4 @@
-package com.tuka.comiccharacters.ui.panel;
+package com.tuka.comiccharacters.ui.form;
 
 import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.model.Series;
@@ -12,13 +12,13 @@ import java.util.List;
 import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
-public class SeriesPanel extends JPanel {
+public class SeriesForm extends JPanel {
 
-    public SeriesPanel() {
+    public SeriesForm() {
         this(null, null, null);
     }
 
-    public SeriesPanel(Series existingSeries, Runnable refreshCallback, JDialog parentDialog) {
+    public SeriesForm(Series existingSeries, Runnable refreshCallback, JDialog parentDialog) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Series"));
 

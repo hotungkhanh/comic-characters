@@ -1,4 +1,4 @@
-package com.tuka.comiccharacters.ui.panel;
+package com.tuka.comiccharacters.ui.form;
 
 import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.PublisherService;
@@ -10,12 +10,12 @@ import java.util.List;
 import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
-public class PublisherPanel extends JPanel {
+public class PublisherForm extends JPanel {
 
     public final SeriesService seriesService = new SeriesService();
     public final JList<Series> seriesList;
 
-    public PublisherPanel() {
+    public PublisherForm() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Publisher"));
 

@@ -1,4 +1,4 @@
-package com.tuka.comiccharacters.ui.panel;
+package com.tuka.comiccharacters.ui.form;
 
 import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.service.CreatorService;
@@ -8,14 +8,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
-public class CreatorPanel extends JPanel {
+public class CreatorForm extends JPanel {
 
     private final JTextField nameField = new JTextField(20);
     private final JTextArea overviewArea = new JTextArea(5, 20);
     private final CreatorService creatorService = new CreatorService();
     private final JButton submitButton = new JButton("Add Creator");
 
-    public CreatorPanel() {
+    public CreatorForm() {
         setLayout(new BorderLayout());
 
         JPanel formPanel = new JPanel(new GridLayout(0, 1));
@@ -48,7 +48,7 @@ public class CreatorPanel extends JPanel {
         add(submitButton, BorderLayout.SOUTH);
     }
 
-    public CreatorPanel(Creator existingCreator) {
+    public CreatorForm(Creator existingCreator) {
         this(); // Set up the layout and fields
 
         nameField.setText(existingCreator.getName());

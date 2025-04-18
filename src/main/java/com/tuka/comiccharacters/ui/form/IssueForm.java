@@ -1,4 +1,4 @@
-package com.tuka.comiccharacters.ui.panel;
+package com.tuka.comiccharacters.ui.form;
 
 import com.tuka.comiccharacters.model.*;
 import com.tuka.comiccharacters.service.CharacterService;
@@ -15,7 +15,7 @@ import java.util.List;
 import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
-public class IssuePanel extends JPanel {
+public class IssueForm extends JPanel {
 
     private final JComboBox<Series> seriesDropdown;
     private final JTextField issueNumberField;
@@ -29,7 +29,7 @@ public class IssuePanel extends JPanel {
     private final CharacterService characterService = new CharacterService();
     private final IssueService issueService = new IssueService();
 
-    public IssuePanel() {
+    public IssueForm() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Issue"));
 

@@ -1,4 +1,4 @@
-package com.tuka.comiccharacters.ui.display;
+package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.SeriesService;
@@ -9,13 +9,13 @@ import java.awt.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SeriesDisplay extends JPanel {
+public class SeriesBrowser extends JPanel {
     private final DefaultListModel<Series> seriesListModel;
     private final JList<Series> seriesJList;
     private final SeriesService seriesService;
     private List<Series> allSeries;
 
-    public SeriesDisplay() {
+    public SeriesBrowser() {
         this.seriesService = new SeriesService();
         this.seriesListModel = new DefaultListModel<>();
         this.seriesJList = new JList<>(seriesListModel);

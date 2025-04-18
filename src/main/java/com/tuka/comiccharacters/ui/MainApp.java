@@ -3,10 +3,10 @@ package com.tuka.comiccharacters.ui;
 import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.SeriesService;
-import com.tuka.comiccharacters.ui.display.CreatorDisplay;
-import com.tuka.comiccharacters.ui.display.SeriesDisplay;
-import com.tuka.comiccharacters.ui.panel.CreatorPanel;
-import com.tuka.comiccharacters.ui.panel.SeriesPanel;
+import com.tuka.comiccharacters.ui.browser.CreatorBrowser;
+import com.tuka.comiccharacters.ui.browser.SeriesBrowser;
+import com.tuka.comiccharacters.ui.form.CreatorForm;
+import com.tuka.comiccharacters.ui.form.SeriesForm;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,13 +23,13 @@ public class MainApp {
         searchField.setPreferredSize(new Dimension(400, 30));
 
         // Displays
-        CreatorDisplay creatorDisplay = new CreatorDisplay();
-        SeriesDisplay seriesDisplay = new SeriesDisplay();
+        CreatorBrowser creatorBrowser = new CreatorBrowser();
+        SeriesBrowser seriesBrowser = new SeriesBrowser();
 
         // Main panel with 2 columns
         JPanel mainPanel = new JPanel(new GridLayout(1, 2, 10, 10));
-        mainPanel.add(creatorDisplay);
-        mainPanel.add(seriesDisplay);
+        mainPanel.add(creatorBrowser);
+        mainPanel.add(seriesBrowser);
 
         // Search logic (filter both displays)
         searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
@@ -47,8 +47,8 @@ public class MainApp {
 
             private void filter() {
                 String query = searchField.getText().trim();
-                creatorDisplay.filter(query);
-                seriesDisplay.filter(query);
+                creatorBrowser.filter(query);
+                seriesBrowser.filter(query);
             }
         });
 
@@ -59,20 +59,20 @@ public class MainApp {
 
         addCreatorButton.addActionListener(e -> {
             JDialog dialog = new JDialog(frame, "Add Creator", true);
-            dialog.setContentPane(new CreatorPanel());
+            dialog.setContentPane(new CreatorForm());
             dialog.pack();
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
-            creatorDisplay.refreshCreators();
+            creatorBrowser.refreshCreators();
         });
 
         addSeriesButton.addActionListener(e -> {
             JDialog dialog = new JDialog(frame, "Add Series", true);
-            dialog.setContentPane(new SeriesPanel());
+            dialog.setContentPane(new SeriesForm());
             dialog.pack();
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
-            seriesDisplay.refreshSeries();
+            seriesBrowser.refreshSeries();
         });
 
         buttonPanel.add(addCreatorButton);
@@ -150,7 +150,7 @@ public class MainApp {
 
     public static void showEditSeriesDialog(Series series, Runnable refreshCallback) {
         JDialog dialog = new JDialog((Frame) null, "Edit Series", true);
-        SeriesPanel panel = new SeriesPanel(series, refreshCallback, dialog);
+        SeriesForm panel = new SeriesForm(series, refreshCallback, dialog);
         dialog.setContentPane(panel);
         dialog.pack();
         dialog.setLocationRelativeTo(null);

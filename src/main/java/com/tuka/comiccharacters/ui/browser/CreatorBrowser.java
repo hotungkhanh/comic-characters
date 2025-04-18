@@ -1,21 +1,21 @@
-package com.tuka.comiccharacters.ui.display;
+package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.service.CreatorService;
-import com.tuka.comiccharacters.ui.panel.CreatorPanel;
+import com.tuka.comiccharacters.ui.form.CreatorForm;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CreatorDisplay extends JPanel {
+public class CreatorBrowser extends JPanel {
 
     private final CreatorService creatorService;
     private final DefaultListModel<Creator> listModel;
     private final List<Creator> allCreators; // Full list for filtering
 
-    public CreatorDisplay() {
+    public CreatorBrowser() {
         this.creatorService = new CreatorService();
         this.listModel = new DefaultListModel<>();
         this.allCreators = new ArrayList<>();
@@ -70,7 +70,7 @@ public class CreatorDisplay extends JPanel {
 
             // Show a new dialog pre-filled with this creator
             JDialog editDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Edit Creator", true);
-            CreatorPanel editPanel = new CreatorPanel(creator); // Assume you overload CreatorPanel for editing
+            CreatorForm editPanel = new CreatorForm(creator); // Assume you overload CreatorPanel for editing
             editDialog.setContentPane(editPanel);
             editDialog.pack();
             editDialog.setLocationRelativeTo(this);
