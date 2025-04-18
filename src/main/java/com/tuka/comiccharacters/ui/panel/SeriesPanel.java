@@ -13,6 +13,7 @@ import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
 public class SeriesPanel extends JPanel {
+
     public SeriesPanel() {
         this(null, null, null);
     }
@@ -21,16 +22,21 @@ public class SeriesPanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createTitledBorder("Series"));
 
-        JTextField titleField = new JTextField(15);
-        JTextField yearField = new JTextField(5);
+        // UI Fields
+        JTextField titleField = new JTextField(20);
+        JTextField startYearField = new JTextField(5);
+        JTextField endYearField = new JTextField(5);
+        JTextArea overviewArea = new JTextArea(4, 20);
+        overviewArea.setLineWrap(true);
+        overviewArea.setWrapStyleWord(true);
 
+        // Publisher Dropdown
         PublisherService publisherService = new PublisherService();
-        List<Publisher> allPublishers = publisherService.getAllPublishers();
-        List<Publisher> publishersWithNull = new ArrayList<>();
-        publishersWithNull.add(null);
-        publishersWithNull.addAll(allPublishers);
+        List<Publisher> publishers = new ArrayList<>();
+        publishers.add(null); // for "None"
+        publishers.addAll(publisherService.getAllPublishers());
 
-        JComboBox<Publisher> publisherDropdown = new JComboBox<>(publishersWithNull.toArray(new Publisher[0]));
+        JComboBox<Publisher> publisherDropdown = new JComboBox<>(publishers.toArray(new Publisher[0]));
         publisherDropdown.setRenderer(new DefaultListCellRenderer() {
             @Override
             public java.awt.Component getListCellRendererComponent(JList<?> list, Object value, int index,
@@ -41,46 +47,66 @@ public class SeriesPanel extends JPanel {
             }
         });
 
+        // Pre-fill if editing
         if (existingSeries != null) {
             titleField.setText(existingSeries.getTitle());
-            yearField.setText(String.valueOf(existingSeries.getStartYear()));
+            startYearField.setText(String.valueOf(existingSeries.getStartYear()));
+            if (existingSeries.getEndYear() != null) {
+                endYearField.setText(String.valueOf(existingSeries.getEndYear()));
+            }
+            overviewArea.setText(existingSeries.getOverview() != null ? existingSeries.getOverview() : "");
             publisherDropdown.setSelectedItem(existingSeries.getPublisher());
         }
 
+        // Layout
         add(new JLabel("Title:"));
         add(titleField);
         add(Box.createVerticalStrut(5));
 
         add(new JLabel("Start Year:"));
-        add(yearField);
+        add(startYearField);
+        add(Box.createVerticalStrut(5));
+
+        add(new JLabel("End Year:"));
+        add(endYearField);
+        add(Box.createVerticalStrut(5));
+
+        add(new JLabel("Overview:"));
+        add(new JScrollPane(overviewArea));
         add(Box.createVerticalStrut(5));
 
         add(new JLabel("Publisher:"));
         add(publisherDropdown);
         add(Box.createVerticalStrut(10));
 
+        // Save Button
         JButton saveButton = new JButton(existingSeries == null ? "Add Series" : "Save Changes");
-
         saveButton.addActionListener(e -> {
             String title = titleField.getText().trim();
-            String yearText = yearField.getText().trim();
+            String startYearText = startYearField.getText().trim();
+            String endYearText = endYearField.getText().trim();
+            String overview = overviewArea.getText().trim();
             Publisher selectedPublisher = (Publisher) publisherDropdown.getSelectedItem();
 
-            if (title.isEmpty() || yearText.isEmpty()) {
-                showError("Please fill in title and start year.");
+            if (title.isEmpty() || startYearText.isEmpty()) {
+                showError("Title and start year are required.");
                 return;
             }
 
             try {
-                int year = Integer.parseInt(yearText);
+                int startYear = Integer.parseInt(startYearText);
+                Integer endYear = endYearText.isEmpty() ? null : Integer.parseInt(endYearText);
+
                 SeriesService service = new SeriesService();
 
                 if (existingSeries == null) {
-                    service.addSeries(title, year, selectedPublisher);
+                    service.addSeries(title, startYear, endYear, overview, selectedPublisher);
                     showSuccess("Series added!");
                 } else {
                     existingSeries.setTitle(title);
-                    existingSeries.setStartYear(year);
+                    existingSeries.setStartYear(startYear);
+                    existingSeries.setEndYear(endYear);
+                    existingSeries.setOverview(overview);
                     existingSeries.setPublisher(selectedPublisher);
                     service.updateSeries(existingSeries);
                     showSuccess("Series updated!");
@@ -90,7 +116,7 @@ public class SeriesPanel extends JPanel {
                 if (parentDialog != null) parentDialog.dispose();
 
             } catch (NumberFormatException ex) {
-                showError("Start Year must be a number.");
+                showError("Start and end year must be valid numbers.");
             }
         });
 

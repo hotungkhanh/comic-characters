@@ -1,7 +1,6 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.SeriesDaoImpl;
-import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.model.Series;
 
@@ -10,12 +9,8 @@ import java.util.List;
 public class SeriesService {
     private final SeriesDaoImpl seriesDao = new SeriesDaoImpl();
 
-    public void addSeries(String title, int startYear) {
-        addSeries(title, startYear, null);
-    }
-
-    public void addSeries(String title, int startYear, Publisher publisher) {
-        Series series = new Series(title, startYear, publisher);
+    public void addSeries(String title, Integer startYear, Integer endYear, String overview, Publisher publisher) {
+        Series series = new Series(title, startYear, endYear, overview, publisher);
         seriesDao.save(series);
     }
 
@@ -24,7 +19,7 @@ public class SeriesService {
     }
 
     public Series getByIdWithIssues(Long id) {
-        return seriesDao.findByIdWithIssues(id);
+        return seriesDao.findByIdWithIssuesAndPublisher(id);
     }
 
     public void updateSeries(Series updatedSeries) {

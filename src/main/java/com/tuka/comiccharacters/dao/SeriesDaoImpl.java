@@ -10,15 +10,17 @@ public class SeriesDaoImpl extends AbstractJpaDao<Series> {
         super(Series.class);
     }
 
-    public Series findByIdWithIssues(Long id) {
-        EntityManager em = getEntityManager();
-        try {
+    public Series findByIdWithIssuesAndPublisher(Long id) {
+        try (EntityManager em = getEntityManager()) {
             return em.createQuery(
-                            "SELECT s FROM Series s LEFT JOIN FETCH s.issues WHERE s.id = :id", Series.class)
+                            "SELECT s FROM Series s " +
+                                    "LEFT JOIN FETCH s.publisher " +
+                                    "LEFT JOIN FETCH s.issues " +
+                                    "WHERE s.id = :id", Series.class)
                     .setParameter("id", id)
-                    .getSingleResult();
-        } finally {
-            em.close();
+                    .getResultStream()
+                    .findFirst()
+                    .orElse(null);
         }
     }
 

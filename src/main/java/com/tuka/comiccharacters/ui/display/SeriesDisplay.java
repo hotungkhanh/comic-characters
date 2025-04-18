@@ -7,18 +7,18 @@ import com.tuka.comiccharacters.ui.MainApp;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SeriesDisplay extends JPanel {
     private final DefaultListModel<Series> seriesListModel;
     private final JList<Series> seriesJList;
     private final SeriesService seriesService;
-    private final List<Series> allSeries; // Full list for filtering
+    private List<Series> allSeries;
 
     public SeriesDisplay() {
         this.seriesService = new SeriesService();
         this.seriesListModel = new DefaultListModel<>();
         this.seriesJList = new JList<>(seriesListModel);
-        this.allSeries = seriesService.getAllSeries(); // Get all series initially
         this.seriesJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         setLayout(new BorderLayout(10, 10));
@@ -43,16 +43,23 @@ public class SeriesDisplay extends JPanel {
 
     public void filter(String query) {
         seriesListModel.clear();
+        if (allSeries == null) return;
 
-        for (Series s : allSeries) {
-            if (s.getTitle().toLowerCase().contains(query.toLowerCase())) {
-                seriesListModel.addElement(s);
-            }
+        List<Series> filtered = allSeries.stream()
+                .filter(s -> s.getTitle().toLowerCase().contains(query.toLowerCase()))
+                .toList();
+
+        for (Series s : filtered) {
+            seriesListModel.addElement(s);
         }
     }
 
     public void refreshSeries() {
         seriesListModel.clear();
+        allSeries = seriesService.getAllSeries().stream()
+                .sorted((s1, s2) -> s1.getTitle().compareToIgnoreCase(s2.getTitle()))
+                .collect(Collectors.toList());
+
         for (Series s : allSeries) {
             seriesListModel.addElement(s);
         }
