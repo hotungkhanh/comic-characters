@@ -2,7 +2,7 @@ package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.SeriesService;
-import com.tuka.comiccharacters.ui.MainApp;
+import com.tuka.comiccharacters.ui.details.SeriesDetails;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +33,7 @@ public class SeriesBrowser extends JPanel {
                 Series selected = seriesJList.getSelectedValue();
                 if (selected != null) {
                     Series fullSeries = seriesService.getByIdWithIssues(selected.getId());
-                    MainApp.showSeriesPopup(fullSeries, this::refreshSeries);
+                    SeriesDetails.show(fullSeries, this::refreshSeries);
                 }
             }
         });
