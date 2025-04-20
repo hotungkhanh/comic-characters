@@ -8,6 +8,7 @@ import com.tuka.comiccharacters.service.SeriesService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -109,7 +110,7 @@ public class IssueForm extends JPanel {
         }
 
         try {
-            int number = Integer.parseInt(issueText);
+            BigDecimal number = new BigDecimal(issueText);
             issueService.addIssue(selectedSeries, number, selectedCreators, selectedCharacters);
             showSuccess("Issue added with creators and characters!");
             resetForm();

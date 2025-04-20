@@ -2,6 +2,8 @@ package com.tuka.comiccharacters.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,10 +19,16 @@ public class Issue {
     @JoinColumn(name = "series_id", nullable = false)
     private Series series;
 
-    private Integer issueNumber;
+    @Column(precision = 6, scale = 2)
+    private BigDecimal issueNumber;
 
     @Column(length = 1000)
     private String overview;
+
+    private LocalDate releaseDate;
+
+    @Column(precision = 6, scale = 2)
+    private BigDecimal priceUsd;
 
     @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<IssueCreator> issueCreators = new HashSet<>();
@@ -36,23 +44,15 @@ public class Issue {
     public Issue() {
     }
 
-    public Issue(Series series, int issueNumber) {
+    public Issue(Series series, BigDecimal issueNumber) {
         this.series = series;
         this.issueNumber = issueNumber;
     }
 
-    public Issue(Series series, int issueNumber, List<IssueCreator> issueCreators) {
+    public Issue(Series series, BigDecimal issueNumber, List<IssueCreator> issueCreators) {
         this.series = series;
         this.issueNumber = issueNumber;
         this.issueCreators.addAll(issueCreators);
-    }
-
-    public String getOverview() {
-        return overview;
-    }
-
-    public void setOverview(String overview) {
-        this.overview = overview;
     }
 
     public Long getId() {
@@ -67,12 +67,36 @@ public class Issue {
         this.series = series;
     }
 
-    public int getIssueNumber() {
+    public BigDecimal getIssueNumber() {
         return issueNumber;
     }
 
-    public void setIssueNumber(Integer issueNumber) {
+    public void setIssueNumber(BigDecimal issueNumber) {
         this.issueNumber = issueNumber;
+    }
+
+    public String getOverview() {
+        return overview;
+    }
+
+    public void setOverview(String overview) {
+        this.overview = overview;
+    }
+
+    public LocalDate getReleaseDate() {
+        return releaseDate;
+    }
+
+    public void setReleaseDate(LocalDate releaseDate) {
+        this.releaseDate = releaseDate;
+    }
+
+    public BigDecimal getPriceUsd() {
+        return priceUsd;
+    }
+
+    public void setPriceUsd(BigDecimal priceUsd) {
+        this.priceUsd = priceUsd;
     }
 
     public Set<IssueCreator> getIssueCreators() {
@@ -106,4 +130,3 @@ public class Issue {
         return series + " #" + issueNumber;
     }
 }
-
