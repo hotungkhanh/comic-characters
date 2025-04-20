@@ -2,6 +2,9 @@ package com.tuka.comiccharacters.model;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "creators")
 public class Creator {
@@ -15,6 +18,12 @@ public class Creator {
 
     @Column(length = 1000)
     private String overview;
+
+    @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<IssueCreator> issueCreators = new HashSet<>();
+
+    @ManyToMany(mappedBy = "creators")
+    private Set<ComicCharacter> creditedCharacters = new HashSet<>();
 
     public Creator() {
     }
@@ -50,6 +59,22 @@ public class Creator {
 
     public void setOverview(String overview) {
         this.overview = overview;
+    }
+
+    public Set<IssueCreator> getIssueCreators() {
+        return issueCreators;
+    }
+
+    public void setIssueCreators(Set<IssueCreator> issueCreators) {
+        this.issueCreators = issueCreators;
+    }
+
+    public Set<ComicCharacter> getCreditedCharacters() {
+        return creditedCharacters;
+    }
+
+    public void setCreditedCharacters(Set<ComicCharacter> creditedCharacters) {
+        this.creditedCharacters = creditedCharacters;
     }
 
     @Override
