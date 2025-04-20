@@ -11,6 +11,7 @@ import com.tuka.comiccharacters.service.PublisherService;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
@@ -24,7 +25,7 @@ public class CharacterForm extends JPanel {
         JTextField aliasField = new JTextField(10);
 
         PublisherService publisherService = new PublisherService();
-        List<Publisher> allPublishers = publisherService.getAllPublishers();
+        Set<Publisher> allPublishers = publisherService.getAllPublishers();
         List<Publisher> publishersWithNull = new ArrayList<>();
         publishersWithNull.add(null); // represents 'None'
         publishersWithNull.addAll(allPublishers);
@@ -42,14 +43,14 @@ public class CharacterForm extends JPanel {
 
         // Creator list
         CreatorService creatorService = new CreatorService();
-        List<Creator> allCreators = creatorService.getAllCreators();
+        Set<Creator> allCreators = creatorService.getAllCreators();
         JList<Creator> creatorList = new JList<>(allCreators.toArray(new Creator[0]));
         creatorList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         JScrollPane scrollPane = new JScrollPane(creatorList);
 
         // First Appearance dropdown with null option
         IssueService issueService = new IssueService();
-        List<Issue> allIssues = issueService.getAllIssues();
+        Set<Issue> allIssues = issueService.getAllIssues();
         List<Issue> issuesWithNull = new ArrayList<>();
         issuesWithNull.add(null); // represents 'None'
         issuesWithNull.addAll(allIssues);

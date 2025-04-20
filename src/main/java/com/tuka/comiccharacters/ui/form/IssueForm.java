@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
@@ -134,7 +135,7 @@ public class IssueForm extends JPanel {
     }
 
     public void refreshCharacters() {
-        List<ComicCharacter> updatedCharacters = characterService.getAllCharacters();
+        Set<ComicCharacter> updatedCharacters = characterService.getAllCharacters();
         characterList.setListData(updatedCharacters.toArray(new ComicCharacter[0]));
     }
 }

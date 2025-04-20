@@ -5,6 +5,7 @@ import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.model.Series;
 
 import java.util.List;
+import java.util.Set;
 
 public class SeriesService {
     private final SeriesDaoImpl seriesDao = new SeriesDaoImpl();
@@ -14,7 +15,7 @@ public class SeriesService {
         seriesDao.save(series);
     }
 
-    public List<Series> getAllSeries() {
+    public Set<Series> getAllSeries() {
         return seriesDao.findAll();
     }
 

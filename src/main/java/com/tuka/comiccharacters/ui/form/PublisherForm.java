@@ -5,7 +5,8 @@ import com.tuka.comiccharacters.service.PublisherService;
 import com.tuka.comiccharacters.service.SeriesService;
 
 import javax.swing.*;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
@@ -41,7 +42,9 @@ public class PublisherForm extends JPanel {
                 showError("Publisher name is required.");
                 return;
             }
-            List<Series> selectedSeries = seriesList.getSelectedValuesList();
+
+            Set<Series> selectedSeries = new HashSet<>(seriesList.getSelectedValuesList());
+
             publisherService.addPublisher(name, selectedSeries);
             showSuccess("Publisher added!");
             nameField.setText("");
@@ -52,7 +55,7 @@ public class PublisherForm extends JPanel {
     }
 
     public void refreshSeries() {
-        List<Series> updatedSeries = seriesService.getAllSeries();
+        Set<Series> updatedSeries = seriesService.getAllSeries();
         seriesList.setListData(updatedSeries.toArray(new Series[0]));
     }
 }

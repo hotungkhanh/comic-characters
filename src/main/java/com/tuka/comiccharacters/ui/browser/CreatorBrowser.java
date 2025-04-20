@@ -8,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class CreatorBrowser extends JPanel {
 
@@ -48,7 +49,8 @@ public class CreatorBrowser extends JPanel {
         listModel.clear();
         allCreators.clear();
 
-        List<Creator> creators = creatorService.getAllCreators();
+        Set<Creator> creatorSet = creatorService.getAllCreators();
+        List<Creator> creators = new ArrayList<>(creatorSet);
         creators.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
         allCreators.addAll(creators);
 

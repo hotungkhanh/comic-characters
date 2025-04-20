@@ -4,7 +4,10 @@ import com.tuka.comiccharacters.util.JPAUtil;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractJpaDao<T> implements Dao<T> {
     private final Class<T> entityClass;
@@ -36,12 +39,14 @@ public abstract class AbstractJpaDao<T> implements Dao<T> {
     }
 
     @Override
-    public List<T> findAll() {
+    public Set<T> findAll() {
         try (EntityManager em = JPAUtil.getEntityManagerFactory().createEntityManager()) {
-            return em.createQuery("FROM " + entityClass.getSimpleName(), entityClass)
+            List<T> resultList = em.createQuery("FROM " + entityClass.getSimpleName(), entityClass)
                     .getResultList();
+            return new HashSet<>(resultList);  // Convert to Set
         }
     }
+
 
     @Override
     public void delete(T entity) {

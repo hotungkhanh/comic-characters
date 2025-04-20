@@ -35,7 +35,7 @@ public class IssueService {
         issueDao.save(issue);
     }
 
-    public List<Issue> getAllIssues() {
+    public Set<Issue> getAllIssues() {
         return issueDao.findAll();
     }
 }

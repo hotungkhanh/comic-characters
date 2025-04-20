@@ -5,6 +5,7 @@ import com.tuka.comiccharacters.dao.Dao;
 import com.tuka.comiccharacters.model.Creator;
 
 import java.util.List;
+import java.util.Set;
 
 public class CreatorService {
     private final Dao<Creator> creatorDao = new CreatorDaoImpl();
@@ -17,7 +18,7 @@ public class CreatorService {
         creatorDao.save(new Creator(name, overview));
     }
 
-    public List<Creator> getAllCreators() {
+    public Set<Creator> getAllCreators() {
         return creatorDao.findAll();
     }
 

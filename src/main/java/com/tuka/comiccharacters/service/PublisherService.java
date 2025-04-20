@@ -5,6 +5,7 @@ import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.model.Series;
 
 import java.util.List;
+import java.util.Set;
 
 public class PublisherService {
     private final PublisherDaoImpl publisherDao = new PublisherDaoImpl();
@@ -14,12 +15,12 @@ public class PublisherService {
         publisherDao.save(publisher);
     }
 
-    public void addPublisher(String name, List<Series> seriesList) {
-        Publisher publisher = new Publisher(name, seriesList);
+    public void addPublisher(String name, Set<Series> allSeries) {
+        Publisher publisher = new Publisher(name, allSeries);
         publisherDao.save(publisher);
     }
 
-    public List<Publisher> getAllPublishers() {
+    public Set<Publisher> getAllPublishers() {
         return publisherDao.findAll();
     }
 }

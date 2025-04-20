@@ -7,6 +7,7 @@ import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.Publisher;
 
 import java.util.List;
+import java.util.Set;
 
 public class CharacterService {
     private final CharacterDaoImpl characterDao = new CharacterDaoImpl();
@@ -25,7 +26,7 @@ public class CharacterService {
         characterDao.save(comicCharacter);
     }
 
-    public List<ComicCharacter> getAllCharacters() {
+    public Set<ComicCharacter> getAllCharacters() {
         return characterDao.findAll();
     }
 }
