@@ -23,6 +23,9 @@ public class ComicCharacter {
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
+    @Column(length = 1000)
+    private String overview;
+
     @ManyToMany
     @JoinTable(
             name = "character_creators",
@@ -80,6 +83,14 @@ public class ComicCharacter {
 
     public void setPublisher(Publisher publisher) {
         this.publisher = publisher;
+    }
+
+    public String getOverview() {
+        return overview;
+    }
+
+    public void setOverview(String overview) {
+        this.overview = overview;
     }
 
     public Set<Creator> getCreators() {

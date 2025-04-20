@@ -19,6 +19,9 @@ public class Issue {
 
     private Integer issueNumber;
 
+    @Column(length = 1000)
+    private String overview;
+
     @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<IssueCreator> issueCreators = new HashSet<>();
 
@@ -44,6 +47,14 @@ public class Issue {
         this.issueCreators.addAll(issueCreators);
     }
 
+    public String getOverview() {
+        return overview;
+    }
+
+    public void setOverview(String overview) {
+        this.overview = overview;
+    }
+
     public Long getId() {
         return id;
     }
@@ -52,8 +63,16 @@ public class Issue {
         return series;
     }
 
+    public void setSeries(Series series) {
+        this.series = series;
+    }
+
     public int getIssueNumber() {
         return issueNumber;
+    }
+
+    public void setIssueNumber(Integer issueNumber) {
+        this.issueNumber = issueNumber;
     }
 
     public Set<IssueCreator> getIssueCreators() {
