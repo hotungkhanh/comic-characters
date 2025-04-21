@@ -2,6 +2,7 @@ package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.service.CharacterService;
+import com.tuka.comiccharacters.ui.details.CharacterDetails;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -34,6 +35,7 @@ public class CharacterBrowser extends AbstractBrowser<ComicCharacter> {
 
     @Override
     protected void showDetails(ComicCharacter character) {
-//        new CharacterDetails(this, character, this::refreshEntities).showDetailsDialog();
+        ComicCharacter fullCharacter = characterService.getCharacterByIdWithDetails(character.getId());
+        new CharacterDetails(this, fullCharacter, this::refreshEntities).showDetailsDialog();
     }
 }
