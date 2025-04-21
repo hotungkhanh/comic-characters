@@ -4,64 +4,38 @@ import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.SeriesService;
 import com.tuka.comiccharacters.ui.details.SeriesDetails;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Comparator;
 
-public class SeriesBrowser extends JPanel {
-    private final DefaultListModel<Series> seriesListModel;
-    private final JList<Series> seriesJList;
+public class SeriesBrowser extends AbstractBrowserPanel<Series> {
+
     private final SeriesService seriesService;
-    private List<Series> allSeries;
 
     public SeriesBrowser() {
+        super("Series");
         this.seriesService = new SeriesService();
-        this.seriesListModel = new DefaultListModel<>();
-        this.seriesJList = new JList<>(seriesListModel);
-        this.seriesJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createTitledBorder("Series"));
-
-        JScrollPane scrollPane = new JScrollPane(seriesJList);
-        add(scrollPane, BorderLayout.CENTER);
-
-        // Double-click to view series details
-        seriesJList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                Series selected = seriesJList.getSelectedValue();
-                if (selected != null) {
-                    Series fullSeries = seriesService.getByIdWithIssues(selected.getId());
-                    SeriesDetails.show(fullSeries, this::refreshSeries);
-                }
-            }
-        });
-
-        refreshSeries();
+        refreshEntities();
     }
 
-    public void filter(String query) {
-        seriesListModel.clear();
-        if (allSeries == null) return;
-
-        List<Series> filtered = allSeries.stream()
-                .filter(s -> s.getTitle().toLowerCase().contains(query.toLowerCase()))
-                .toList();
-
-        for (Series s : filtered) {
-            seriesListModel.addElement(s);
-        }
+    @Override
+    protected Collection<Series> getEntities() {
+        return seriesService.getAllSeries();
     }
 
-    public void refreshSeries() {
-        seriesListModel.clear();
-        allSeries = seriesService.getAllSeries().stream()
-                .sorted((s1, s2) -> s1.getTitle().compareToIgnoreCase(s2.getTitle()))
-                .collect(Collectors.toList());
+    @Override
+    protected boolean matchesQuery(Series series, String query) {
+        return series.getTitle().toLowerCase().contains(query.toLowerCase());
+    }
 
-        for (Series s : allSeries) {
-            seriesListModel.addElement(s);
-        }
+    @Override
+    protected Comparator<Series> getComparator() {
+        return Comparator.comparing(s -> s.getTitle().toLowerCase());
+    }
+
+    @Override
+    protected void showDetails(Series series) {
+        Series fullSeries = seriesService.getByIdWithIssues(series.getId());
+        SeriesDetails.show(fullSeries, this::refreshEntities);
     }
 }
+

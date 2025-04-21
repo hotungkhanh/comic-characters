@@ -50,25 +50,25 @@ public class MainApp {
 
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-        JButton addCreatorButton = new JButton("Add Creator");
-        JButton addSeriesButton = new JButton("Add Series");
+        JButton addCreatorButton = new JButton("Add new Creator");
+        JButton addSeriesButton = new JButton("Add new Series");
 
         addCreatorButton.addActionListener(e -> {
-            JDialog dialog = new JDialog(frame, "Add Creator", true);
+            JDialog dialog = new JDialog(frame, "Add new Creator", true);
             dialog.setContentPane(new CreatorForm());
             dialog.pack();
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
-            creatorBrowser.refreshCreators();
+            creatorBrowser.refreshEntities();
         });
 
         addSeriesButton.addActionListener(e -> {
-            JDialog dialog = new JDialog(frame, "Add Series", true);
+            JDialog dialog = new JDialog(frame, "Add new Series", true);
             dialog.setContentPane(new SeriesForm());
             dialog.pack();
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
-            seriesBrowser.refreshSeries();
+            seriesBrowser.refreshEntities();
         });
 
         buttonPanel.add(addCreatorButton);

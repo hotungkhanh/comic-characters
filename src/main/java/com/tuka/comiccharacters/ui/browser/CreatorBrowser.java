@@ -4,68 +4,38 @@ import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.service.CreatorService;
 import com.tuka.comiccharacters.ui.details.CreatorDetails;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.Collection;
+import java.util.Comparator;
 
-public class CreatorBrowser extends JPanel {
+public class CreatorBrowser extends AbstractBrowserPanel<Creator> {
 
     private final CreatorService creatorService;
-    private final DefaultListModel<Creator> listModel;
-    private final List<Creator> allCreators; // Full list for filtering
 
     public CreatorBrowser() {
+        super("Creators");
         this.creatorService = new CreatorService();
-        this.listModel = new DefaultListModel<>();
-        this.allCreators = new ArrayList<>();
-
-        setLayout(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createTitledBorder("Creators"));
-
-        // Creator list
-        JList<Creator> creatorList = new JList<>(listModel);
-        creatorList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        JScrollPane scrollPane = new JScrollPane(creatorList);
-        add(scrollPane, BorderLayout.CENTER);
-
-        // Double-click to view details
-        creatorList.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (evt.getClickCount() == 2) {
-                    Creator selected = creatorList.getSelectedValue();
-                    if (selected != null) {
-                        CreatorDetails.show(CreatorBrowser.this, selected, CreatorBrowser.this::refreshCreators);
-                    }
-                }
-            }
-        });
-
-        refreshCreators();
+        refreshEntities();
     }
 
-    public void refreshCreators() {
-        listModel.clear();
-        allCreators.clear();
-
-        Set<Creator> creatorSet = creatorService.getAllCreators();
-        List<Creator> creators = new ArrayList<>(creatorSet);
-        creators.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-        allCreators.addAll(creators);
-
-        for (Creator creator : creators) {
-            listModel.addElement(creator);
-        }
+    @Override
+    protected Collection<Creator> getEntities() {
+        return creatorService.getAllCreators();
     }
 
-    public void filter(String query) {
-        listModel.clear();
-        for (Creator creator : allCreators) {
-            if (creator.getName().toLowerCase().contains(query.toLowerCase())) {
-                listModel.addElement(creator);
-            }
-        }
+    @Override
+    protected boolean matchesQuery(Creator creator, String query) {
+        return creator.getName().toLowerCase().contains(query.toLowerCase());
+    }
+
+    @Override
+    protected Comparator<Creator> getComparator() {
+        return Comparator.comparing(c -> c.getName().toLowerCase());
+    }
+
+    @Override
+    protected void showDetails(Creator creator) {
+        CreatorDetails.show(this, creator, this::refreshEntities);
     }
 }
+
 
