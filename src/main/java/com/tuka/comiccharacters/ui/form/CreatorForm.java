@@ -5,31 +5,21 @@ import com.tuka.comiccharacters.service.CreatorService;
 import com.tuka.comiccharacters.ui.MainApp;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionListener;
 
-public class CreatorForm extends JPanel {
+public class CreatorForm extends AbstractForm {
 
     private final JTextField nameField = new JTextField(20);
     private final JTextArea overviewArea = new JTextArea(5, 20);
     private final CreatorService creatorService = new CreatorService();
-    private final JButton submitButton = new JButton("Add Creator");
 
     public CreatorForm() {
-        setLayout(new BorderLayout());
-
-        JPanel formPanel = new JPanel(new GridLayout(0, 1));
-        formPanel.setBorder(BorderFactory.createTitledBorder("Add Creator"));
-
-        formPanel.add(new JLabel("Name:"));
-        formPanel.add(nameField);
-
-        formPanel.add(new JLabel("Overview:"));
+        super("Add Creator", "Add Creator");
         overviewArea.setLineWrap(true);
         overviewArea.setWrapStyleWord(true);
-        formPanel.add(new JScrollPane(overviewArea));
+        addFormField("Name", nameField);
+        addFormField("Overview", new JScrollPane(overviewArea));
 
-        submitButton.addActionListener(e -> {
+        addSubmitListener(_ -> {
             String name = nameField.getText().trim();
             String overview = overviewArea.getText().trim();
 
@@ -43,27 +33,18 @@ public class CreatorForm extends JPanel {
             nameField.setText("");
             overviewArea.setText("");
         });
-
-        add(formPanel, BorderLayout.CENTER);
-        add(submitButton, BorderLayout.SOUTH);
     }
 
     public CreatorForm(Creator existingCreator) {
         this(); // Set up the layout and fields
 
+        setSubmitButtonText("Save");
         nameField.setText(existingCreator.getName());
         overviewArea.setText(existingCreator.getOverview());
 
-        // Change button text to "Save"
-        submitButton.setText("Save");
+        removeAllSubmitListeners(); // Remove the "Add Creator" listener
 
-        // Remove existing listeners (from add mode)
-        for (ActionListener al : submitButton.getActionListeners()) {
-            submitButton.removeActionListener(al);
-        }
-
-        // Add save logic
-        submitButton.addActionListener(e -> {
+        addSubmitListener(_ -> {
             String name = nameField.getText().trim();
             String overview = overviewArea.getText().trim();
 

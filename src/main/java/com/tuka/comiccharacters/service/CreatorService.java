@@ -4,7 +4,6 @@ import com.tuka.comiccharacters.dao.CreatorDaoImpl;
 import com.tuka.comiccharacters.dao.Dao;
 import com.tuka.comiccharacters.model.Creator;
 
-import java.util.List;
 import java.util.Set;
 
 public class CreatorService {
