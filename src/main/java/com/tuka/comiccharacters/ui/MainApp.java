@@ -1,8 +1,10 @@
 package com.tuka.comiccharacters.ui;
 
 import com.tuka.comiccharacters.ui.browser.CreatorBrowser;
+import com.tuka.comiccharacters.ui.browser.PublisherBrowser;
 import com.tuka.comiccharacters.ui.browser.SeriesBrowser;
 import com.tuka.comiccharacters.ui.form.CreatorForm;
+import com.tuka.comiccharacters.ui.form.PublisherForm;
 import com.tuka.comiccharacters.ui.form.SeriesForm;
 
 import javax.swing.*;
@@ -16,53 +18,50 @@ public class MainApp {
 
         // Search bar
         JTextField searchField = new JTextField();
-        searchField.setPreferredSize(new Dimension(400, 30));
+        searchField.setPreferredSize(new Dimension(600, 30));
 
-        // Displays
+        // Browsers
+        PublisherBrowser publisherBrowser = new PublisherBrowser();
         CreatorBrowser creatorBrowser = new CreatorBrowser();
         SeriesBrowser seriesBrowser = new SeriesBrowser();
 
-        // Main panel with 2 columns
-        JPanel mainPanel = new JPanel(new GridLayout(1, 2, 10, 10));
-        mainPanel.add(creatorBrowser);
-        mainPanel.add(seriesBrowser);
+        // Main panel with 3 columns (for browsers)
+        JPanel browserPanel = new JPanel(new GridLayout(1, 3, 10, 10));
+        browserPanel.add(publisherBrowser);
+        browserPanel.add(creatorBrowser);
+        browserPanel.add(seriesBrowser);
 
-        // Search logic (filter both displays)
-        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                filter();
-            }
+        // Button panels for each column
+        JPanel publisherButtonPanel = getPublisherButtonPanel(frame, publisherBrowser);
+        JPanel creatorButtonPanel = getCreatorButtonPanel(frame, creatorBrowser);
+        JPanel seriesButtonPanel = getSeriesButtonPanel(frame, seriesBrowser);
 
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                filter();
-            }
+        // Main content panel to hold browsers and their buttons in separate rows
+        JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
+        contentPanel.add(browserPanel, BorderLayout.CENTER);
 
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                filter();
-            }
+        JPanel buttonRowPanel = new JPanel(new GridLayout(1, 3, 10, 10));
+        buttonRowPanel.add(publisherButtonPanel);
+        buttonRowPanel.add(creatorButtonPanel);
+        buttonRowPanel.add(seriesButtonPanel);
+        contentPanel.add(buttonRowPanel, BorderLayout.SOUTH);
 
-            private void filter() {
-                String query = searchField.getText().trim();
-                creatorBrowser.filter(query);
-                seriesBrowser.filter(query);
-            }
-        });
+        // Wrap search bar and content panel
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(searchField, BorderLayout.NORTH);
+        topPanel.add(contentPanel, BorderLayout.CENTER);
 
-        // Button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-        JButton addCreatorButton = new JButton("Add new Creator");
+        frame.add(topPanel, BorderLayout.CENTER);
+
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+    private static JPanel getSeriesButtonPanel(JFrame frame, SeriesBrowser seriesBrowser) {
+        JPanel seriesButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton addSeriesButton = new JButton("Add new Series");
-
-        addCreatorButton.addActionListener(e -> {
-            JDialog dialog = new JDialog(frame, "Add new Creator", true);
-            dialog.setContentPane(new CreatorForm());
-            dialog.pack();
-            dialog.setLocationRelativeTo(frame);
-            dialog.setVisible(true);
-            creatorBrowser.refreshEntities();
-        });
-
-        addSeriesButton.addActionListener(e -> {
+        addSeriesButton.addActionListener(_ -> {
             JDialog dialog = new JDialog(frame, "Add new Series", true);
             dialog.setContentPane(new SeriesForm());
             dialog.pack();
@@ -70,21 +69,38 @@ public class MainApp {
             dialog.setVisible(true);
             seriesBrowser.refreshEntities();
         });
+        seriesButtonPanel.add(addSeriesButton);
+        return seriesButtonPanel;
+    }
 
-        buttonPanel.add(addCreatorButton);
-        buttonPanel.add(addSeriesButton);
+    private static JPanel getCreatorButtonPanel(JFrame frame, CreatorBrowser creatorBrowser) {
+        JPanel creatorButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton addCreatorButton = new JButton("Add new Creator");
+        addCreatorButton.addActionListener(_ -> {
+            JDialog dialog = new JDialog(frame, "Add new Creator", true);
+            dialog.setContentPane(new CreatorForm());
+            dialog.pack();
+            dialog.setLocationRelativeTo(frame);
+            dialog.setVisible(true);
+            creatorBrowser.refreshEntities();
+        });
+        creatorButtonPanel.add(addCreatorButton);
+        return creatorButtonPanel;
+    }
 
-        // Wrap everything in the frame
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(searchField, BorderLayout.NORTH);
-        topPanel.add(mainPanel, BorderLayout.CENTER);
-
-        frame.add(topPanel, BorderLayout.CENTER);
-        frame.add(buttonPanel, BorderLayout.SOUTH);
-
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+    private static JPanel getPublisherButtonPanel(JFrame frame, PublisherBrowser publisherBrowser) {
+        JPanel publisherButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton addPublisherButton = new JButton("Add new Publisher");
+        addPublisherButton.addActionListener(_ -> {
+            JDialog dialog = new JDialog(frame, "Add new Publisher", true);
+            dialog.setContentPane(new PublisherForm());
+            dialog.pack();
+            dialog.setLocationRelativeTo(frame);
+            dialog.setVisible(true);
+            publisherBrowser.refreshEntities();
+        });
+        publisherButtonPanel.add(addPublisherButton);
+        return publisherButtonPanel;
     }
 
     public static void showError(String message) {

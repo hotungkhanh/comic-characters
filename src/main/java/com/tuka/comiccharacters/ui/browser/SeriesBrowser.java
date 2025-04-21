@@ -2,7 +2,6 @@ package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.SeriesService;
-import com.tuka.comiccharacters.ui.details.CreatorDetails;
 import com.tuka.comiccharacters.ui.details.SeriesDetails;
 
 import java.util.Collection;

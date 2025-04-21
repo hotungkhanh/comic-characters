@@ -4,7 +4,6 @@ import com.tuka.comiccharacters.dao.PublisherDaoImpl;
 import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.model.Series;
 
-import java.util.List;
 import java.util.Set;
 
 public class PublisherService {
