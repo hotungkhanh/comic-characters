@@ -2,7 +2,7 @@ package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.service.PublisherService;
-//import com.tuka.comiccharacters.ui.details.PublisherDetails;
+import com.tuka.comiccharacters.ui.details.PublisherDetails;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -34,6 +34,7 @@ public class PublisherBrowser extends AbstractBrowser<Publisher> {
 
     @Override
     protected void showDetails(Publisher publisher) {
-//        new PublisherDetails(this, publisher, this::refreshEntities).showDetailsDialog();
+        Publisher fullPublisher = publisherService.getPublisherByIdWithSeriesAndCharacters(publisher.getId());
+        new PublisherDetails(this, fullPublisher, this::refreshEntities).showDetailsDialog();
     }
 }

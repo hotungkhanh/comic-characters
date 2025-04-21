@@ -17,10 +17,10 @@ public class Publisher {
     private String name;
 
     @OneToMany(mappedBy = "publisher", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Series> allSeries = new HashSet<>();
+    private Set<Series> publisherSeries = new HashSet<>();
 
     @OneToMany(mappedBy = "publisher", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ComicCharacter> allCharacters = new HashSet<>();
+    private Set<ComicCharacter> publisherCharacters = new HashSet<>();
 
     public Publisher() {
     }
@@ -31,7 +31,7 @@ public class Publisher {
 
     public Publisher(String name, Set<Series> seriesList) {
         this.name = name;
-        this.allSeries = seriesList;
+        this.publisherSeries = seriesList;
     }
 
     public Long getId() {
@@ -46,30 +46,30 @@ public class Publisher {
         this.name = name;
     }
 
-    public Set<Series> getAllSeries() {
-        return allSeries;
+    public Set<Series> getPublisherSeries() {
+        return publisherSeries;
     }
 
-    public void setAllSeries(Set<Series> allSeries) {
-        this.allSeries = allSeries;
+    public void setPublisherSeries(Set<Series> allSeries) {
+        this.publisherSeries = allSeries;
     }
 
     public void addSeries(Series series) {
-        allSeries.add(series);
+        publisherSeries.add(series);
         series.setPublisher(this);
     }
 
     public void removeSeries(Series series) {
-        allSeries.remove(series);
+        publisherSeries.remove(series);
         series.setPublisher(null);
     }
 
-    public Set<ComicCharacter> getAllCharacters() {
-        return allCharacters;
+    public Set<ComicCharacter> getPublisherCharacters() {
+        return publisherCharacters;
     }
 
-    public void setAllCharacters(Set<ComicCharacter> allCharacters) {
-        this.allCharacters = allCharacters;
+    public void setPublisherCharacters(Set<ComicCharacter> allCharacters) {
+        this.publisherCharacters = allCharacters;
     }
 
     @Override
