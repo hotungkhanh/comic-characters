@@ -7,7 +7,7 @@ import com.tuka.comiccharacters.ui.details.CreatorDetails;
 import java.util.Collection;
 import java.util.Comparator;
 
-public class CreatorBrowser extends AbstractBrowserPanel<Creator> {
+public class CreatorBrowser extends AbstractBrowser<Creator> {
 
     private final CreatorService creatorService;
 
@@ -34,7 +34,7 @@ public class CreatorBrowser extends AbstractBrowserPanel<Creator> {
 
     @Override
     protected void showDetails(Creator creator) {
-        CreatorDetails.show(this, creator, this::refreshEntities);
+        new CreatorDetails(this, creator, this::refreshEntities).showDetailsDialog();
     }
 }
 

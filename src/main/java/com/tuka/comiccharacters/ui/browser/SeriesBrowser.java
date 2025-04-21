@@ -2,12 +2,13 @@ package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.SeriesService;
+import com.tuka.comiccharacters.ui.details.CreatorDetails;
 import com.tuka.comiccharacters.ui.details.SeriesDetails;
 
 import java.util.Collection;
 import java.util.Comparator;
 
-public class SeriesBrowser extends AbstractBrowserPanel<Series> {
+public class SeriesBrowser extends AbstractBrowser<Series> {
 
     private final SeriesService seriesService;
 
@@ -35,7 +36,7 @@ public class SeriesBrowser extends AbstractBrowserPanel<Series> {
     @Override
     protected void showDetails(Series series) {
         Series fullSeries = seriesService.getByIdWithIssues(series.getId());
-        SeriesDetails.show(fullSeries, this::refreshEntities);
+        new SeriesDetails(this, fullSeries, this::refreshEntities).showDetailsDialog();
     }
 }
 

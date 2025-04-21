@@ -7,13 +7,13 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-public abstract class AbstractBrowserPanel<T> extends JPanel {
+public abstract class AbstractBrowser<T> extends JPanel {
 
     protected final DefaultListModel<T> listModel = new DefaultListModel<>();
     protected final JList<T> entityList = new JList<>(listModel);
     protected final List<T> allEntities = new ArrayList<>();
 
-    public AbstractBrowserPanel(String title) {
+    public AbstractBrowser(String title) {
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createTitledBorder(title));
 

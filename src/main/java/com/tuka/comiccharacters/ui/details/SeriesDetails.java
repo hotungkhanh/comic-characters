@@ -8,56 +8,53 @@ import com.tuka.comiccharacters.ui.form.SeriesForm;
 import javax.swing.*;
 import java.awt.*;
 
-public class SeriesDetails {
+public class SeriesDetails extends AbstractDetails<Series> {
 
-    public static void show(Series series, Runnable refreshCallback) {
-        JDialog dialog = new JDialog((Frame) null, "Series Details", true);
-        dialog.setLayout(new BorderLayout());
+    public SeriesDetails(Component parent, Series series, Runnable refreshCallback) {
+        super(parent, series, refreshCallback);
+    }
 
-        String publisherText = series.getPublisher() != null ? series.getPublisher().toString() : "None";
-        String message = series +
+    @Override
+    protected JPanel getMainPanel(JDialog dialog) {
+        String publisherText = entity.getPublisher() != null ? entity.getPublisher().toString() : "None";
+        String message = entity +
                 "\nPublisher: " + publisherText +
-                "\nIssues: " + series.getIssues().size();
+                "\nIssues: " + entity.getIssues().size();
 
         JTextArea textArea = new JTextArea(message);
         textArea.setEditable(false);
         textArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        dialog.add(new JScrollPane(textArea), BorderLayout.CENTER);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
 
-        JPanel buttonPanel = new JPanel();
-        JButton editBtn = new JButton("Edit");
-        JButton deleteBtn = new JButton("Delete");
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
+        return panel;
+    }
 
-        editBtn.addActionListener(e -> {
-            dialog.dispose();
-            showEdit(series, refreshCallback);
-        });
+    @Override
+    protected String getTitle() {
+        return "Series Details";
+    }
 
-        deleteBtn.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(dialog, "Delete this series?", "Confirm", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                new SeriesService().deleteSeries(series.getId());
-                MainApp.showSuccess("Series deleted.");
-                dialog.dispose();
-                refreshCallback.run();
-            }
-        });
-
-        buttonPanel.add(editBtn);
-        buttonPanel.add(deleteBtn);
-        dialog.add(buttonPanel, BorderLayout.SOUTH);
-
-        dialog.setSize(350, 220);
-        dialog.setLocationRelativeTo(null);
+    @Override
+    protected void showEditDialog() {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Edit Series", true);
+        SeriesForm panel = new SeriesForm(entity, refreshCallback, dialog);
+        dialog.setContentPane(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
     }
 
-    public static void showEdit(Series series, Runnable refreshCallback) {
-        JDialog dialog = new JDialog((Frame) null, "Edit Series", true);
-        SeriesForm panel = new SeriesForm(series, refreshCallback, dialog);
-        dialog.setContentPane(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
+    @Override
+    protected void deleteEntity() {
+        new SeriesService().deleteSeries(entity.getId());
+        MainApp.showSuccess("Series deleted.");
+    }
+
+    @Override
+    protected String getDeleteConfirmationMessage() {
+        return "Delete this series?";
     }
 }
