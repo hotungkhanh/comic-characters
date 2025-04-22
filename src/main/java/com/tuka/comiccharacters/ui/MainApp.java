@@ -4,6 +4,7 @@ import com.tuka.comiccharacters.ui.browser.CharacterBrowser;
 import com.tuka.comiccharacters.ui.browser.CreatorBrowser;
 import com.tuka.comiccharacters.ui.browser.PublisherBrowser;
 import com.tuka.comiccharacters.ui.browser.SeriesBrowser;
+import com.tuka.comiccharacters.ui.form.CharacterForm;
 import com.tuka.comiccharacters.ui.form.CreatorForm;
 import com.tuka.comiccharacters.ui.form.PublisherForm;
 import com.tuka.comiccharacters.ui.form.SeriesForm;
@@ -93,7 +94,7 @@ public class MainApp {
         JButton addCharacterButton = new JButton("Add New Characters");
         addCharacterButton.addActionListener(_ -> {
             JDialog dialog = new JDialog(frame, "Add New Character", true);
-//            dialog.setContentPane(new CharacterForm());
+            dialog.setContentPane(new CharacterForm());
             dialog.pack();
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);

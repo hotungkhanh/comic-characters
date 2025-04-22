@@ -1,9 +1,11 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.SeriesDaoImpl;
+import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.model.Series;
 
+import java.util.List;
 import java.util.Set;
 
 public class SeriesService {
@@ -34,5 +36,12 @@ public class SeriesService {
         if (series != null) {
             seriesDao.delete(series);
         }
+    }
+
+    public List<Issue> getIssuesBySeries(Series series) {
+        if (series == null || series.getId() == null) {
+            throw new IllegalArgumentException("Invalid series provided.");
+        }
+        return seriesDao.findIssuesBySeries(series);
     }
 }

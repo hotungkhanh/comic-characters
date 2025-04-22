@@ -12,11 +12,11 @@ import java.util.Set;
 public class CharacterService {
     private final CharacterDaoImpl characterDao = new CharacterDaoImpl();
 
-    public void addCharacter(String name, String alias, Publisher publisher, List<Creator> creatorList, Issue firstAppearance) {
+    public void addCharacter(String name, String alias, Publisher publisher, String overview, List<Creator> creatorList, Issue firstAppearance) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Character name cannot be empty.");
         }
-        ComicCharacter comicCharacter = new ComicCharacter(name.trim(), alias != null ? alias.trim() : null, publisher);
+        ComicCharacter comicCharacter = new ComicCharacter(name.trim(), alias != null ? alias.trim() : null, publisher, overview);
         comicCharacter.setFirstAppearance(firstAppearance);
         if (creatorList != null && !creatorList.isEmpty()) {
             comicCharacter.getCreators().addAll(creatorList);
@@ -26,13 +26,6 @@ public class CharacterService {
 
     public Set<ComicCharacter> getAllCharacters() {
         return characterDao.findAll();
-    }
-
-    public ComicCharacter getCharacterById(Long id) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Invalid character ID.");
-        }
-        return characterDao.findById(id);
     }
 
     public ComicCharacter getCharacterByIdWithDetails(Long id) {

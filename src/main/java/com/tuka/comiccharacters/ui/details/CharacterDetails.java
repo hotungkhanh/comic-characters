@@ -5,6 +5,7 @@ import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.service.CharacterService;
 import com.tuka.comiccharacters.ui.MainApp;
+import com.tuka.comiccharacters.ui.form.CharacterForm;
 
 import javax.swing.*;
 import java.awt.*;
@@ -136,8 +137,8 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
     @Override
     protected void showEditDialog() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Edit Character", true);
-        // CharacterForm panel = new CharacterForm(entity);
-        // dialog.setContentPane(panel);
+         CharacterForm panel = new CharacterForm(entity);
+         dialog.setContentPane(panel);
         dialog.pack();
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);

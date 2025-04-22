@@ -34,8 +34,4 @@ public class IssueService {
 
         issueDao.save(issue);
     }
-
-    public Set<Issue> getAllIssues() {
-        return issueDao.findAll();
-    }
 }

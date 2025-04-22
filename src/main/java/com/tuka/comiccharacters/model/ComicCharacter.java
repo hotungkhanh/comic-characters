@@ -44,17 +44,11 @@ public class ComicCharacter {
     public ComicCharacter() {
     }
 
-    public ComicCharacter(String name, String alias, Publisher publisher) {
+    public ComicCharacter(String name, String alias, Publisher publisher, String overview) {
         this.name = name;
         this.alias = alias;
         this.publisher = publisher;
-    }
-
-    public ComicCharacter(String name, String alias, Publisher publisher, List<Creator> creatorList) {
-        this.name = name;
-        this.alias = alias;
-        this.publisher = publisher;
-        this.creators.addAll(creatorList);
+        this.overview = overview;
     }
 
     public Long getId() {
@@ -103,14 +97,6 @@ public class ComicCharacter {
 
     public Set<Issue> getIssues() {
         return issues;
-    }
-
-    public void setIssues(Set<Issue> issues) {
-        this.issues = issues;
-    }
-
-    public void addCreator(Creator creator) {
-        this.creators.add(creator);
     }
 
     public Issue getFirstAppearance() {
