@@ -10,7 +10,8 @@ public class PublisherDaoImpl extends AbstractJpaDao<Publisher> {
         super(Publisher.class);
     }
 
-    public Publisher findByIdWithSeriesAndCharacters(Long id) {
+    @Override
+    public Publisher findByIdWithDetails(Long id) {
         try (EntityManager em = getEntityManager()) {
             return em.createQuery("SELECT p FROM Publisher p LEFT JOIN FETCH p.publisherSeries LEFT JOIN FETCH p.publisherCharacters WHERE p.id = :id", Publisher.class)
                     .setParameter("id", id)

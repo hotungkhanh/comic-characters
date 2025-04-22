@@ -13,7 +13,8 @@ public class SeriesDaoImpl extends AbstractJpaDao<Series> {
         super(Series.class);
     }
 
-    public Series findByIdWithIssuesAndPublisher(Long id) {
+    @Override
+    public Series findByIdWithDetails(Long id) {
         try (EntityManager em = getEntityManager()) {
             return em.createQuery(
                             "SELECT s FROM Series s " +

@@ -21,7 +21,7 @@ public class SeriesService {
     }
 
     public Series getByIdWithIssues(Long id) {
-        return seriesDao.findByIdWithIssuesAndPublisher(id);
+        return seriesDao.findByIdWithDetails(id);
     }
 
     public void updateSeries(Series updatedSeries) {

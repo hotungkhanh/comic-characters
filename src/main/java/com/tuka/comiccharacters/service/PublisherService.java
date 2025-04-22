@@ -40,7 +40,7 @@ public class PublisherService {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Invalid publisher ID.");
         }
-        return publisherDao.findByIdWithSeriesAndCharacters(id);
+        return publisherDao.findByIdWithDetails(id);
     }
 
     public void updatePublisher(Publisher publisher) {
