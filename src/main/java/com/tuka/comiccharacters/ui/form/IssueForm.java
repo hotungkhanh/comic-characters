@@ -10,6 +10,9 @@ import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -38,7 +41,12 @@ public class IssueForm extends AbstractForm {
 
     // Creators Section
     private final JPanel creatorsPanel = new JPanel(new BorderLayout());
-    private final DefaultTableModel creatorTableModel = new DefaultTableModel(new Object[]{"Name", "Role(s)"}, 0);
+    private final DefaultTableModel creatorTableModel = new DefaultTableModel(new Object[]{"Name", "Role(s)"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false; // Make table non-editable
+        }
+    };
     private final JTable creatorTable = new JTable(creatorTableModel);
     private final JTextField creatorSearchField = new JTextField(15);
     private final JList<Role> roleSearchList = new JList<>(Role.values());
@@ -127,6 +135,7 @@ public class IssueForm extends AbstractForm {
         creatorsPanel.add(new JScrollPane(creatorTable), BorderLayout.CENTER);
         creatorTable.setRowHeight(creatorTable.getRowHeight() * 2);
         creatorTable.setPreferredScrollableViewportSize(new Dimension(300, 80));
+        addCreatorRemovalListener();
 
         JPanel creatorSearchPanel = new JPanel(new BorderLayout());
         creatorSearchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
@@ -175,6 +184,7 @@ public class IssueForm extends AbstractForm {
         charactersPanel.setBorder(BorderFactory.createTitledBorder("Characters"));
         charactersPanel.add(new JScrollPane(selectedCharactersList), BorderLayout.CENTER);
         selectedCharactersScrollPane.setPreferredSize(new Dimension(300, 80));
+        addCharacterRemovalListener();
 
         JPanel characterInputPanel = new JPanel(new BorderLayout());
         JPanel characterSearchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -216,14 +226,75 @@ public class IssueForm extends AbstractForm {
         loadInitialData();
     }
 
+    private void addCreatorRemovalListener() {
+        creatorTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    int row = creatorTable.rowAtPoint(e.getPoint());
+                    if (row >= 0 && row < creatorTableModel.getRowCount()) {
+                        creatorTable.setRowSelectionInterval(row, row);
+                        JPopupMenu popupMenu = new JPopupMenu();
+                        JMenuItem removeItem = new JMenuItem("Remove Creator");
+                        removeItem.addActionListener(new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent event) {
+                                removeSelectedCreator();
+                            }
+                        });
+                        popupMenu.add(removeItem);
+                        popupMenu.show(creatorTable, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+    }
+
+    private void removeSelectedCreator() {
+        int selectedRow = creatorTable.getSelectedRow();
+        if (selectedRow != -1) {
+            // Get the name of the creator to remove from the selectedCreators list
+            String creatorName = (String) creatorTableModel.getValueAt(selectedRow, 0);
+            selectedCreators.removeIf(ic -> ic.getCreator().getName().equals(creatorName));
+            creatorTableModel.removeRow(selectedRow);
+        }
+    }
+
+    private void addCharacterRemovalListener() {
+        selectedCharactersList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    int index = selectedCharactersList.locationToIndex(e.getPoint());
+                    if (index >= 0 && index < selectedCharactersListModel.getSize()) {
+                        selectedCharactersList.setSelectedIndex(index);
+                        JPopupMenu popupMenu = new JPopupMenu();
+                        JMenuItem removeItem = new JMenuItem("Remove Character");
+                        removeItem.addActionListener(new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent event) {
+                                removeSelectedCharacter();
+                            }
+                        });
+                        popupMenu.add(removeItem);
+                        popupMenu.show(selectedCharactersList, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+    }
+
+    private void removeSelectedCharacter() {
+        int selectedIndex = selectedCharactersList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            selectedCharactersListModel.remove(selectedIndex);
+        }
+    }
+
     private void loadInitialData() {
         Executors.newSingleThreadExecutor().submit(() -> {
             allCreators = creatorService.getAllCreators();
             allCharacters = characterService.getAllCharacters();
-            SwingUtilities.invokeLater(() -> {
-                 matchedCreatorsListModel.addAll(allCreators);
-                 matchedCharactersListModel.addAll(allCharacters);
-            });
         });
     }
 
