@@ -38,4 +38,34 @@ public class IssueService {
 
         issueDao.save(issue);
     }
+
+    public void updateIssue(Issue existingIssue) {
+        // Ensure proper bidirectional linkage for IssueCreators
+        Set<IssueCreator> updatedIssueCreators = existingIssue.getIssueCreators();
+        if (updatedIssueCreators != null) {
+            for (IssueCreator ic : updatedIssueCreators) {
+                ic.setIssue(existingIssue);
+            }
+        }
+
+        // Ensure proper bidirectional linkage for Characters
+        Set<ComicCharacter> updatedCharacters = existingIssue.getCharacters();
+        if (updatedCharacters != null) {
+            for (ComicCharacter character : updatedCharacters) {
+                character.getIssues().add(existingIssue);
+            }
+        }
+
+        // Update the issue in the database
+        issueDao.save(existingIssue);
+    }
+
+
+    public void deleteIssue(Long issueId) {
+        issueDao.delete(issueDao.findById(issueId));
+    }
+
+    public Issue getIssueByIdWithDetails(Long id) {
+       return issueDao.findByIdWithDetails(id);
+    }
 }

@@ -50,7 +50,6 @@ public class IssueForm extends AbstractForm {
     private final JTable creatorTable = new JTable(creatorTableModel);
     private final JTextField creatorSearchField = new JTextField(15);
     private final JList<Role> roleSearchList = new JList<>(Role.values());
-    private final JScrollPane roleSearchScrollPane = new JScrollPane(roleSearchList);
     private final DefaultListModel<Creator> matchedCreatorsListModel = new DefaultListModel<>();
     private final JList<Creator> matchedCreatorsList = new JList<>(matchedCreatorsListModel);
     private final JScrollPane matchedCreatorsScrollPane = new JScrollPane(matchedCreatorsList);
@@ -77,6 +76,7 @@ public class IssueForm extends AbstractForm {
     private Set<Creator> allCreators = new HashSet<>();
     private ScheduledFuture<?> creatorSearchTask;
     private ScheduledFuture<?> characterSearchTask;
+    private Issue existingIssue; // To hold the issue being edited
 
     public IssueForm(Series series, Runnable onIssueAdded, JDialog parentDialog) {
         super("Add New Issue");
@@ -224,6 +224,124 @@ public class IssueForm extends AbstractForm {
 
         // Load data in the background
         loadInitialData();
+    }
+
+    public IssueForm(Issue existingIssue, Runnable onIssueUpdated, JDialog parentDialog) {
+        this(existingIssue.getSeries(), onIssueUpdated, parentDialog); // Call the default constructor to build the UI
+        setSubmitButtonText("Save Changes");
+
+        // Store the existing issue for updates
+        this.existingIssue = existingIssue;
+
+        // Fill in the existing data
+        seriesNameLabel.setText(existingIssue.getSeries().getTitle());
+        issueNumberField.setText(existingIssue.getIssueNumber() != null ? existingIssue.getIssueNumber().toString() : "");
+        overviewTextArea.setText(existingIssue.getOverview() != null ? existingIssue.getOverview() : "");
+        releaseDateField.setText(existingIssue.getReleaseDate() != null ? existingIssue.getReleaseDate().toString() : "");
+        priceField.setText(existingIssue.getPriceUsd() != null ? existingIssue.getPriceUsd().toString() : "");
+
+        // Fill creators
+        for (IssueCreator issueCreator : existingIssue.getIssueCreators()) {
+            // Simulate adding creators by roles
+            Set<Role> roles = issueCreator.getRoles();
+            Creator creator = issueCreator.getCreator();
+
+            boolean alreadyAdded = selectedCreators.stream()
+                    .anyMatch(ic -> ic.getCreator().equals(creator));
+
+            if (!alreadyAdded) {
+                selectedCreators.add(issueCreator);
+                String roleNames = roles.stream().map(Enum::name).collect(Collectors.joining(", "));
+                creatorTableModel.addRow(new Object[]{creator.getName(), roleNames});
+            }
+        }
+
+        // Fill characters
+        for (ComicCharacter character : existingIssue.getCharacters()) {
+            if (!selectedCharactersListModel.contains(character)) {
+                selectedCharactersListModel.addElement(character);
+            }
+        }
+
+        // Clear existing listeners and add the edit logic
+        removeAllSubmitListeners();
+        addSubmitListener(_ -> updateIssue(onIssueUpdated, parentDialog));
+    }
+
+    private void updateIssue(Runnable onIssueUpdated, JDialog parentDialog) {
+        if (existingIssue == null) {
+            showError("Error: No issue to update.");
+            return;
+        }
+
+        String issueText = issueNumberField.getText().trim();
+        String overview = overviewTextArea.getText().trim();
+        String releaseDateText = releaseDateField.getText().trim();
+        String priceText = priceField.getText().trim();
+
+        BigDecimal issueNumber;
+        try {
+            issueNumber = new BigDecimal(issueText);
+        } catch (NumberFormatException ex) {
+            showError("Issue number must be a number.");
+            return;
+        }
+
+        LocalDate releaseDate = null;
+        if (!releaseDateText.isEmpty()) {
+            try {
+                releaseDate = LocalDate.parse(releaseDateText, DateTimeFormatter.ISO_LOCAL_DATE);
+            } catch (DateTimeParseException ex) {
+                showError("Invalid date format. Please use YYYY-MM-DD.");
+                return;
+            }
+        }
+
+        BigDecimal price = null;
+        if (!priceText.isEmpty()) {
+            try {
+                price = new BigDecimal(priceText);
+            } catch (NumberFormatException ex) {
+                showError("Price must be a number.");
+                return;
+            }
+        }
+
+        List<ComicCharacter> charactersToAdd = new ArrayList<>();
+        for (int i = 0; i < selectedCharactersListModel.getSize(); i++) {
+            charactersToAdd.add(selectedCharactersListModel.getElementAt(i));
+        }
+
+        existingIssue.setIssueNumber(issueNumber);
+        existingIssue.setOverview(overview);
+        if (releaseDate != null) {
+            existingIssue.setReleaseDate(releaseDate);
+        }
+        if (price != null) {
+            existingIssue.setPriceUsd(price);
+        }
+
+        // Update creators
+        existingIssue.getIssueCreators().clear(); // Clear existing creators
+        for (IssueCreator ic : selectedCreators) {
+            ic.setIssue(existingIssue);
+        }
+        existingIssue.getIssueCreators().addAll(selectedCreators);
+
+        // Update characters
+        existingIssue.getCharacters().clear(); // Clear existing characters
+        for (ComicCharacter character : charactersToAdd) {
+            existingIssue.addCharacter(character); // Use the addCharacter method to maintain bidirectional relationship
+        }
+
+        issueService.updateIssue(existingIssue); // You'll need to implement this method in IssueService
+        showSuccess("Issue updated successfully.");
+        if (onIssueUpdated != null) {
+            onIssueUpdated.run();
+        }
+        if (parentDialog != null) {
+            parentDialog.dispose();
+        }
     }
 
     private void addCreatorRemovalListener() {

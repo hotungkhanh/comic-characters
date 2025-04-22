@@ -3,6 +3,7 @@ package com.tuka.comiccharacters.ui.details;
 import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.model.Series;
+import com.tuka.comiccharacters.service.IssueService;
 import com.tuka.comiccharacters.service.PublisherService;
 import com.tuka.comiccharacters.service.SeriesService;
 import com.tuka.comiccharacters.ui.MainApp;
@@ -19,6 +20,7 @@ import java.util.List;
 public class SeriesDetails extends AbstractDetails<Series> {
 
     private final PublisherService publisherService = new PublisherService();
+    private final IssueService issueService = new IssueService(); // Add IssueService
     private JDialog detailsDialog;
 
     public SeriesDetails(Component parent, Series series, Runnable refreshCallback) {
@@ -29,7 +31,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
     public void showDetailsDialog() {
         detailsDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), getTitle(), true);
         detailsDialog.setLayout(new BorderLayout(10, 10));
-        detailsDialog.setSize(400, 250);
+        detailsDialog.setSize(400, 300); // Increased size to accommodate potential scrollbar
         detailsDialog.setLocationRelativeTo(parent);
 
         detailsDialog.add(getMainPanel(detailsDialog), BorderLayout.CENTER); // Pass the dialog here
@@ -46,6 +48,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
 
         int row = 0;
 
@@ -62,22 +65,20 @@ public class SeriesDetails extends AbstractDetails<Series> {
         valueGbc.fill = GridBagConstraints.HORIZONTAL;
 
         // Title
-        labelGbc.gridy = valueGbc.gridy = row;
+        labelGbc.gridy = valueGbc.gridy = row++;
         infoPanel.add(new JLabel("Title:"), labelGbc);
         infoPanel.add(new JLabel(entity.getTitle()), valueGbc);
-        row++;
 
         // Years Published
         String yearRange = (entity.getEndYear() != null)
                 ? entity.getStartYear() + " - " + entity.getEndYear()
                 : entity.getStartYear() + " - Present";
-        labelGbc.gridy = valueGbc.gridy = row;
+        labelGbc.gridy = valueGbc.gridy = row++;
         infoPanel.add(new JLabel("Years Published:"), labelGbc);
         infoPanel.add(new JLabel(yearRange), valueGbc);
-        row++;
 
         // Publisher
-        labelGbc.gridy = valueGbc.gridy = row;
+        labelGbc.gridy = valueGbc.gridy = row++;
         infoPanel.add(new JLabel("Publisher:"), labelGbc);
         String publisherText = (entity.getPublisher() != null) ? entity.getPublisher().getName() : "None";
         JLabel publisherLabel = new JLabel(publisherText);
@@ -95,11 +96,10 @@ public class SeriesDetails extends AbstractDetails<Series> {
             }
         });
         infoPanel.add(publisherLabel, valueGbc);
-        row++;
 
         // Overview
         if (entity.getOverview() != null && !entity.getOverview().isBlank()) {
-            labelGbc.gridy = valueGbc.gridy = row;
+            labelGbc.gridy = valueGbc.gridy = row++;
             infoPanel.add(new JLabel("Overview:"), labelGbc);
 
             JTextArea overviewArea = new JTextArea(entity.getOverview());
@@ -119,7 +119,6 @@ public class SeriesDetails extends AbstractDetails<Series> {
             infoPanel.add(overviewScroll, valueGbc);
             valueGbc.fill = GridBagConstraints.HORIZONTAL; // reset for next
             valueGbc.weighty = 0;
-            row++;
         }
 
         // Issues
@@ -137,26 +136,25 @@ public class SeriesDetails extends AbstractDetails<Series> {
         JScrollPane issueScrollPane = new JScrollPane(issueList);
         issuesPanel.add(issueScrollPane, BorderLayout.CENTER);
 
-        JButton addIssueButton = new JButton("Add New Issue");
-        addIssueButton.addActionListener(_ -> {
-            JDialog addIssueDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Add New Issue", true);
-            IssueForm issueForm = new IssueForm(entity, () -> {
-                // Refresh details after adding an issue
-                SeriesService seriesService = new SeriesService();
-                Series updatedSeries = seriesService.getByIdWithIssues(entity.getId());
-                SeriesDetails.this.entity.setIssues(updatedSeries.getIssues());
-                SwingUtilities.invokeLater(() -> {
-                    dialog.remove(mainPanel);
-                    dialog.add(getMainPanel(dialog), BorderLayout.CENTER);
-                    dialog.revalidate();
-                    dialog.repaint();
-                });
-            }, addIssueDialog);
-            addIssueDialog.setContentPane(issueForm);
-            addIssueDialog.pack();
-            addIssueDialog.setLocationRelativeTo(parent);
-            addIssueDialog.setVisible(true);
+        // Add MouseListener to the issueList
+        issueList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) { // Double-click to open details
+                    Issue selectedIssue = issueList.getSelectedValue();
+                    if (selectedIssue != null) {
+                        Issue fetchedIssue = issueService.getIssueByIdWithDetails(selectedIssue.getId());
+                        if (fetchedIssue != null) {
+                            new IssueDetails(parent, fetchedIssue, SeriesDetails.this::refreshDetails).showDetailsDialog();
+                        } else {
+                            MainApp.showError("Could not load issue details.");
+                        }
+                    }
+                }
+            }
         });
+
+        JButton addIssueButton = getAddIssuesButton(dialog, mainPanel);
         issuesPanel.add(addIssueButton, BorderLayout.SOUTH);
 
         gbc.gridx = 0;
@@ -169,6 +167,31 @@ public class SeriesDetails extends AbstractDetails<Series> {
 
         mainPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
         return mainPanel;
+    }
+
+    private void refreshDetails() {
+        SeriesService seriesService = new SeriesService();
+        Series updatedSeries = seriesService.getByIdWithIssues(entity.getId());
+        SeriesDetails.this.entity.setIssues(updatedSeries.getIssues());
+        SwingUtilities.invokeLater(() -> {
+            detailsDialog.remove((JScrollPane) detailsDialog.getContentPane().getComponent(0)); // Assuming mainPanel is the first component
+            detailsDialog.add(new JScrollPane(getMainPanel(detailsDialog)), BorderLayout.CENTER);
+            detailsDialog.revalidate();
+            detailsDialog.repaint();
+        });
+    }
+
+    private JButton getAddIssuesButton(JDialog dialog, JPanel mainPanel) {
+        JButton addIssuesButton = new JButton("Add New Issues");
+        addIssuesButton.addActionListener(_ -> {
+            JDialog addIssueDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Add New Issues", true);
+            IssueForm issueForm = new IssueForm(entity, this::refreshDetails, addIssueDialog);
+            addIssueDialog.setContentPane(issueForm);
+            addIssueDialog.pack();
+            addIssueDialog.setLocationRelativeTo(parent);
+            addIssueDialog.setVisible(true);
+        });
+        return addIssuesButton;
     }
 
     @Override
