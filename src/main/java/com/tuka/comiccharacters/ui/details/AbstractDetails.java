@@ -40,7 +40,9 @@ public abstract class AbstractDetails<T> {
         deleteButton.addActionListener(_ -> {
             int confirm = JOptionPane.showConfirmDialog(parent, getDeleteConfirmationMessage(), "Confirm Deletion", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
+                System.out.println("Deleting issue...");
                 deleteEntity();
+                System.out.println("Issue deleted from service.");
                 dialog.dispose();
                 refreshCallback.run();
             }

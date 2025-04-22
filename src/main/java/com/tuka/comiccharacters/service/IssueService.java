@@ -64,14 +64,13 @@ public class IssueService {
         if (issue == null) {
             throw new IllegalArgumentException("Issue with ID " + issueId + " not found.");
         }
+        System.out.println("Issue found: " + issue);
 
         // Remove this issue from its series
         Series series = issue.getSeries();
         if (series.getIssues() != null) {
             series.getIssues().remove(issue);
         }
-
-        issue.getIssueCreators().clear();
 
         // Remove this issue from associated characters
         for (ComicCharacter character : new HashSet<>(issue.getCharacters())) {
@@ -81,6 +80,7 @@ public class IssueService {
 
         // Finally, delete the issue
         issueDao.delete(issue);
+        System.out.println("Issue deleted from the database.");
     }
 
     public Issue getIssueByIdWithDetails(Long id) {

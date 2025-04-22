@@ -1,9 +1,14 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.CreatorDaoImpl;
+import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Creator;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 
 import java.util.Set;
+
+import static com.tuka.comiccharacters.util.JPAUtil.getEntityManager;
 
 public class CreatorService {
     private final CreatorDaoImpl creatorDao = new CreatorDaoImpl();
@@ -28,9 +33,32 @@ public class CreatorService {
     }
 
     public void deleteCreator(Long id) {
-        Creator creator = creatorDao.findById(id);
-        if (creator != null) {
-            creatorDao.delete(creator);
+        EntityTransaction transaction = null;
+        try (EntityManager em = getEntityManager()) {
+            transaction = em.getTransaction();
+            transaction.begin();
+
+            Creator creator = em.find(Creator.class, id);
+            if (creator != null) {
+                // Remove the association with credited characters
+                Set<ComicCharacter> creditedCharacters = creator.getCreditedCharacters();
+                // To avoid ConcurrentModificationException, iterate over a copy
+                for (ComicCharacter character : new java.util.HashSet<>(creditedCharacters)) {
+                    character.getCreators().remove(creator);
+                }
+                creator.getCreditedCharacters().clear(); // Clear the set on the Creator
+
+                em.remove(creator);
+            } else {
+                throw new IllegalArgumentException("Creator with ID " + id + " not found.");
+            }
+
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null && transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw e;
         }
     }
 }
