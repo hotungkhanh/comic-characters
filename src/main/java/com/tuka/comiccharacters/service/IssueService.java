@@ -7,6 +7,7 @@ import com.tuka.comiccharacters.model.IssueCreator;
 import com.tuka.comiccharacters.model.Series;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,8 +15,11 @@ import java.util.Set;
 public class IssueService {
     private final IssueDaoImpl issueDao = new IssueDaoImpl();
 
-    public void addIssue(Series series, BigDecimal issueNumber, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
+    public void addIssue(Series series, BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal priceUsd, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
         Issue issue = new Issue(series, issueNumber);
+        issue.setOverview(overview);
+        issue.setReleaseDate(releaseDate);
+        issue.setPriceUsd(priceUsd);
 
         if (issueCreators != null && !issueCreators.isEmpty()) {
             for (IssueCreator ic : issueCreators) {

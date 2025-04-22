@@ -6,6 +6,7 @@ import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.PublisherService;
 import com.tuka.comiccharacters.service.SeriesService;
 import com.tuka.comiccharacters.ui.MainApp;
+import com.tuka.comiccharacters.ui.form.IssueForm;
 import com.tuka.comiccharacters.ui.form.SeriesForm;
 
 import javax.swing.*;
@@ -75,7 +76,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
         infoPanel.add(new JLabel(yearRange), valueGbc);
         row++;
 
-        // Publisher (Now clickable)
+        // Publisher
         labelGbc.gridy = valueGbc.gridy = row;
         infoPanel.add(new JLabel("Publisher:"), labelGbc);
         String publisherText = (entity.getPublisher() != null) ? entity.getPublisher().getName() : "None";
@@ -139,6 +140,19 @@ public class SeriesDetails extends AbstractDetails<Series> {
         JButton addIssueButton = new JButton("Add New Issue");
         addIssueButton.addActionListener(_ -> {
             JDialog addIssueDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Add New Issue", true);
+            IssueForm issueForm = new IssueForm(entity, () -> {
+                // Refresh details after adding an issue
+                SeriesService seriesService = new SeriesService();
+                Series updatedSeries = seriesService.getByIdWithIssues(entity.getId());
+                SeriesDetails.this.entity.setIssues(updatedSeries.getIssues());
+                SwingUtilities.invokeLater(() -> {
+                    dialog.remove(mainPanel);
+                    dialog.add(getMainPanel(dialog), BorderLayout.CENTER);
+                    dialog.revalidate();
+                    dialog.repaint();
+                });
+            }, addIssueDialog);
+            addIssueDialog.setContentPane(issueForm);
             addIssueDialog.pack();
             addIssueDialog.setLocationRelativeTo(parent);
             addIssueDialog.setVisible(true);
