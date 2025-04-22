@@ -9,11 +9,10 @@ public abstract class AbstractForm extends JPanel {
     protected JPanel formPanel;
     protected JButton submitButton;
 
-    public AbstractForm(String title, String submitButtonText) {
+    public AbstractForm(String submitButtonText) {
         setLayout(new BorderLayout());
 
         formPanel = new JPanel(new GridLayout(0, 1));
-        formPanel.setBorder(BorderFactory.createTitledBorder(title));
 
         submitButton = new JButton(submitButtonText);
 

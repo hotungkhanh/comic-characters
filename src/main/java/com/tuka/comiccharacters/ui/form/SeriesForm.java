@@ -25,7 +25,7 @@ public class SeriesForm extends AbstractForm {
     }
 
     public SeriesForm(Series existingSeries, Runnable refreshCallback, JDialog parentDialog) {
-        super(existingSeries == null ? "Add Series" : "Edit Series", existingSeries == null ? "Add Series" : "Save Changes");
+        super(existingSeries == null ? "Add New Series" : "Edit Series");
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS)); // Use BoxLayout for vertical arrangement

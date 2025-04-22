@@ -13,7 +13,7 @@ public class CreatorForm extends AbstractForm {
     private final CreatorService creatorService = new CreatorService();
 
     public CreatorForm() {
-        super("Add Creator", "Add Creator");
+        super("Add New Creator");
         overviewArea.setLineWrap(true);
         overviewArea.setWrapStyleWord(true);
         addFormField("Name", nameField);
@@ -36,13 +36,13 @@ public class CreatorForm extends AbstractForm {
     }
 
     public CreatorForm(Creator existingCreator) {
-        this(); // Set up the layout and fields
+        this();
 
         setSubmitButtonText("Save");
         nameField.setText(existingCreator.getName());
         overviewArea.setText(existingCreator.getOverview());
 
-        removeAllSubmitListeners(); // Remove the "Add Creator" listener
+        removeAllSubmitListeners();
 
         addSubmitListener(_ -> {
             String name = nameField.getText().trim();

@@ -1,61 +1,53 @@
 package com.tuka.comiccharacters.ui.form;
 
-import com.tuka.comiccharacters.model.Series;
+import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.service.PublisherService;
-import com.tuka.comiccharacters.service.SeriesService;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.Set;
 
 import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
-public class PublisherForm extends JPanel {
+public class PublisherForm extends AbstractForm {
 
-    public final SeriesService seriesService = new SeriesService();
-    public final JList<Series> seriesList;
+    private final JTextField nameField = new JTextField(20);
+    private final PublisherService publisherService = new PublisherService();
+    private Publisher editingPublisher;
 
     public PublisherForm() {
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBorder(BorderFactory.createTitledBorder("Publisher"));
+        super("Add New Publisher");
+        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
+        addFormField("Name", nameField);
 
-        JTextField nameField = new JTextField(15);
-        PublisherService publisherService = new PublisherService();
-
-        seriesList = new JList<>();
-        seriesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        refreshSeries();
-        JScrollPane scrollPane = new JScrollPane(seriesList);
-
-        add(new JLabel("Publisher Name:"));
-        add(nameField);
-        add(Box.createVerticalStrut(5));
-        add(new JLabel("Select Series:"));
-        add(scrollPane);
-        add(Box.createVerticalStrut(10));
-
-        JButton addButton = new JButton("Add Publisher");
-        addButton.addActionListener(e -> {
+        addSubmitListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
                 showError("Publisher name is required.");
                 return;
             }
-
-            Set<Series> selectedSeries = new HashSet<>(seriesList.getSelectedValuesList());
-
-            publisherService.addPublisher(name, selectedSeries);
+            publisherService.addPublisher(name);
             showSuccess("Publisher added!");
             nameField.setText("");
-            seriesList.clearSelection();
         });
-
-        add(addButton);
     }
 
-    public void refreshSeries() {
-        Set<Series> updatedSeries = seriesService.getAllSeries();
-        seriesList.setListData(updatedSeries.toArray(new Series[0]));
+    public PublisherForm(Publisher existingPublisher) {
+        super("Edit Publisher");
+        this.editingPublisher = existingPublisher;
+        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
+        addFormField("Name", nameField);
+        nameField.setText(existingPublisher.getName());
+
+        addSubmitListener(e -> {
+            String name = nameField.getText().trim();
+            if (name.isEmpty()) {
+                showError("Publisher name is required.");
+                return;
+            }
+            editingPublisher.setName(name);
+            publisherService.updatePublisher(editingPublisher);
+            showSuccess("Publisher updated!");
+            SwingUtilities.getWindowAncestor(this).dispose();
+        });
     }
 }

@@ -90,10 +90,10 @@ public class MainApp {
 
     private static JPanel getCharacterButtonPanel(JFrame frame, CharacterBrowser characterBrowser) {
         JPanel characterButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton addCharacterButton = new JButton("Add New Character");
+        JButton addCharacterButton = new JButton("Add New Characters");
         addCharacterButton.addActionListener(_ -> {
             JDialog dialog = new JDialog(frame, "Add New Character", true);
-//            dialog.setContentPane(new CharacterForm()); // Assuming you have a CharacterForm
+//            dialog.setContentPane(new CharacterForm());
             dialog.pack();
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
@@ -120,7 +120,7 @@ public class MainApp {
 
     private static JPanel getCreatorButtonPanel(JFrame frame, CreatorBrowser creatorBrowser) {
         JPanel creatorButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton addCreatorButton = new JButton("Add New Creator");
+        JButton addCreatorButton = new JButton("Add New Creators");
         addCreatorButton.addActionListener(_ -> {
             JDialog dialog = new JDialog(frame, "Add New Creator", true);
             dialog.setContentPane(new CreatorForm());
@@ -135,7 +135,7 @@ public class MainApp {
 
     private static JPanel getPublisherButtonPanel(JFrame frame, PublisherBrowser publisherBrowser) {
         JPanel publisherButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton addPublisherButton = new JButton("Add New Publisher");
+        JButton addPublisherButton = new JButton("Add New Publishers");
         addPublisherButton.addActionListener(_ -> {
             JDialog dialog = new JDialog(frame, "Add New Publisher", true);
             dialog.setContentPane(new PublisherForm());
