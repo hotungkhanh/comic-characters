@@ -22,6 +22,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
     private final PublisherService publisherService = new PublisherService();
     private final IssueService issueService = new IssueService(); // Add IssueService
     private JDialog detailsDialog;
+    private JList<Issue> issueList;
 
     public SeriesDetails(Component parent, Series series, Runnable refreshCallback) {
         super(parent, series, refreshCallback);
@@ -131,7 +132,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
         DefaultListModel<Issue> issueListModel = new DefaultListModel<>();
         sortedIssues.forEach(issueListModel::addElement);
 
-        JList<Issue> issueList = new JList<>(issueListModel);
+        issueList = new JList<>(issueListModel);
         issueList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane issueScrollPane = new JScrollPane(issueList);
         issuesPanel.add(issueScrollPane, BorderLayout.CENTER);
@@ -174,8 +175,13 @@ public class SeriesDetails extends AbstractDetails<Series> {
         Series updatedSeries = seriesService.getByIdWithIssues(entity.getId());
         SeriesDetails.this.entity.setIssues(updatedSeries.getIssues());
         SwingUtilities.invokeLater(() -> {
-            detailsDialog.remove((JScrollPane) detailsDialog.getContentPane().getComponent(0)); // Assuming mainPanel is the first component
-            detailsDialog.add(new JScrollPane(getMainPanel(detailsDialog)), BorderLayout.CENTER);
+            DefaultListModel<Issue> issueListModel = (DefaultListModel<Issue>) issueList.getModel();
+            issueListModel.clear();
+            updatedSeries.getIssues().stream()
+                    .sorted(Comparator.comparing(Issue::toString))
+                    .forEach(issueListModel::addElement);
+            issueList.revalidate();
+            issueList.repaint();
             detailsDialog.revalidate();
             detailsDialog.repaint();
         });

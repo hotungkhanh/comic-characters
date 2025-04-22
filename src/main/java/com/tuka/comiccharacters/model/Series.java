@@ -2,9 +2,9 @@ package com.tuka.comiccharacters.model;
 
 import jakarta.persistence.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Table(name = "series")
@@ -30,7 +30,7 @@ public class Series {
     private Publisher publisher;
 
     @OneToMany(mappedBy = "series", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Issue> issues = new ArrayList<>();
+    private Set<Issue> issues = new HashSet<>();
 
     public Series() {
     }
@@ -89,11 +89,11 @@ public class Series {
         this.publisher = publisher;
     }
 
-    public List<Issue> getIssues() {
+    public Set<Issue> getIssues() {
         return issues;
     }
 
-    public void setIssues(List<Issue> issues) {
+    public void setIssues(Set<Issue> issues) {
         this.issues = issues;
     }
 

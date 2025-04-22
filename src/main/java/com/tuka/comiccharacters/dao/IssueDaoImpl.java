@@ -20,6 +20,7 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
                             "LEFT JOIN FETCH ic.roles " +
                             "LEFT JOIN FETCH i.characters " +
                             "LEFT JOIN FETCH i.series s " +
+                            "LEFT JOIN FETCH s.issues " +
                             "LEFT JOIN FETCH s.publisher " +
                             "WHERE i.id = :id", Issue.class);
             query.setParameter("id", id);

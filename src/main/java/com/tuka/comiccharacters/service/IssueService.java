@@ -14,7 +14,6 @@ import java.util.Set;
 
 public class IssueService {
     private final IssueDaoImpl issueDao = new IssueDaoImpl();
-
     public void addIssue(Series series, BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal priceUsd, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
         Issue issue = new Issue(series, issueNumber);
         issue.setOverview(overview);
@@ -60,12 +59,31 @@ public class IssueService {
         issueDao.save(existingIssue);
     }
 
-
     public void deleteIssue(Long issueId) {
-        issueDao.delete(issueDao.findById(issueId));
+        Issue issue = issueDao.findByIdWithDetails(issueId);
+        if (issue == null) {
+            throw new IllegalArgumentException("Issue with ID " + issueId + " not found.");
+        }
+
+        // Remove this issue from its series
+        Series series = issue.getSeries();
+        if (series.getIssues() != null) {
+            series.getIssues().remove(issue);
+        }
+
+        issue.getIssueCreators().clear();
+
+        // Remove this issue from associated characters
+        for (ComicCharacter character : new HashSet<>(issue.getCharacters())) {
+            character.getIssues().remove(issue);
+        }
+        issue.getCharacters().clear();
+
+        // Finally, delete the issue
+        issueDao.delete(issue);
     }
 
     public Issue getIssueByIdWithDetails(Long id) {
-       return issueDao.findByIdWithDetails(id);
+        return issueDao.findByIdWithDetails(id);
     }
 }
