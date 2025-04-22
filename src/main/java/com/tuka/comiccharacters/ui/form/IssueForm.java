@@ -336,6 +336,7 @@ public class IssueForm extends AbstractForm {
 
         issueService.updateIssue(existingIssue); // You'll need to implement this method in IssueService
         showSuccess("Issue updated successfully.");
+        SwingUtilities.getWindowAncestor(this).dispose();
         if (onIssueUpdated != null) {
             onIssueUpdated.run();
         }

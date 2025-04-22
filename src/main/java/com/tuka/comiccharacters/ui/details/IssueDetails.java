@@ -114,20 +114,18 @@ public class IssueDetails extends AbstractDetails<Issue> {
         }
 
         // Release Date
-        labelGbc.gridy = valueGbc.gridy = row++;
-        infoPanel.add(new JLabel("Release Date:"), labelGbc);
-        String releaseDateText = (entity.getReleaseDate() != null)
-                ? entity.getReleaseDate().format(DateTimeFormatter.ISO_LOCAL_DATE)
-                : "Not set";
-        infoPanel.add(new JLabel(releaseDateText), valueGbc);
+        if (entity.getReleaseDate() != null) {
+            labelGbc.gridy = valueGbc.gridy = row++;
+            infoPanel.add(new JLabel("Release Date:"), labelGbc);
+            infoPanel.add(new JLabel(entity.getReleaseDate().format(DateTimeFormatter.ISO_LOCAL_DATE)), valueGbc);
+        }
 
         // Price
-        labelGbc.gridy = valueGbc.gridy = row++;
-        infoPanel.add(new JLabel("Price (USD):"), labelGbc);
-        String priceText = (entity.getPriceUsd() != null)
-                ? String.format("$%.2f", entity.getPriceUsd())
-                : "Not set";
-        infoPanel.add(new JLabel(priceText), valueGbc);
+        if (entity.getPriceUsd() != null) {
+            labelGbc.gridy = valueGbc.gridy = row++;
+            infoPanel.add(new JLabel("Price (USD):"), labelGbc);
+            infoPanel.add(new JLabel(String.format("$%.2f", entity.getPriceUsd())), valueGbc);
+        }
 
         // Creators
         labelGbc.gridy = valueGbc.gridy = row++;
