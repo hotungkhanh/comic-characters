@@ -5,12 +5,16 @@ import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.IssueCreator;
 import com.tuka.comiccharacters.model.Series;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.tuka.comiccharacters.util.JPAUtil.getEntityManager;
 
 public class IssueService {
     private final IssueDaoImpl issueDao = new IssueDaoImpl();
@@ -60,27 +64,43 @@ public class IssueService {
     }
 
     public void deleteIssue(Long issueId) {
-        Issue issue = issueDao.findByIdWithDetails(issueId);
-        if (issue == null) {
-            throw new IllegalArgumentException("Issue with ID " + issueId + " not found.");
-        }
-        System.out.println("Issue found: " + issue);
+        EntityTransaction transaction = null;
+        try (EntityManager em = getEntityManager()) {
+            transaction = em.getTransaction();
+            transaction.begin();
 
-        // Remove this issue from its series
-        Series series = issue.getSeries();
-        if (series.getIssues() != null) {
-            series.getIssues().remove(issue);
-        }
+            Issue issue = em.find(Issue.class, issueId);
+            if (issue == null) {
+                throw new IllegalArgumentException("Issue with ID " + issueId + " not found.");
+            }
+            System.out.println("Issue found: " + issue);
 
-        // Remove this issue from associated characters
-        for (ComicCharacter character : new HashSet<>(issue.getCharacters())) {
-            character.getIssues().remove(issue);
-        }
-        issue.getCharacters().clear();
+            // Remove this issue from its series
+            Series series = issue.getSeries();
+            if (series != null && series.getIssues() != null) {
+                series.getIssues().remove(issue);
+            }
 
-        // Finally, delete the issue
-        issueDao.delete(issue);
-        System.out.println("Issue deleted from the database.");
+            // Remove this issue from associated characters
+            for (ComicCharacter character : new HashSet<>(issue.getCharacters())) {
+                character.getIssues().remove(issue);
+            }
+            issue.getCharacters().clear();
+
+            // Finally, delete the issue
+            em.remove(issue);
+            System.out.println("Issue marked for deletion.");
+
+            transaction.commit();
+            System.out.println("Issue deleted from the database.");
+
+        } catch (Exception e) {
+            if (transaction != null && transaction.isActive()) {
+                transaction.rollback();
+                System.err.println("Error deleting issue: " + e.getMessage());
+            }
+            throw e;
+        }
     }
 
     public Issue getIssueByIdWithDetails(Long id) {
