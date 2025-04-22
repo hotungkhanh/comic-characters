@@ -16,11 +16,11 @@ public class Publisher {
 
     private String name;
 
-    @OneToMany(mappedBy = "publisher", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "publisher")
     private Set<Series> publisherSeries = new HashSet<>();
 
-    @OneToMany(mappedBy = "publisher", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ComicCharacter> publisherCharacters = new HashSet<>();
+    @OneToMany(mappedBy = "publisher")
+    private final Set<ComicCharacter> publisherCharacters = new HashSet<>();
 
     public Publisher() {
     }
@@ -50,26 +50,8 @@ public class Publisher {
         return publisherSeries;
     }
 
-    public void setPublisherSeries(Set<Series> allSeries) {
-        this.publisherSeries = allSeries;
-    }
-
-    public void addSeries(Series series) {
-        publisherSeries.add(series);
-        series.setPublisher(this);
-    }
-
-    public void removeSeries(Series series) {
-        publisherSeries.remove(series);
-        series.setPublisher(null);
-    }
-
     public Set<ComicCharacter> getPublisherCharacters() {
         return publisherCharacters;
-    }
-
-    public void setPublisherCharacters(Set<ComicCharacter> allCharacters) {
-        this.publisherCharacters = allCharacters;
     }
 
     @Override

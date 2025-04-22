@@ -86,6 +86,6 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
 
     @Override
     protected String getDeleteConfirmationMessage() {
-        return "Delete this publisher and all associated series and characters?";
+        return "Delete this publisher? Associated series and characters will not be deleted.";
     }
 }
