@@ -38,6 +38,7 @@ public class IssueForm extends AbstractForm {
     private final JScrollPane overviewScrollPane = new JScrollPane(overviewTextArea);
     private final JTextField releaseDateField = new JTextField(10);
     private final JTextField priceField = new JTextField(10);
+    private final JCheckBox annualCheckBox = new JCheckBox("Annual:");
 
     // Creators Section
     private final JPanel creatorsPanel = new JPanel(new BorderLayout());
@@ -121,8 +122,15 @@ public class IssueForm extends AbstractForm {
         gbc.gridx = 1;
         issueInfoPanel.add(releaseDateField, gbc);
 
+        // Annual Checkbox
+        JPanel annualPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        annualPanel.add(annualCheckBox);
         gbc.gridx = 0;
         gbc.gridy = 3;
+        issueInfoPanel.add(annualPanel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
         issueInfoPanel.add(new JLabel("Price (USD):"), gbc);
         gbc.gridx = 1;
         issueInfoPanel.add(priceField, gbc);
@@ -239,6 +247,7 @@ public class IssueForm extends AbstractForm {
         overviewTextArea.setText(existingIssue.getOverview() != null ? existingIssue.getOverview() : "");
         releaseDateField.setText(existingIssue.getReleaseDate() != null ? existingIssue.getReleaseDate().toString() : "");
         priceField.setText(existingIssue.getPriceUsd() != null ? existingIssue.getPriceUsd().toString() : "");
+        annualCheckBox.setSelected(existingIssue.getAnnual() != null ? existingIssue.getAnnual() : false);
 
         // Fill creators
         for (IssueCreator issueCreator : existingIssue.getIssueCreators()) {
@@ -278,6 +287,7 @@ public class IssueForm extends AbstractForm {
         String overview = overviewTextArea.getText().trim();
         String releaseDateText = releaseDateField.getText().trim();
         String priceText = priceField.getText().trim();
+        boolean isAnnual = annualCheckBox.isSelected();
 
         BigDecimal issueNumber;
         try {
@@ -292,7 +302,7 @@ public class IssueForm extends AbstractForm {
             try {
                 releaseDate = LocalDate.parse(releaseDateText, DateTimeFormatter.ISO_LOCAL_DATE);
             } catch (DateTimeParseException ex) {
-                showError("Invalid date format. Please use YYYY-MM-DD.");
+                showError("Invalid date format. Please use yyyy-MM-DD.");
                 return;
             }
         }
@@ -320,6 +330,7 @@ public class IssueForm extends AbstractForm {
         if (price != null) {
             existingIssue.setPriceUsd(price);
         }
+        existingIssue.setAnnual(isAnnual);
 
         // Update creators
         existingIssue.getIssueCreators().clear(); // Clear existing creators
@@ -334,7 +345,7 @@ public class IssueForm extends AbstractForm {
             existingIssue.addCharacter(character); // Use the addCharacter method to maintain bidirectional relationship
         }
 
-        issueService.updateIssue(existingIssue); // You'll need to implement this method in IssueService
+        issueService.updateIssue(existingIssue);
         showSuccess("Issue updated successfully.");
         SwingUtilities.getWindowAncestor(this).dispose();
         if (onIssueUpdated != null) {
@@ -491,6 +502,7 @@ public class IssueForm extends AbstractForm {
         String overview = overviewTextArea.getText().trim();
         String releaseDateText = releaseDateField.getText().trim();
         String priceText = priceField.getText().trim();
+        boolean isAnnual = annualCheckBox.isSelected();
 
         BigDecimal issueNumber;
         try {
@@ -505,7 +517,7 @@ public class IssueForm extends AbstractForm {
             try {
                 releaseDate = LocalDate.parse(releaseDateText, DateTimeFormatter.ISO_LOCAL_DATE);
             } catch (DateTimeParseException ex) {
-                showError("Invalid date format. Please use<ctrl3348>-MM-DD.");
+                showError("Invalid date format. Please use yyyy-MM-DD.");
                 return;
             }
         }
@@ -525,7 +537,7 @@ public class IssueForm extends AbstractForm {
             charactersToAdd.add(selectedCharactersListModel.getElementAt(i));
         }
 
-        issueService.addIssue(currentSeries, issueNumber, overview, releaseDate, price, selectedCreators, charactersToAdd);
+        issueService.addIssue(currentSeries, issueNumber, overview, releaseDate, price, isAnnual, selectedCreators, charactersToAdd);
         showSuccess("Issue added!");
         resetForm();
         if (onIssueAdded != null) {
@@ -541,6 +553,7 @@ public class IssueForm extends AbstractForm {
         overviewTextArea.setText("");
         releaseDateField.setText("");
         priceField.setText("");
+        annualCheckBox.setSelected(false);
         creatorTableModel.setRowCount(0);
         selectedCreators.clear();
         selectedCharactersListModel.clear();

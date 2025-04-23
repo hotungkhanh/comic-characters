@@ -18,11 +18,12 @@ import static com.tuka.comiccharacters.util.JPAUtil.getEntityManager;
 
 public class IssueService {
     private final IssueDaoImpl issueDao = new IssueDaoImpl();
-    public void addIssue(Series series, BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal priceUsd, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
+    public void addIssue(Series series, BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal priceUsd, boolean isAnnual, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
         Issue issue = new Issue(series, issueNumber);
         issue.setOverview(overview);
         issue.setReleaseDate(releaseDate);
         issue.setPriceUsd(priceUsd);
+        issue.setAnnual(isAnnual);
 
         if (issueCreators != null && !issueCreators.isEmpty()) {
             for (IssueCreator ic : issueCreators) {
