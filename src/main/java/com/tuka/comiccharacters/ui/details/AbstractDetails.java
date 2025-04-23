@@ -94,22 +94,28 @@ public abstract class AbstractDetails<T> {
         return row + 1;
     }
 
-    protected <E> JPanel createListPanel(String title, List<E> items, Function<E, String> toStringMapper, int preferredHeight) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder(title));
-
+    protected <E> JList<String> createStringList(List<E> items, Function<E, String> toStringMapper) {
         DefaultListModel<String> listModel = new DefaultListModel<>();
         for (E item : items) {
             listModel.addElement(toStringMapper.apply(item));
         }
-
         JList<String> jList = new JList<>(listModel);
         jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        return jList;
+    }
 
-        JScrollPane scrollPane = new JScrollPane(jList);
+    protected JPanel createListPanel(JList<?> list, int preferredHeight) {
+        JPanel panel = new JPanel(new BorderLayout());
+        JScrollPane scrollPane = new JScrollPane(list);
         scrollPane.setPreferredSize(new Dimension(400, preferredHeight));
-
         panel.add(scrollPane, BorderLayout.CENTER);
+        return panel;
+    }
+
+    protected JPanel createTitledPanel(Component component, String title) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createTitledBorder(title));
+        panel.add(component, BorderLayout.CENTER);
         return panel;
     }
 
