@@ -29,21 +29,20 @@ public class CreatorDetails extends AbstractDetails<Creator> {
     }
 
     public void showDetailsDialog() {
-        super.showDetailsDialog(600, 700);
+        super.showDetailsDialog(600, 620);
     }
 
     @Override
     protected JPanel getMainPanel(JDialog dialog) {
         this.detailsDialog = dialog;
 
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         JPanel infoPanel = createMainInfoPanel();
-
         int row = 0;
 
         row = addLabelValue(infoPanel, "Name:", entity.getName(), row);
-        gbc.insets = new Insets(5, 0, 5, 0); // Reduce spacing
-        row = addTextArea(infoPanel, "Overview:", entity.getOverview(), row, 5);
+        if (entity.getOverview() != null && !entity.getOverview().isBlank()) {
+            row = addTextArea(infoPanel, "Overview:", entity.getOverview(), row, 5);
+        }
 
         List<ComicCharacter> sortedCharacters = entity.getCreditedCharacters().stream()
                 .sorted(Comparator.comparing(ComicCharacter::getName, String.CASE_INSENSITIVE_ORDER))
@@ -94,6 +93,7 @@ public class CreatorDetails extends AbstractDetails<Creator> {
         gbc.gridy = row++;
         infoPanel.add(issuePanel, gbc);
 
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
         return mainPanel;
     }

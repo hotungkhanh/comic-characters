@@ -29,7 +29,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
     }
 
     public void showDetailsDialog() {
-        super.showDetailsDialog(600, 900);
+        super.showDetailsDialog(600, 700);
     }
 
     @Override
@@ -47,7 +47,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
 
         row = addPublisherLink(infoPanel, row);
 
-        row = addTextArea(infoPanel, "Overview:", entity.getOverview(), row, 5);
+        row = addTextArea(infoPanel, "Overview:", entity.getOverview(), row, 6);
 
         JPanel issuesPanel = createIssuesPanel();
         gbc.gridx = 0;
