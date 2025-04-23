@@ -29,10 +29,12 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setPreferredSize(new Dimension(500, 500));
 
-        JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        infoPanel.add(new JLabel("Name:"));
-        infoPanel.add(new JLabel(entity.getName()));
+        // Info Panel for Publisher name
+        JPanel infoPanel = createMainInfoPanel();
+        int row = 0;
+        row = addLabelValue(infoPanel, "Name:", entity.getName(), row);
 
+        // Sorted Lists
         List<Series> sortedSeries = entity.getPublisherSeries()
                 .stream()
                 .sorted(Comparator.comparing(Series::getTitle, String.CASE_INSENSITIVE_ORDER))
@@ -43,20 +45,11 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
                 .sorted(Comparator.comparing(ComicCharacter::getName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
 
+        // Use reusable method to create panels
+        JPanel seriesPanel = createListPanel("Series", sortedSeries, Series::getTitle, 200);
+        JPanel charactersPanel = createListPanel("Characters", sortedCharacters, ComicCharacter::getName, 200);
+
         JPanel centerPanel = new JPanel(new GridLayout(1, 2, 10, 10));
-
-        JPanel seriesPanel = new JPanel(new BorderLayout());
-        seriesPanel.setBorder(BorderFactory.createTitledBorder("Series"));
-        JList<Series> seriesList = new JList<>(sortedSeries.toArray(new Series[0]));
-        seriesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        seriesPanel.add(new JScrollPane(seriesList), BorderLayout.CENTER);
-
-        JPanel charactersPanel = new JPanel(new BorderLayout());
-        charactersPanel.setBorder(BorderFactory.createTitledBorder("Characters"));
-        JList<ComicCharacter> characterList = new JList<>(sortedCharacters.toArray(new ComicCharacter[0]));
-        characterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        charactersPanel.add(new JScrollPane(characterList), BorderLayout.CENTER);
-
         centerPanel.add(seriesPanel);
         centerPanel.add(charactersPanel);
 

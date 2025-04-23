@@ -34,86 +34,53 @@ public class SeriesDetails extends AbstractDetails<Series> {
 
     @Override
     protected JPanel getMainPanel(JDialog dialog) {
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        JPanel infoPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-
+        this.detailsDialog = dialog;
+        JPanel infoPanel = createMainInfoPanel();
         int row = 0;
 
-        // Reusable label constraints
-        GridBagConstraints labelGbc = (GridBagConstraints) gbc.clone();
-        labelGbc.gridx = 0;
-        labelGbc.weightx = 0;
-        labelGbc.fill = GridBagConstraints.NONE;
+        row = addLabelValue(infoPanel, "Title:", entity.getTitle(), row);
 
-        // Reusable value constraints
-        GridBagConstraints valueGbc = (GridBagConstraints) gbc.clone();
-        valueGbc.gridx = 1;
-        valueGbc.weightx = 1.0;
-        valueGbc.fill = GridBagConstraints.HORIZONTAL;
-
-        // Title
-        labelGbc.gridy = valueGbc.gridy = row++;
-        infoPanel.add(new JLabel("Title:"), labelGbc);
-        infoPanel.add(new JLabel(entity.getTitle()), valueGbc);
-
-        // Years Published
         String yearRange = (entity.getEndYear() != null)
                 ? entity.getStartYear() + " - " + entity.getEndYear()
                 : entity.getStartYear() + " - Present";
-        labelGbc.gridy = valueGbc.gridy = row++;
-        infoPanel.add(new JLabel("Years Published:"), labelGbc);
-        infoPanel.add(new JLabel(yearRange), valueGbc);
+        row = addLabelValue(infoPanel, "Years Published:", yearRange, row);
 
-        // Publisher
-        labelGbc.gridy = valueGbc.gridy = row++;
-        infoPanel.add(new JLabel("Publisher:"), labelGbc);
-        String publisherText = (entity.getPublisher() != null) ? entity.getPublisher().getName() : "None";
-        JLabel publisherLabel = new JLabel(publisherText);
-        publisherLabel.setForeground(Color.BLUE);
-        publisherLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        row = addPublisherLink(infoPanel, row);
+
+        row = addTextArea(infoPanel, "Overview:", entity.getOverview(), row, 5);
+
+        JPanel issuesPanel = createIssuesPanel();
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1.0;
+        gbc.weighty = 0.7;
+        gbc.fill = GridBagConstraints.BOTH;
+        infoPanel.add(issuesPanel, gbc);
+
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
+        return mainPanel;
+    }
+
+    private int addPublisherLink(JPanel panel, int row) {
         Publisher seriesPublisher = entity.getPublisher();
-        publisherLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (seriesPublisher != null) {
+        MouseAdapter mouseAdapter = null;
+        if (seriesPublisher != null) {
+            mouseAdapter = new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
                     detailsDialog.dispose();
                     Publisher fetchedPublisher = publisherService.getPublisherByIdWithSeriesAndCharacters(seriesPublisher.getId());
                     new PublisherDetails(parent, fetchedPublisher, refreshCallback).showDetailsDialog();
                 }
-            }
-        });
-        infoPanel.add(publisherLabel, valueGbc);
-
-        // Overview
-        if (entity.getOverview() != null && !entity.getOverview().isBlank()) {
-            labelGbc.gridy = valueGbc.gridy = row++;
-            infoPanel.add(new JLabel("Overview:"), labelGbc);
-
-            JTextArea overviewArea = new JTextArea(entity.getOverview());
-            overviewArea.setLineWrap(true);
-            overviewArea.setWrapStyleWord(true);
-            overviewArea.setEditable(false);
-            overviewArea.setBackground(infoPanel.getBackground());
-            overviewArea.setBorder(null);
-            overviewArea.setFont(UIManager.getFont("Label.font"));
-
-            JScrollPane overviewScroll = new JScrollPane(overviewArea);
-            overviewScroll.setPreferredSize(new Dimension(300, 100));
-            overviewScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-
-            valueGbc.fill = GridBagConstraints.BOTH;
-            valueGbc.weighty = 0.3;
-            infoPanel.add(overviewScroll, valueGbc);
-            valueGbc.fill = GridBagConstraints.HORIZONTAL; // reset for next
-            valueGbc.weighty = 0;
+            };
         }
+        String publisherText = (entity.getPublisher() != null) ? entity.getPublisher().getName() : "None";
+        return addClickableLabel(panel, "Publisher:", publisherText, row, mouseAdapter, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
 
-        // Issues
+    private JPanel createIssuesPanel() {
         JPanel issuesPanel = new JPanel(new BorderLayout());
         issuesPanel.setBorder(BorderFactory.createTitledBorder("Issues"));
 
@@ -128,11 +95,10 @@ public class SeriesDetails extends AbstractDetails<Series> {
         JScrollPane issueScrollPane = new JScrollPane(issueList);
         issuesPanel.add(issueScrollPane, BorderLayout.CENTER);
 
-        // Add MouseListener to the issueList
         issueList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) { // Double-click to open details
+                if (e.getClickCount() == 2) {
                     Issue selectedIssue = issueList.getSelectedValue();
                     if (selectedIssue != null) {
                         Issue fetchedIssue = issueService.getIssueByIdWithDetails(selectedIssue.getId());
@@ -148,17 +114,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
 
         JButton addIssueButton = getAddIssuesButton();
         issuesPanel.add(addIssueButton, BorderLayout.SOUTH);
-
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
-        gbc.weighty = 0.7;
-        gbc.fill = GridBagConstraints.BOTH;
-        infoPanel.add(issuesPanel, gbc);
-
-        mainPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
-        return mainPanel;
+        return issuesPanel;
     }
 
     private void refreshDetails() {
