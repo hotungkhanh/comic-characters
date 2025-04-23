@@ -7,5 +7,6 @@ public enum Role {
     INKER,
     COLORIST,
     LETTERER,
+    COVER_ARTIST,
     EDITOR,
 }

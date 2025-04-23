@@ -19,7 +19,7 @@ public class Issue {
     @JoinColumn(name = "series_id", nullable = false)
     private Series series;
 
-    @Column(precision = 6, scale = 2)
+    @Column(precision = 6, scale = 2, nullable = false)
     private BigDecimal issueNumber;
 
     @Column(length = 1000)
@@ -40,6 +40,9 @@ public class Issue {
             inverseJoinColumns = @JoinColumn(name = "character_id")
     )
     private Set<ComicCharacter> characters = new HashSet<>();
+
+    @Column(nullable = false)
+    private Boolean isAnnual = false;
 
     public Issue() {
     }
@@ -120,13 +123,27 @@ public class Issue {
         character.getIssues().add(this);
     }
 
-    public void removeCharacter(ComicCharacter character) {
-        characters.remove(character);
-        character.getIssues().remove(this);
+    public Boolean getAnnual() {
+        return isAnnual;
+    }
+
+    public void setAnnual(Boolean annual) {
+        isAnnual = annual;
     }
 
     @Override
     public String toString() {
-        return series + " #" + issueNumber;
+        String issueNumberStr;
+        if (issueNumber != null) {
+            issueNumberStr = issueNumber.stripTrailingZeros().toString();
+        } else {
+            issueNumberStr = "";
+        }
+
+        if (isAnnual) {
+            return series + " Annual #" + issueNumberStr;
+        } else {
+            return series + " #" + issueNumberStr;
+        }
     }
 }
