@@ -7,13 +7,17 @@ import com.tuka.comiccharacters.service.PublisherService;
 import com.tuka.comiccharacters.service.SeriesService;
 
 import javax.swing.*;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import static com.tuka.comiccharacters.ui.MainApp.showError;
 import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
@@ -23,22 +27,48 @@ public class CharacterForm extends AbstractForm {
     private final JTextField nameField = new JTextField(20);
     private final JTextField aliasField = new JTextField(20);
     private final JComboBox<Publisher> publisherDropdown;
-    private final JTextField creatorSearchField = new JTextField(20);
+    private final JTextField creatorSearchField = new JTextField(15);
     private final DefaultListModel<Creator> selectedCreatorsModel = new DefaultListModel<>();
+    private final JList<Creator> selectedCreatorsList = new JList<>(selectedCreatorsModel);
     private final JComboBox<Series> firstAppearanceSeriesDropdown;
     private final JComboBox<Issue> firstAppearanceIssueDropdown;
     private final JTextArea overviewTextArea = new JTextArea(5, 20);
     private final CharacterService characterService = new CharacterService();
     private final CreatorService creatorService = new CreatorService();
     private final SeriesService seriesService = new SeriesService();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final long SEARCH_DELAY = 300;
     private ComicCharacter editingCharacter;
+    private ScheduledFuture<?> creatorSearchTask;
+    private Set<Creator> allCreators = new HashSet<>();
+    private DefaultListModel<Creator> searchResultsModel; // Added field
 
     public CharacterForm() {
         super("Add New Character");
-        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
+        setLayout(new BorderLayout());
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        addFormField("Name", nameField);
-        addFormField("Alias", aliasField);
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+
+        JPanel characterInfoPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        characterInfoPanel.add(new JLabel("Name:"), gbc);
+        gbc.gridx = 1;
+        characterInfoPanel.add(nameField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        characterInfoPanel.add(new JLabel("Alias:"), gbc);
+        gbc.gridx = 1;
+        characterInfoPanel.add(aliasField, gbc);
 
         PublisherService publisherService = new PublisherService();
         Set<Publisher> allPublishers = publisherService.getAllPublishers();
@@ -47,55 +77,91 @@ public class CharacterForm extends AbstractForm {
         publishersWithNull.addAll(allPublishers);
         publisherDropdown = new JComboBox<>(publishersWithNull.toArray(new Publisher[0]));
         publisherDropdown.setRenderer(new NullableItemRenderer("None"));
-        addFormField("Publisher", publisherDropdown);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        characterInfoPanel.add(new JLabel("Publisher:"), gbc);
+        gbc.gridx = 1;
+        characterInfoPanel.add(publisherDropdown, gbc);
 
         overviewTextArea.setLineWrap(true);
         overviewTextArea.setWrapStyleWord(true);
-        addFormField("Overview", new JScrollPane(overviewTextArea));
+        JScrollPane overviewScrollPane = new JScrollPane(overviewTextArea);
+        overviewScrollPane.setPreferredSize(new Dimension(300, 120));
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        characterInfoPanel.add(new JLabel("Overview:"), gbc);
+        gbc.gridx = 1;
+        characterInfoPanel.add(overviewScrollPane, gbc);
 
-        JPanel creatorPanel = new JPanel();
-        creatorPanel.setLayout(new BoxLayout(creatorPanel, BoxLayout.Y_AXIS));
-        creatorPanel.setBorder(BorderFactory.createTitledBorder("Creators (Right click to remove)"));
+        contentPanel.add(characterInfoPanel);
+        contentPanel.add(Box.createVerticalStrut(15));
 
-        // Selected creators list
-        JList<Creator> selectedCreatorsList = getSelectedCreatorsList();
-        JScrollPane selectedScrollPane = new JScrollPane(selectedCreatorsList);
-        selectedScrollPane.setPreferredSize(new Dimension(250, 100));
-        creatorPanel.add(selectedScrollPane);
+        // Creators Section
+        JPanel creatorPanel = new JPanel(new BorderLayout());
+        creatorPanel.setBorder(BorderFactory.createTitledBorder("Creators"));
 
-        // Search field
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        searchPanel.add(new JLabel("Search:"));
-        creatorSearchField.setPreferredSize(new Dimension(200, 25));
-        searchPanel.add(creatorSearchField);
-        creatorPanel.add(searchPanel);
+        // Search Panel
+        JPanel creatorSearchPanel = new JPanel(new BorderLayout());
+        creatorSearchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
+        creatorSearchField.setText("Search for Creators...");
+        creatorSearchField.setForeground(Color.GRAY);
+        creatorSearchField.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (creatorSearchField.getText().equals("Search for Creators...")) {
+                    creatorSearchField.setText("");
+                    creatorSearchField.setForeground(Color.BLACK);
+                }
+            }
 
-        // Search result list and add button panel
-        JPanel resultPanel = new JPanel(new BorderLayout());
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (creatorSearchField.getText().isEmpty()) {
+                    creatorSearchField.setForeground(Color.GRAY);
+                    creatorSearchField.setText("Search for Creators...");
+                }
+            }
+        });
+        creatorSearchPanel.add(creatorSearchField, BorderLayout.CENTER);
+        creatorPanel.add(creatorSearchPanel, BorderLayout.NORTH);
 
-        DefaultListModel<Creator> searchResultsModel = new DefaultListModel<>();
+        // Search results list
+        searchResultsModel = new DefaultListModel<>();
         JList<Creator> searchResultsList = new JList<>(searchResultsModel);
         searchResultsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         JScrollPane searchScrollPane = new JScrollPane(searchResultsList);
-        searchScrollPane.setPreferredSize(new Dimension(250, 50));
+        searchScrollPane.setPreferredSize(new Dimension(300, 80));
 
+        // Add Creator button
+        JPanel addCreatorPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton addCreatorButton = new JButton("Add Creator(s)");
-        addCreatorButton.setPreferredSize(new Dimension(80, 30));
-
-        resultPanel.add(searchScrollPane, BorderLayout.CENTER);
-        resultPanel.add(addCreatorButton, BorderLayout.EAST);
-        creatorPanel.add(resultPanel);
-        formPanel.add(creatorPanel);
-
-        creatorSearchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            void updateSearch() {
-                String search = creatorSearchField.getText().trim().toLowerCase();
-                searchResultsModel.clear();
-                if (!search.isEmpty()) {
-                    Set<Creator> allCreators = creatorService.getAllCreators();
-                    List<Creator> matches = allCreators.stream().filter(c -> c.getName().toLowerCase().contains(search)).toList();
-                    matches.forEach(searchResultsModel::addElement);
+        addCreatorButton.setPreferredSize(new Dimension(300, 30));
+        addCreatorPanel.add(addCreatorButton);
+        addCreatorButton.addActionListener(_ -> {
+            List<Creator> selected = searchResultsList.getSelectedValuesList();
+            for (Creator creator : selected) {
+                if (!selectedCreatorsModel.contains(creator)) {
+                    selectedCreatorsModel.addElement(creator);
                 }
+            }
+            searchResultsList.clearSelection();
+            creatorSearchField.setText("");
+        });
+
+        // Selected creators list
+        JScrollPane selectedScrollPane = new JScrollPane(selectedCreatorsList);
+        selectedScrollPane.setPreferredSize(new Dimension(300, 80));
+        creatorPanel.add(selectedScrollPane, BorderLayout.SOUTH);
+        addCreatorRemovalListener();
+
+        JPanel searchAndAddPanel = new JPanel(new BorderLayout());
+        searchAndAddPanel.add(searchScrollPane, BorderLayout.CENTER);
+        searchAndAddPanel.add(addCreatorPanel, BorderLayout.SOUTH);
+        creatorPanel.add(searchAndAddPanel, BorderLayout.CENTER);
+
+        creatorSearchField.getDocument().addDocumentListener(new DocumentListener() {
+            void updateSearch() {
+                scheduleCreatorSearch();
             }
 
             @Override
@@ -114,18 +180,16 @@ public class CharacterForm extends AbstractForm {
             }
         });
 
-        addCreatorButton.addActionListener(_ -> {
-            List<Creator> selected = searchResultsList.getSelectedValuesList();
-            for (Creator creator : selected) {
-                if (!selectedCreatorsModel.contains(creator)) {
-                    selectedCreatorsModel.addElement(creator);
-                }
-            }
-            searchResultsList.clearSelection();
-            creatorSearchField.setText("");
-        });
+        contentPanel.add(creatorPanel);
+        contentPanel.add(Box.createVerticalStrut(15));
 
-        formPanel.add(creatorPanel);
+        // First Appearance Series and Issue Dropdowns
+        JPanel firstAppearancePanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbcAppearance = new GridBagConstraints();
+        gbcAppearance.anchor = GridBagConstraints.WEST;
+        gbcAppearance.insets = new Insets(5, 5, 5, 5);
+        gbcAppearance.fill = GridBagConstraints.HORIZONTAL;
+        gbcAppearance.weightx = 1.0;
 
         Set<Series> allSeries = seriesService.getAllSeries();
         List<Series> seriesWithNull = new ArrayList<>();
@@ -133,13 +197,30 @@ public class CharacterForm extends AbstractForm {
         seriesWithNull.addAll(allSeries);
         firstAppearanceSeriesDropdown = new JComboBox<>(seriesWithNull.toArray(new Series[0]));
         firstAppearanceSeriesDropdown.setRenderer(new NullableItemRenderer("None"));
-        addFormField("First appearance Series", firstAppearanceSeriesDropdown);
+        gbcAppearance.gridx = 0;
+        gbcAppearance.gridy = 0;
+        firstAppearancePanel.add(new JLabel("First appearance Series:"), gbcAppearance);
+        gbcAppearance.gridx = 1;
+        firstAppearancePanel.add(firstAppearanceSeriesDropdown, gbcAppearance);
 
         firstAppearanceIssueDropdown = new JComboBox<>();
         firstAppearanceIssueDropdown.setEnabled(false);
-        addFormField("First appearance Issue", firstAppearanceIssueDropdown);
+        firstAppearanceIssueDropdown.setRenderer(new NullableItemRenderer("None"));
+        gbcAppearance.gridx = 0;
+        gbcAppearance.gridy = 1;
+        firstAppearancePanel.add(new JLabel("First appearance Issue:"), gbcAppearance);
+        gbcAppearance.gridx = 1;
+        firstAppearancePanel.add(firstAppearanceIssueDropdown, gbcAppearance);
 
         firstAppearanceSeriesDropdown.addActionListener(_ -> populateIssuesDropdown());
+        contentPanel.add(firstAppearancePanel);
+        contentPanel.add(Box.createVerticalStrut(15));
+
+        add(new JScrollPane(contentPanel), BorderLayout.CENTER);
+        add(submitButton, BorderLayout.SOUTH);
+
+        // Load initial data for creator search.
+        loadInitialData();
 
         addSubmitListener(_ -> {
             String name = nameField.getText().trim();
@@ -163,9 +244,11 @@ public class CharacterForm extends AbstractForm {
                 return;
             }
 
-            characterService.addCharacter(name, alias, selectedPublisher, overview, selectedCreators, selectedFirstAppearance);
-            showSuccess("Character added!");
-            resetForm();
+            if (editingCharacter != null) {
+                updateCharacter(name, alias, selectedPublisher, overview, selectedCreators, selectedFirstAppearance);
+            } else {
+                addCharacter(name, alias, selectedPublisher, overview, selectedCreators, selectedFirstAppearance);
+            }
         });
     }
 
@@ -210,36 +293,57 @@ public class CharacterForm extends AbstractForm {
                 return;
             }
 
-            editingCharacter.setName(name);
-            editingCharacter.setAlias(alias);
-            editingCharacter.setPublisher(selectedPublisher);
-            editingCharacter.setOverview(overview);
-            editingCharacter.setCreators(new HashSet<>(selectedCreators));
-            editingCharacter.setFirstAppearance(selectedFirstAppearance);
-
-            characterService.updateCharacter(editingCharacter);
-            showSuccess("Character updated!");
-            SwingUtilities.getWindowAncestor(this).dispose();
+            updateCharacter(name, alias, selectedPublisher, overview, selectedCreators, selectedFirstAppearance);
         });
     }
 
-    private JList<Creator> getSelectedCreatorsList() {
-        JList<Creator> selectedCreatorsList = new JList<>(selectedCreatorsModel);
-        selectedCreatorsList.setVisibleRowCount(5);
-        selectedCreatorsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    private void addCharacter(String name, String alias, Publisher selectedPublisher, String overview, List<Creator> selectedCreators, Issue selectedFirstAppearance) {
+        characterService.addCharacter(name, alias, selectedPublisher, overview, selectedCreators, selectedFirstAppearance);
+        showSuccess("Character added!");
+        resetForm();
+    }
 
+    private void updateCharacter(String name, String alias, Publisher selectedPublisher, String overview, List<Creator> selectedCreators, Issue selectedFirstAppearance) {
+        editingCharacter.setName(name);
+        editingCharacter.setAlias(alias);
+        editingCharacter.setPublisher(selectedPublisher);
+        editingCharacter.setOverview(overview);
+        editingCharacter.setCreators(new HashSet<>(selectedCreators));
+        editingCharacter.setFirstAppearance(selectedFirstAppearance);
+        characterService.updateCharacter(editingCharacter);
+        showSuccess("Character updated!");
+        SwingUtilities.getWindowAncestor(this).dispose();
+    }
+
+    private void addCreatorRemovalListener() {
         selectedCreatorsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
                     int index = selectedCreatorsList.locationToIndex(e.getPoint());
-                    if (index != -1) {
-                        selectedCreatorsModel.removeElementAt(index);
+                    if (index >= 0 && index < selectedCreatorsModel.getSize()) {
+                        selectedCreatorsList.setSelectedIndex(index);
+                        JPopupMenu popupMenu = new JPopupMenu();
+                        JMenuItem removeItem = new JMenuItem("Remove Creator");
+                        removeItem.addActionListener(new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent event) {
+                                removeSelectedCreator();
+                            }
+                        });
+                        popupMenu.add(removeItem);
+                        popupMenu.show(selectedCreatorsList, e.getX(), e.getY());
                     }
                 }
             }
         });
-        return selectedCreatorsList;
+    }
+
+    private void removeSelectedCreator() {
+        int selectedIndex = selectedCreatorsList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            selectedCreatorsModel.remove(selectedIndex);
+        }
     }
 
     private void populateIssuesDropdown() {
@@ -273,6 +377,28 @@ public class CharacterForm extends AbstractForm {
         firstAppearanceIssueDropdown.setEnabled(false);
         firstAppearanceIssueDropdown.addItem(null);
         firstAppearanceIssueDropdown.setRenderer(new NullableItemRenderer("None"));
+    }
+
+    private void scheduleCreatorSearch() {
+        if (creatorSearchTask != null) {
+            creatorSearchTask.cancel(true);
+        }
+        long SEARCH_DELAY = 300;
+        creatorSearchTask = scheduler.schedule(() -> {
+            String search = creatorSearchField.getText().trim().toLowerCase();
+            SwingUtilities.invokeLater(() -> {
+                searchResultsModel.clear();
+                allCreators.stream()
+                        .filter(creator -> creator.getName().toLowerCase().contains(search))
+                        .forEach(searchResultsModel::addElement);
+            });
+        }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
+    }
+
+    private void loadInitialData() {
+        Executors.newSingleThreadExecutor().submit(() -> {
+            allCreators = creatorService.getAllCreators();
+        });
     }
 
     private static class NullableItemRenderer extends DefaultListCellRenderer {
