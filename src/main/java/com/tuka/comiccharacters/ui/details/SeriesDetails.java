@@ -28,17 +28,8 @@ public class SeriesDetails extends AbstractDetails<Series> {
         super(parent, series, refreshCallback);
     }
 
-    @Override
     public void showDetailsDialog() {
-        detailsDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), getTitle(), true);
-        detailsDialog.setLayout(new BorderLayout(10, 10));
-        detailsDialog.setSize(400, 300); // Increased size to accommodate potential scrollbar
-        detailsDialog.setLocationRelativeTo(parent);
-
-        detailsDialog.add(getMainPanel(detailsDialog), BorderLayout.CENTER); // Pass the dialog here
-        detailsDialog.add(getButtonPanel(detailsDialog), BorderLayout.SOUTH);
-
-        detailsDialog.setVisible(true);
+        super.showDetailsDialog(600, 900);
     }
 
     @Override
@@ -155,7 +146,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
             }
         });
 
-        JButton addIssueButton = getAddIssuesButton(dialog, mainPanel);
+        JButton addIssueButton = getAddIssuesButton();
         issuesPanel.add(addIssueButton, BorderLayout.SOUTH);
 
         gbc.gridx = 0;
@@ -187,7 +178,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
         });
     }
 
-    private JButton getAddIssuesButton(JDialog dialog, JPanel mainPanel) {
+    private JButton getAddIssuesButton() {
         JButton addIssuesButton = new JButton("Add New Issues");
         addIssuesButton.addActionListener(_ -> {
             JDialog addIssueDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Add New Issues", true);

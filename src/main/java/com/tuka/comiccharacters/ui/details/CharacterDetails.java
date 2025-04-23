@@ -18,6 +18,10 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
         super(parent, character, refreshCallback);
     }
 
+    public void showDetailsDialog() {
+        super.showDetailsDialog(600, 900);
+    }
+
     @Override
     protected JPanel getMainPanel(JDialog dialog) {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
@@ -137,10 +141,9 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
     @Override
     protected void showEditDialog() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Edit Character", true);
-         CharacterForm panel = new CharacterForm(entity);
-         dialog.setContentPane(panel);
+        CharacterForm panel = new CharacterForm(entity);
+        dialog.setContentPane(panel);
         dialog.pack();
-        dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
         refreshCallback.run();
     }

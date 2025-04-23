@@ -21,6 +21,10 @@ public class CreatorDetails extends AbstractDetails<Creator> {
         super(parent, creator, refreshCallback);
     }
 
+    public void showDetailsDialog() {
+        super.showDetailsDialog(600, 700);
+    }
+
     @Override
     protected JPanel getMainPanel(JDialog dialog) {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));

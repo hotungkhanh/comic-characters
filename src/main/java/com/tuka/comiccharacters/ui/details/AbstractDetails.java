@@ -15,10 +15,10 @@ public abstract class AbstractDetails<T> {
         this.refreshCallback = refreshCallback;
     }
 
-    public void showDetailsDialog() {
+    public void showDetailsDialog(int windowWidth, int windowHeight) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), getTitle(), true);
         dialog.setLayout(new BorderLayout(10, 10));
-        dialog.setSize(400, 250);
+        dialog.setSize(windowWidth, windowHeight);
         dialog.setLocationRelativeTo(parent);
 
         dialog.add(getMainPanel(dialog), BorderLayout.CENTER);

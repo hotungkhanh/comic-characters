@@ -25,17 +25,8 @@ public class IssueDetails extends AbstractDetails<Issue> {
         super(parent, issue, refreshCallback);
     }
 
-    @Override
     public void showDetailsDialog() {
-        detailsDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), getTitle(), true);
-        detailsDialog.setLayout(new BorderLayout(10, 10));
-        detailsDialog.setSize(400, 300);
-        detailsDialog.setLocationRelativeTo(parent);
-
-        detailsDialog.add(getMainPanel(detailsDialog), BorderLayout.CENTER);
-        detailsDialog.add(getButtonPanel(detailsDialog), BorderLayout.SOUTH);
-
-        detailsDialog.setVisible(true);
+        super.showDetailsDialog(800, 900);
     }
 
     @Override

@@ -20,6 +20,10 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
         super(parent, publisher, refreshCallback);
     }
 
+    public void showDetailsDialog() {
+        super.showDetailsDialog(800, 500);
+    }
+
     @Override
     protected JPanel getMainPanel(JDialog dialog) {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
