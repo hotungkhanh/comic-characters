@@ -159,6 +159,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
         IssueForm issueForm = new IssueForm(entity, refreshCallback, dialog);
         dialog.setContentPane(issueForm);
         dialog.pack();
+        dialog.setSize(700, 900);
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
     }

@@ -141,6 +141,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
             IssueForm issueForm = new IssueForm(entity, this::refreshDetails, addIssueDialog);
             addIssueDialog.setContentPane(issueForm);
             addIssueDialog.pack();
+            addIssueDialog.setSize(700, 900);
             addIssueDialog.setLocationRelativeTo(parent);
             addIssueDialog.setVisible(true);
         });
