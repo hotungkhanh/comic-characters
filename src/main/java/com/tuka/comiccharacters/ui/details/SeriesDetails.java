@@ -71,7 +71,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     detailsDialog.dispose();
-                    Publisher fetchedPublisher = publisherService.getPublisherByIdWithSeriesAndCharacters(seriesPublisher.getId());
+                    Publisher fetchedPublisher = publisherService.getByIdWithDetails(seriesPublisher.getId());
                     new PublisherDetails(parent, fetchedPublisher, refreshCallback).showDetailsDialog();
                 }
             };

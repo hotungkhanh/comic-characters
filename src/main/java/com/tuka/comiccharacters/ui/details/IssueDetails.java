@@ -115,7 +115,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     detailsDialog.dispose();
-                    Publisher fetchedPublisher = publisherService.getPublisherByIdWithSeriesAndCharacters(publisher.getId());
+                    Publisher fetchedPublisher = publisherService.getByIdWithDetails(publisher.getId());
                     new PublisherDetails(parent, fetchedPublisher, refreshCallback).showDetailsDialog();
                 }
             };

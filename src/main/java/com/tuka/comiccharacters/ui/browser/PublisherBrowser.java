@@ -35,7 +35,7 @@ public class PublisherBrowser extends AbstractBrowser<Publisher> {
 
     @Override
     protected void showDetails(Publisher publisher) {
-        Publisher fullPublisher = publisherService.getPublisherByIdWithSeriesAndCharacters(publisher.getId());
+        Publisher fullPublisher = publisherService.getByIdWithDetails(publisher.getId());
         new PublisherDetails(this, fullPublisher, this::refreshEntities).showDetailsDialog();
     }
 

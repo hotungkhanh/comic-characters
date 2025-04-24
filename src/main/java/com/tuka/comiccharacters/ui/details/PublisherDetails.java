@@ -134,7 +134,7 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
 
     @Override
     protected void deleteEntity() {
-        publisherService.deletePublisher(entity.getId());
+        publisherService.delete(entity.getId());
         MainApp.showSuccess("Publisher deleted.");
     }
 
