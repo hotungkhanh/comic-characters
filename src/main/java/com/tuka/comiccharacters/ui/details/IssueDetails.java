@@ -79,7 +79,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
         // Characters
         List<ComicCharacter> characters = List.copyOf(entity.getCharacters()); // Convert Set to List
         if (!characters.isEmpty()) {
-            JList<String> charactersList = createStringList(characters, ComicCharacter::getName);
+            JList<String> charactersList = createStringList(characters, ComicCharacter::toString);
             charactersList.addMouseListener(getListDoubleClickListener(characters, character -> {
                 ComicCharacter fetched = characterService.getCharacterByIdWithDetails(character.getId());
                 if (fetched != null) {

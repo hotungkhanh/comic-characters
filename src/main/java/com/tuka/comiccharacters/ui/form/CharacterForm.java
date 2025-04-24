@@ -37,7 +37,6 @@ public class CharacterForm extends AbstractForm {
     private final CreatorService creatorService = new CreatorService();
     private final SeriesService seriesService = new SeriesService();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private final long SEARCH_DELAY = 300;
     private ComicCharacter editingCharacter;
     private ScheduledFuture<?> creatorSearchTask;
     private Set<Creator> allCreators = new HashSet<>();

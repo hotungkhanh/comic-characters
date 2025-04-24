@@ -5,6 +5,7 @@ import com.tuka.comiccharacters.service.CreatorService;
 import com.tuka.comiccharacters.ui.MainApp;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class CreatorForm extends AbstractForm {
 
@@ -14,10 +15,45 @@ public class CreatorForm extends AbstractForm {
 
     public CreatorForm() {
         super("Add New Creator");
+        setLayout(new GridBagLayout()); // Use GridBagLayout for more control
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(5, 5, 5, 5); // Add some padding
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Make the text field fill the available horizontal space
+        gbc.weightx = 1.0; // Give the text field some weight
+
+        // Name Label and Field
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        add(new JLabel("Name:"), gbc); // Add the label
+        gbc.gridx = 1;
+        add(nameField, gbc); // Add the text field
+
+        // Overview Label and Area
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1; // Span only one column for the label
+        gbc.anchor = GridBagConstraints.WEST; // Keep label to the left
+        add(new JLabel("Overview:"), gbc);
+        gbc.gridx = 1;
+        gbc.gridwidth = 1; // The text area will take up one column.
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;  // Make the text area fill both directions
+        add(new JScrollPane(overviewArea), gbc);
+
+        // Submit Button
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2; // span 2 columns
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.NONE; // Don't fill.
+        gbc.anchor = GridBagConstraints.CENTER; // Center the button.
+        add(submitButton, gbc);
+
         overviewArea.setLineWrap(true);
         overviewArea.setWrapStyleWord(true);
-        addFormField("Name", nameField);
-        addFormField("Overview", new JScrollPane(overviewArea));
 
         addSubmitListener(_ -> {
             String name = nameField.getText().trim();
@@ -36,7 +72,7 @@ public class CreatorForm extends AbstractForm {
     }
 
     public CreatorForm(Creator existingCreator) {
-        this();
+        this(); // Call the default constructor to set up the layout
 
         setSubmitButtonText("Save");
         nameField.setText(existingCreator.getName());

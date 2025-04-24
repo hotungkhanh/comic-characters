@@ -27,8 +27,12 @@ public class SeriesForm extends AbstractForm {
     public SeriesForm(Series existingSeries, Runnable refreshCallback, JDialog parentDialog) {
         super(existingSeries == null ? "Add New Series" : "Edit Series");
 
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS)); // Use BoxLayout for vertical arrangement
+        setLayout(new GridBagLayout()); // Use GridBagLayout
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
 
         overviewArea.setLineWrap(true);
         overviewArea.setWrapStyleWord(true);
@@ -50,16 +54,60 @@ public class SeriesForm extends AbstractForm {
             }
         });
 
-        addFormField("Title", titleField);
-        add(Box.createVerticalStrut(5));
-        addFormField("Start Year", startYearField);
-        add(Box.createVerticalStrut(5));
-        addFormField("End Year", endYearField);
-        add(Box.createVerticalStrut(5));
-        addFormField("Overview", new JScrollPane(overviewArea));
-        add(Box.createVerticalStrut(5));
-        addFormField("Publisher", publisherDropdown);
-        add(Box.createVerticalStrut(10));
+        // Title Label and Field
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        add(new JLabel("Title:"), gbc);
+        gbc.gridx = 1;
+        add(titleField, gbc);
+
+        // Start Year Label and Field
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        add(new JLabel("Start Year:"), gbc);
+        gbc.gridx = 1;
+        add(startYearField, gbc);
+
+        // End Year Label and Field
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        add(new JLabel("End Year:"), gbc);
+        gbc.gridx = 1;
+        add(endYearField, gbc);
+
+        // Overview Label and Area
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        add(new JLabel("Overview:"), gbc);
+        gbc.gridx = 1;
+        gbc.gridwidth = 1;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        add(new JScrollPane(overviewArea), gbc);
+
+        // Publisher Label and Dropdown
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weighty = 0;
+        add(new JLabel("Publisher:"), gbc);
+        gbc.gridx = 1;
+        gbc.gridwidth = 1;
+        add(publisherDropdown, gbc);
+
+        // Submit Button
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
+        add(submitButton, gbc);
 
         // Pre-fill if editing
         if (existingSeries != null) {
