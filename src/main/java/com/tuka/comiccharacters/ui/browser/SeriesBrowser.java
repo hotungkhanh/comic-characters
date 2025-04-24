@@ -36,7 +36,7 @@ public class SeriesBrowser extends AbstractBrowser<Series> {
 
     @Override
     protected void showDetails(Series series) {
-        Series fullSeries = seriesService.getByIdWithIssues(series.getId());
+        Series fullSeries = seriesService.getByIdWithDetails(series.getId());
         new SeriesDetails(this, fullSeries, this::refreshEntities).showDetailsDialog();
     }
 

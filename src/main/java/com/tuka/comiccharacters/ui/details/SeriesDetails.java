@@ -119,7 +119,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
 
     private void refreshDetails() {
         SeriesService seriesService = new SeriesService();
-        Series updatedSeries = seriesService.getByIdWithIssues(entity.getId());
+        Series updatedSeries = seriesService.getByIdWithDetails(entity.getId());
         SeriesDetails.this.entity.setIssues(updatedSeries.getIssues());
         SwingUtilities.invokeLater(() -> {
             DefaultListModel<Issue> issueListModel = (DefaultListModel<Issue>) issueList.getModel();
@@ -165,7 +165,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
 
     @Override
     protected void deleteEntity() {
-        new SeriesService().deleteSeries(entity.getId());
+        new SeriesService().delete(entity.getId());
         MainApp.showSuccess("Series deleted.");
     }
 

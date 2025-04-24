@@ -52,7 +52,7 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
                 .toList();
 
         JPanel seriesPanel = createInteractiveListPanel("Series", sortedSeries, Series::toString, s -> {
-            Series fetched = seriesService.getByIdWithIssues(s.getId());
+            Series fetched = seriesService.getByIdWithDetails(s.getId());
             if (fetched != null) {
                 detailsDialog.dispose();
                 new SeriesDetails(parent, fetched, refreshCallback).showDetailsDialog();
