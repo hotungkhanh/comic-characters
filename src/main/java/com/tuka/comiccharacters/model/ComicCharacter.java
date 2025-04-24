@@ -34,7 +34,7 @@ public class ComicCharacter {
     )
     private Set<Creator> creators = new HashSet<>();
 
-    @ManyToMany(mappedBy = "characters", fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "characters", fetch = FetchType.LAZY)
     private Set<Issue> issues = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
