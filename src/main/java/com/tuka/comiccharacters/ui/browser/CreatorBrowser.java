@@ -3,7 +3,9 @@ package com.tuka.comiccharacters.ui.browser;
 import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.service.CreatorService;
 import com.tuka.comiccharacters.ui.details.CreatorDetails;
+import com.tuka.comiccharacters.ui.form.CreatorForm;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
 
@@ -11,8 +13,8 @@ public class CreatorBrowser extends AbstractBrowser<Creator> {
 
     private final CreatorService creatorService;
 
-    public CreatorBrowser() {
-        super("Creators");
+    public CreatorBrowser(JFrame parentFrame) {
+        super("Creators", parentFrame);
         this.creatorService = new CreatorService();
         refreshEntities();
     }
@@ -36,5 +38,15 @@ public class CreatorBrowser extends AbstractBrowser<Creator> {
     protected void showDetails(Creator creator) {
         Creator fullCreator = creatorService.getCreatorByIdWithDetails(creator.getId());
         new CreatorDetails(this, fullCreator, this::refreshEntities).showDetailsDialog();
+    }
+
+    @Override
+    protected void showAddForm() {
+        JDialog dialog = new JDialog(parentFrame, "Add New Creator", true);
+        dialog.setContentPane(new CreatorForm());
+        dialog.pack();
+        dialog.setLocationRelativeTo(parentFrame);
+        dialog.setVisible(true);
+        refreshEntities();
     }
 }
