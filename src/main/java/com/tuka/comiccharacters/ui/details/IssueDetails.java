@@ -65,7 +65,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
                     .collect(Collectors.toList());
             JList<String> creatorsList = createStringList(creators, this::getCreatorNameAndRoles); // Use method reference
             creatorsList.addMouseListener(getListDoubleClickListener(creators, creator -> {
-                Creator fetched = creatorService.getCreatorByIdWithDetails(creator.getId());
+                Creator fetched = creatorService.getByIdWithDetails(creator.getId());
                 if (fetched != null) {
                     detailsDialog.dispose();
                     new CreatorDetails(parent, fetched, refreshCallback).showDetailsDialog();

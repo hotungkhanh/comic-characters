@@ -54,7 +54,7 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
                 .toList();
         JList<String> creatorsList = createStringList(sortedCreators, Creator::getName);
         creatorsList.addMouseListener(getListDoubleClickListener(sortedCreators, creator -> {
-            Creator fetched = creatorService.getCreatorByIdWithDetails(creator.getId());
+            Creator fetched = creatorService.getByIdWithDetails(creator.getId());
             if (fetched != null) {
                 detailsDialog.dispose();
                 new CreatorDetails(parent, fetched, refreshCallback).showDetailsDialog();

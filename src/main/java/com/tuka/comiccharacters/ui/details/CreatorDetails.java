@@ -159,7 +159,7 @@ public class CreatorDetails extends AbstractDetails<Creator> {
 
     @Override
     protected void deleteEntity() {
-        new CreatorService().deleteCreator(entity.getId());
+        new CreatorService().delete(entity.getId());
         MainApp.showSuccess("Creator deleted.");
     }
 

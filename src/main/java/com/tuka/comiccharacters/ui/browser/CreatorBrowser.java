@@ -36,7 +36,7 @@ public class CreatorBrowser extends AbstractBrowser<Creator> {
 
     @Override
     protected void showDetails(Creator creator) {
-        Creator fullCreator = creatorService.getCreatorByIdWithDetails(creator.getId());
+        Creator fullCreator = creatorService.getByIdWithDetails(creator.getId());
         new CreatorDetails(this, fullCreator, this::refreshEntities).showDetailsDialog();
     }
 
