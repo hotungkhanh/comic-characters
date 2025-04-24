@@ -1,5 +1,6 @@
 package com.tuka.comiccharacters.service;
 
+import com.tuka.comiccharacters.dao.Dao;
 import com.tuka.comiccharacters.dao.IssueDaoImpl;
 import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Issue;
@@ -17,7 +18,8 @@ import java.util.Set;
 import static com.tuka.comiccharacters.util.JPAUtil.getEntityManager;
 
 public class IssueService {
-    private final IssueDaoImpl issueDao = new IssueDaoImpl();
+    private final Dao<Issue> issueDao = new IssueDaoImpl();
+
     public void addIssue(Series series, BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal priceUsd, boolean isAnnual, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
         Issue issue = new Issue(series, issueNumber);
         issue.setOverview(overview);

@@ -5,6 +5,7 @@ import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.model.Series;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -42,6 +43,7 @@ public class SeriesService {
         if (series == null || series.getId() == null) {
             throw new IllegalArgumentException("Invalid series provided.");
         }
-        return seriesDao.findIssuesBySeries(series);
+        series = seriesDao.findByIdWithDetails(series.getId());
+        return new ArrayList<>(series.getIssues());
     }
 }

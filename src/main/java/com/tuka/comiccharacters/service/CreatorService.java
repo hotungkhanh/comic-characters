@@ -1,6 +1,7 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.CreatorDaoImpl;
+import com.tuka.comiccharacters.dao.Dao;
 import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Creator;
 import jakarta.persistence.EntityManager;
@@ -11,7 +12,7 @@ import java.util.Set;
 import static com.tuka.comiccharacters.util.JPAUtil.getEntityManager;
 
 public class CreatorService {
-    private final CreatorDaoImpl creatorDao = new CreatorDaoImpl();
+    private final Dao<Creator> creatorDao = new CreatorDaoImpl();
 
     public void addCreator(String name, String overview) {
         creatorDao.save(new Creator(name, overview));

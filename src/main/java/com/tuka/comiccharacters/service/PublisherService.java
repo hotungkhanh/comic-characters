@@ -1,5 +1,6 @@
 package com.tuka.comiccharacters.service;
 
+import com.tuka.comiccharacters.dao.Dao;
 import com.tuka.comiccharacters.dao.PublisherDaoImpl;
 import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Publisher;
@@ -12,7 +13,7 @@ import java.util.Set;
 import static com.tuka.comiccharacters.util.JPAUtil.getEntityManager;
 
 public class PublisherService {
-    private final PublisherDaoImpl publisherDao = new PublisherDaoImpl();
+    private final Dao<Publisher> publisherDao = new PublisherDaoImpl();
 
     public void addPublisher(String name) {
         if (name == null || name.trim().isEmpty()) {
@@ -45,9 +46,9 @@ public class PublisherService {
     }
 
     public void deletePublisher(Long id) {
-        EntityManager em = getEntityManager();
         EntityTransaction transaction = null;
-        try {
+
+        try (EntityManager em = getEntityManager()) {
             transaction = em.getTransaction();
             transaction.begin();
 
@@ -78,8 +79,6 @@ public class PublisherService {
                 transaction.rollback();
             }
             throw e;
-        } finally {
-            em.close();
         }
     }
 }

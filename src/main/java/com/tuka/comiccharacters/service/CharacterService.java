@@ -1,6 +1,7 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.CharacterDaoImpl;
+import com.tuka.comiccharacters.dao.Dao;
 import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.model.Issue;
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 public class CharacterService {
-    private final CharacterDaoImpl characterDao = new CharacterDaoImpl();
+    private final Dao<ComicCharacter> characterDao = new CharacterDaoImpl();
 
     public void addCharacter(String name, String alias, Publisher publisher, String overview, List<Creator> creatorList, Issue firstAppearance) {
         if (name == null || name.trim().isEmpty()) {
