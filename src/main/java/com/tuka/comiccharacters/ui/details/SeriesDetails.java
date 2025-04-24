@@ -20,7 +20,7 @@ import java.util.List;
 public class SeriesDetails extends AbstractDetails<Series> {
 
     private final PublisherService publisherService = new PublisherService();
-    private final IssueService issueService = new IssueService(); // Add IssueService
+    private final IssueService issueService = new IssueService();
     private JDialog detailsDialog;
     private JList<Issue> issueList;
 
@@ -29,7 +29,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
     }
 
     public void showDetailsDialog() {
-        super.showDetailsDialog(600, 700);
+        super.showDetailsDialog(600, 500);
     }
 
     @Override
@@ -65,19 +65,21 @@ public class SeriesDetails extends AbstractDetails<Series> {
 
     private int addPublisherLink(JPanel panel, int row) {
         Publisher seriesPublisher = entity.getPublisher();
-        MouseAdapter mouseAdapter = null;
-        if (seriesPublisher != null) {
-            mouseAdapter = new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    detailsDialog.dispose();
-                    Publisher fetchedPublisher = publisherService.getByIdWithDetails(seriesPublisher.getId());
-                    new PublisherDetails(parent, fetchedPublisher, refreshCallback).showDetailsDialog();
-                }
-            };
+
+        if (seriesPublisher == null) {
+            return row;
         }
-        String publisherText = (entity.getPublisher() != null) ? entity.getPublisher().getName() : "None";
-        return addClickableLabel(panel, "Publisher:", publisherText, row, mouseAdapter, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        MouseAdapter mouseAdapter = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                detailsDialog.dispose();
+                Publisher fetchedPublisher = publisherService.getByIdWithDetails(seriesPublisher.getId());
+                new PublisherDetails(parent, fetchedPublisher, refreshCallback).showDetailsDialog();
+            }
+        };
+
+        return addClickableLabel(panel, "Publisher:", seriesPublisher.getName(), row, mouseAdapter, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
     private JPanel createIssuesPanel() {
