@@ -161,9 +161,13 @@ public class SeriesForm extends AbstractForm {
      */
     private void addSeries(String title, int startYear, Integer endYear,
                            String overview, Publisher publisher) {
-        seriesService.addSeries(title, startYear, endYear, overview, publisher);
-        showSuccess("Series added!");
-        resetForm();
+        try {
+            seriesService.addSeries(title, startYear, endYear, overview, publisher);
+            showSuccess("Series added!");
+            resetForm();
+        } catch (IllegalArgumentException e) {
+            showError(e.getMessage());
+        }
     }
 
     /**
@@ -177,14 +181,18 @@ public class SeriesForm extends AbstractForm {
      */
     private void updateSeries(String title, int startYear, Integer endYear,
                               String overview, Publisher publisher) {
-        existingSeries.setTitle(title);
-        existingSeries.setStartYear(startYear);
-        existingSeries.setEndYear(endYear);
-        existingSeries.setOverview(overview);
-        existingSeries.setPublisher(publisher);
+        try {
+            existingSeries.setTitle(title);
+            existingSeries.setStartYear(startYear);
+            existingSeries.setEndYear(endYear);
+            existingSeries.setOverview(overview);
+            existingSeries.setPublisher(publisher);
 
-        seriesService.updateSeries(existingSeries);
-        showSuccess("Series updated!");
+            seriesService.updateSeries(existingSeries);
+            showSuccess("Series updated!");
+        } catch (IllegalArgumentException e) {
+            showError(e.getMessage());
+        }
     }
 
     /**
