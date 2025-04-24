@@ -166,7 +166,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
 
     @Override
     protected void deleteEntity() {
-        issueService.deleteIssue(entity.getId());
+        issueService.delete(entity.getId());
         MainApp.showSuccess("Issue deleted.");
     }
 

@@ -101,7 +101,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
                 if (e.getClickCount() == 2) {
                     Issue selectedIssue = issueList.getSelectedValue();
                     if (selectedIssue != null) {
-                        Issue fetchedIssue = issueService.getIssueByIdWithDetails(selectedIssue.getId());
+                        Issue fetchedIssue = issueService.getByIdWithDetails(selectedIssue.getId());
                         if (fetchedIssue != null) {
                             new IssueDetails(parent, fetchedIssue, SeriesDetails.this::refreshDetails).showDetailsDialog();
                         } else {

@@ -74,7 +74,7 @@ public class CreatorDetails extends AbstractDetails<Creator> {
                 sortedIssues,
                 Issue::toString,
                 selected -> {
-                    Issue fetched = issueService.getIssueByIdWithDetails(selected.getId());
+                    Issue fetched = issueService.getByIdWithDetails(selected.getId());
                     if (fetched != null) {
                         detailsDialog.dispose();
                         new IssueDetails(parent, fetched, refreshCallback).showDetailsDialog();

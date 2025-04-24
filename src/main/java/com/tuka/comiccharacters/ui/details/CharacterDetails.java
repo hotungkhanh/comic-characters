@@ -73,7 +73,7 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     detailsDialog.dispose();
-                    Issue fetchedIssue = issueService.getIssueByIdWithDetails(entity.getFirstAppearance().getId());
+                    Issue fetchedIssue = issueService.getByIdWithDetails(entity.getFirstAppearance().getId());
                     new IssueDetails(parent, fetchedIssue, refreshCallback).showDetailsDialog();
                 }
             };
@@ -96,7 +96,7 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
                 .toList();
         JList<String> appearsInList = createStringList(sortedIssues, Issue::toString);
         appearsInList.addMouseListener(getListDoubleClickListener(sortedIssues, issue -> {
-            Issue fetched = issueService.getIssueByIdWithDetails(issue.getId());
+            Issue fetched = issueService.getByIdWithDetails(issue.getId());
             if (fetched != null) {
                 detailsDialog.dispose();
                 new IssueDetails(parent, fetched, refreshCallback).showDetailsDialog();
