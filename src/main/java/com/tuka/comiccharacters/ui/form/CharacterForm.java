@@ -9,134 +9,447 @@ import com.tuka.comiccharacters.service.SeriesService;
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.tuka.comiccharacters.ui.MainApp.showError;
-import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
-
 public class CharacterForm extends AbstractForm {
-
+    // Form fields
     private final JTextField nameField = new JTextField(20);
     private final JTextField aliasField = new JTextField(20);
-    private final JComboBox<Publisher> publisherDropdown;
-    private final JTextField creatorSearchField = new JTextField(15);
-    private final DefaultListModel<Creator> selectedCreatorsModel = new DefaultListModel<>();
-    private final JList<Creator> selectedCreatorsList = new JList<>(selectedCreatorsModel);
-    private final JComboBox<Series> firstAppearanceSeriesDropdown;
-    private final JComboBox<Issue> firstAppearanceIssueDropdown;
     private final JTextArea overviewTextArea = new JTextArea(5, 20);
+    // Services - initialized once
     private final CharacterService characterService = new CharacterService();
     private final CreatorService creatorService = new CreatorService();
     private final SeriesService seriesService = new SeriesService();
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final PublisherService publisherService = new PublisherService();
+    private JComboBox<Publisher> publisherDropdown;
+    // First appearance dropdowns
+    private JComboBox<Series> seriesDropdown;
+    private JComboBox<Issue> issueDropdown;
+    private JPanel issueDropdownPanel;
+    // Component panels
+    private CreatorSelectionPanel creatorSelectionPanel;
+    // State management
     private ComicCharacter editingCharacter;
-    private ScheduledFuture<?> creatorSearchTask;
-    private Set<Creator> allCreators = new HashSet<>();
-    private DefaultListModel<Creator> searchResultsModel; // Added field
 
+    /**
+     * Creates a new character form for adding characters
+     */
     public CharacterForm() {
         super("Add New Character");
-        setLayout(new BorderLayout());
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        buildUI();
+        loadInitialData();
+        setupSubmitAction();
+    }
 
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+    /**
+     * Creates a new character form for editing an existing character
+     *
+     * @param character The character to edit
+     */
+    public CharacterForm(ComicCharacter character) {
+        super("Edit Character");
+        this.editingCharacter = character;
+        setEditMode(true);
+        buildUI();
+        loadInitialData();
+        populateFields(character);
+        setupEditAction();
+    }
 
-        JPanel characterInfoPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
+    @Override
+    protected void buildUI() {
+        int row = 0;
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        characterInfoPanel.add(new JLabel("Name:"), gbc);
-        gbc.gridx = 1;
-        characterInfoPanel.add(nameField, gbc);
+        // Character basic info section
+        row = addTextField("Name:", nameField, row, true);
+        row = addTextField("Alias:", aliasField, row, false);
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        characterInfoPanel.add(new JLabel("Alias:"), gbc);
-        gbc.gridx = 1;
-        characterInfoPanel.add(aliasField, gbc);
-
-        PublisherService publisherService = new PublisherService();
+        // Publisher dropdown
         Set<Publisher> allPublishers = publisherService.getAllPublishers();
         List<Publisher> publishersWithNull = new ArrayList<>();
         publishersWithNull.add(null);
         publishersWithNull.addAll(allPublishers);
-        publisherDropdown = new JComboBox<>(publishersWithNull.toArray(new Publisher[0]));
-        publisherDropdown.setRenderer(new NullableItemRenderer("None"));
+        publisherDropdown = createNullableDropdown(publishersWithNull.toArray(new Publisher[0]), "None");
+        row = addDropdown("Publisher:", publisherDropdown, row, false);
+
+        // Overview text area
+        row = addTextArea("Overview:", overviewTextArea, row, 5, false);
+
+        // Creators section
+        creatorSelectionPanel = new CreatorSelectionPanel(creatorService);
+        row = addPanel(creatorSelectionPanel, row);
+
+        // First appearance section
+        JPanel firstAppearancePanel = createFirstAppearancePanel();
+        row = addPanel(firstAppearancePanel, row);
+    }
+
+    /**
+     * Creates the panel for selecting a character's first appearance
+     *
+     * @return The first appearance panel
+     */
+    private JPanel createFirstAppearancePanel() {
+        JPanel panel = createTitledPanel("First Appearance");
+        panel.setLayout(new BorderLayout());
+
+        JPanel contentPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = createDefaultConstraints();
+
+        // Series dropdown
         gbc.gridx = 0;
-        gbc.gridy = 2;
-        characterInfoPanel.add(new JLabel("Publisher:"), gbc);
-        gbc.gridx = 1;
-        characterInfoPanel.add(publisherDropdown, gbc);
+        gbc.gridy = 0;
+        contentPanel.add(new JLabel("Series:"), gbc);
 
-        overviewTextArea.setLineWrap(true);
-        overviewTextArea.setWrapStyleWord(true);
-        JScrollPane overviewScrollPane = new JScrollPane(overviewTextArea);
-        overviewScrollPane.setPreferredSize(new Dimension(300, 120));
+        // Get all series and sort them alphabetically
+        Set<Series> allSeriesSet = seriesService.getAllSeries();
+        List<Series> allSeriesList = new ArrayList<>(allSeriesSet);
+
+        // Sort series by title for better usability
+        allSeriesList.sort(Comparator.comparing(Series::getTitle));
+
+        // Add null option at the beginning
+        List<Series> seriesWithNull = new ArrayList<>();
+        seriesWithNull.add(null);
+        seriesWithNull.addAll(allSeriesList);
+
+        seriesDropdown = createNullableDropdown(seriesWithNull.toArray(new Series[0]), "Select a Series");
+
+        gbc.gridx = 1;
+        contentPanel.add(seriesDropdown, gbc);
+
+        // Issue dropdown (initially not visible until Series is selected)
+        issueDropdownPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints issueGbc = createDefaultConstraints();
+
+        issueGbc.gridx = 0;
+        issueGbc.gridy = 0;
+        issueDropdownPanel.add(new JLabel("Issue:"), issueGbc);
+
+        issueDropdown = new JComboBox<>();
+        issueDropdown.setEnabled(false);
+
+        issueGbc.gridx = 1;
+        issueDropdownPanel.add(issueDropdown, issueGbc);
+
+        // Initially hide the issue dropdown panel
+        issueDropdownPanel.setVisible(false);
+
         gbc.gridx = 0;
-        gbc.gridy = 3;
-        characterInfoPanel.add(new JLabel("Overview:"), gbc);
-        gbc.gridx = 1;
-        characterInfoPanel.add(overviewScrollPane, gbc);
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        contentPanel.add(issueDropdownPanel, gbc);
 
-        contentPanel.add(characterInfoPanel);
-        contentPanel.add(Box.createVerticalStrut(15));
-
-        // Creators Section
-        JPanel creatorPanel = new JPanel(new BorderLayout());
-        creatorPanel.setBorder(BorderFactory.createTitledBorder("Creators"));
-
-        // Search Panel
-        JPanel creatorSearchPanel = new JPanel(new BorderLayout());
-        creatorSearchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
-        creatorSearchField.setText("Search for Creators...");
-        creatorSearchField.setForeground(Color.GRAY);
-        creatorSearchField.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (creatorSearchField.getText().equals("Search for Creators...")) {
-                    creatorSearchField.setText("");
-                    creatorSearchField.setForeground(Color.BLACK);
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (creatorSearchField.getText().isEmpty()) {
-                    creatorSearchField.setForeground(Color.GRAY);
-                    creatorSearchField.setText("Search for Creators...");
-                }
-            }
+        // Add listener to update issues when series changes
+        seriesDropdown.addActionListener(e -> {
+            Series selectedSeries = (Series) seriesDropdown.getSelectedItem();
+            updateIssueDropdown(selectedSeries);
         });
-        creatorSearchPanel.add(creatorSearchField, BorderLayout.CENTER);
-        creatorPanel.add(creatorSearchPanel, BorderLayout.NORTH);
 
-        // Search results list
-        searchResultsModel = new DefaultListModel<>();
-        JList<Creator> searchResultsList = new JList<>(searchResultsModel);
-        searchResultsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        JScrollPane searchScrollPane = new JScrollPane(searchResultsList);
-        searchScrollPane.setPreferredSize(new Dimension(300, 80));
+        panel.add(contentPanel, BorderLayout.CENTER);
+        return panel;
+    }
 
-        // Add Creator button
-        JPanel addCreatorPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton addCreatorButton = new JButton("Add Creator(s)");
-        addCreatorButton.setPreferredSize(new Dimension(300, 30));
-        addCreatorPanel.add(addCreatorButton);
-        addCreatorButton.addActionListener(_ -> {
+    /**
+     * Updates the issue dropdown based on the selected series
+     *
+     * @param series The selected series
+     */
+    private void updateIssueDropdown(Series series) {
+        issueDropdown.removeAllItems();
+
+        if (series == null) {
+            issueDropdownPanel.setVisible(false);
+            issueDropdown.setEnabled(false);
+            return;
+        }
+
+        // Load issues for the selected series
+        List<Issue> issues = seriesService.getIssuesBySeries(series);
+
+        // Sort issues by issue number for better usability
+        issues.sort(Comparator.comparing(Issue::getIssueNumber));
+
+        if (issues.isEmpty()) {
+            issueDropdown.setEnabled(false);
+        } else {
+            issueDropdown.setEnabled(true);
+            for (Issue issue : issues) {
+                issueDropdown.addItem(issue);
+            }
+        }
+
+        // Make issue dropdown panel visible
+        issueDropdownPanel.setVisible(true);
+
+        // Revalidate and repaint to ensure UI updates correctly
+        issueDropdownPanel.revalidate();
+        issueDropdownPanel.repaint();
+    }
+
+    /**
+     * Sets up the submit action for adding new characters
+     */
+    private void setupSubmitAction() {
+        addSubmitListener(e -> {
+            if (!validateForm()) {
+                return;
+            }
+            CharacterData data = collectFormData();
+            characterService.addCharacter(
+                    data.name, data.alias, data.publisher,
+                    data.overview, data.creators, data.firstAppearance
+            );
+            showSuccess("Character added!");
+            resetForm();
+        });
+    }
+
+    /**
+     * Sets up the submit action for editing characters
+     */
+    private void setupEditAction() {
+        removeAllSubmitListeners();
+        addSubmitListener(e -> {
+            if (!validateForm()) {
+                return;
+            }
+            CharacterData data = collectFormData();
+            editingCharacter.setName(data.name);
+            editingCharacter.setAlias(data.alias);
+            editingCharacter.setPublisher(data.publisher);
+            editingCharacter.setOverview(data.overview);
+            editingCharacter.setCreators(new HashSet<>(data.creators));
+            editingCharacter.setFirstAppearance(data.firstAppearance);
+
+            characterService.updateCharacter(editingCharacter);
+            showSuccess("Character updated!");
+            SwingUtilities.getWindowAncestor(this).dispose();
+        });
+    }
+
+    /**
+     * Helper method to collect all form data into a single object
+     */
+    private CharacterData collectFormData() {
+        CharacterData data = new CharacterData();
+        data.name = nameField.getText().trim();
+        data.alias = aliasField.getText().trim();
+        data.publisher = (Publisher) publisherDropdown.getSelectedItem();
+        data.overview = overviewTextArea.getText().trim();
+        data.creators = creatorSelectionPanel.getSelectedCreators();
+        data.firstAppearance = (Issue) issueDropdown.getSelectedItem();
+        return data;
+    }
+
+    /**
+     * Validates the form fields
+     *
+     * @return Whether the form is valid
+     */
+    private boolean validateForm() {
+        if (nameField.getText().trim().isEmpty()) {
+            showError("Character name is required.");
+            nameField.requestFocus();
+            return false;
+        }
+
+        // Validate first appearance - if series is selected, issue must also be selected
+        Series selectedSeries = (Series) seriesDropdown.getSelectedItem();
+        Issue selectedIssue = (Issue) issueDropdown.getSelectedItem();
+
+        if (selectedSeries != null && selectedIssue == null) {
+            showError("Please select an issue for the chosen series or clear the series selection.");
+            issueDropdown.requestFocus();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Populates form fields with data from an existing character
+     *
+     * @param character The character to load data from
+     */
+    private void populateFields(ComicCharacter character) {
+        nameField.setText(character.getName());
+        aliasField.setText(character.getAlias() != null ? character.getAlias() : "");
+        publisherDropdown.setSelectedItem(character.getPublisher());
+        overviewTextArea.setText(character.getOverview() != null ? character.getOverview() : "");
+
+        creatorSelectionPanel.setSelectedCreators(character.getCreators());
+
+        // Set first appearance if it exists
+        Issue firstAppearance = character.getFirstAppearance();
+        if (firstAppearance != null) {
+            Series series = firstAppearance.getSeries();
+            seriesDropdown.setSelectedItem(series);
+            // Series selection will trigger issue dropdown update
+            // But we need to set the selected issue after that happens
+            SwingUtilities.invokeLater(() -> issueDropdown.setSelectedItem(firstAppearance));
+        }
+    }
+
+    /**
+     * Loads initial data for the form
+     */
+    private void loadInitialData() {
+        creatorSelectionPanel.loadCreators();
+    }
+
+    @Override
+    protected void resetForm() {
+        nameField.setText("");
+        aliasField.setText("");
+        publisherDropdown.setSelectedIndex(0);
+        overviewTextArea.setText("");
+        creatorSelectionPanel.clearSelection();
+        seriesDropdown.setSelectedIndex(0);
+        issueDropdown.removeAllItems();
+        issueDropdownPanel.setVisible(false);
+    }
+
+    /**
+     * Data class to hold character form data
+     */
+    private static class CharacterData {
+        String name;
+        String alias;
+        Publisher publisher;
+        String overview;
+        List<Creator> creators;
+        Issue firstAppearance;
+    }
+
+    /**
+     * Panel for creator selection functionality
+     */
+    private class CreatorSelectionPanel extends JPanel {
+        private final JTextField creatorSearchField;
+        private final DefaultListModel<Creator> selectedCreatorsModel = new DefaultListModel<>();
+        private final DefaultListModel<Creator> searchResultsModel = new DefaultListModel<>();
+        private final JList<Creator> selectedCreatorsList;
+        private final JList<Creator> searchResultsList;
+        private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        private final CreatorService creatorService;
+        private ScheduledFuture<?> creatorSearchTask;
+        private Set<Creator> allCreators = new HashSet<>();
+
+        public CreatorSelectionPanel(CreatorService creatorService) {
+            super(new BorderLayout());
+            this.creatorService = creatorService;
+
+            setBorder(BorderFactory.createTitledBorder("Creators"));
+
+            // Setup creator search field
+            creatorSearchField = createSearchField("Search for Creators...");
+            JPanel creatorSearchPanel = new JPanel(new BorderLayout());
+            creatorSearchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
+            creatorSearchPanel.add(creatorSearchField, BorderLayout.CENTER);
+
+            // Setup search results
+            searchResultsList = new JList<>(searchResultsModel);
+            searchResultsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            JScrollPane searchScrollPane = new JScrollPane(searchResultsList);
+            searchScrollPane.setPreferredSize(new Dimension(300, 80));
+
+            // Add Creator button
+            JButton addCreatorButton = new JButton("Add Creator(s)");
+            addCreatorButton.setPreferredSize(new Dimension(300, 30));
+            JPanel addCreatorPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            addCreatorPanel.add(addCreatorButton);
+
+            // Setup selected creators list
+            selectedCreatorsList = new JList<>(selectedCreatorsModel);
+            JScrollPane selectedScrollPane = new JScrollPane(selectedCreatorsList);
+            selectedScrollPane.setPreferredSize(new Dimension(300, 80));
+
+            // Combine panels
+            JPanel searchAndAddPanel = new JPanel(new BorderLayout());
+            searchAndAddPanel.add(searchScrollPane, BorderLayout.CENTER);
+            searchAndAddPanel.add(addCreatorPanel, BorderLayout.SOUTH);
+
+            add(creatorSearchPanel, BorderLayout.NORTH);
+            add(searchAndAddPanel, BorderLayout.CENTER);
+            add(selectedScrollPane, BorderLayout.SOUTH);
+
+            // Add event listeners
+            addCreatorRemovalListener();
+            addCreatorButton.addActionListener(e -> addSelectedCreators());
+            setupCreatorSearchListener();
+        }
+
+        public void loadCreators() {
+            Executors.newSingleThreadExecutor().submit(() -> {
+                allCreators = creatorService.getAllCreators();
+            });
+        }
+
+        public List<Creator> getSelectedCreators() {
+            List<Creator> result = new ArrayList<>();
+            for (int i = 0; i < selectedCreatorsModel.getSize(); i++) {
+                result.add(selectedCreatorsModel.getElementAt(i));
+            }
+            return result;
+        }
+
+        public void setSelectedCreators(Set<Creator> creators) {
+            selectedCreatorsModel.clear();
+            for (Creator creator : creators) {
+                selectedCreatorsModel.addElement(creator);
+            }
+        }
+
+        public void clearSelection() {
+            selectedCreatorsModel.clear();
+        }
+
+        private void setupCreatorSearchListener() {
+            creatorSearchField.getDocument().addDocumentListener(new DocumentListener() {
+                void updateSearch() {
+                    scheduleCreatorSearch();
+                }
+
+                @Override
+                public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                    updateSearch();
+                }
+
+                @Override
+                public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                    updateSearch();
+                }
+
+                @Override
+                public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                    updateSearch();
+                }
+            });
+        }
+
+        private void scheduleCreatorSearch() {
+            if (creatorSearchTask != null) {
+                creatorSearchTask.cancel(true);
+            }
+            long SEARCH_DELAY = 300;
+            creatorSearchTask = scheduler.schedule(() -> {
+                String search = creatorSearchField.getText().trim().toLowerCase();
+                SwingUtilities.invokeLater(() -> {
+                    searchResultsModel.clear();
+                    allCreators.stream()
+                            .filter(creator -> creator.getName().toLowerCase().contains(search))
+                            .forEach(searchResultsModel::addElement);
+                });
+            }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
+        }
+
+        private void addSelectedCreators() {
             List<Creator> selected = searchResultsList.getSelectedValuesList();
             for (Creator creator : selected) {
                 if (!selectedCreatorsModel.contains(creator)) {
@@ -145,273 +458,10 @@ public class CharacterForm extends AbstractForm {
             }
             searchResultsList.clearSelection();
             creatorSearchField.setText("");
-        });
-
-        // Selected creators list
-        JScrollPane selectedScrollPane = new JScrollPane(selectedCreatorsList);
-        selectedScrollPane.setPreferredSize(new Dimension(300, 80));
-        creatorPanel.add(selectedScrollPane, BorderLayout.SOUTH);
-        addCreatorRemovalListener();
-
-        JPanel searchAndAddPanel = new JPanel(new BorderLayout());
-        searchAndAddPanel.add(searchScrollPane, BorderLayout.CENTER);
-        searchAndAddPanel.add(addCreatorPanel, BorderLayout.SOUTH);
-        creatorPanel.add(searchAndAddPanel, BorderLayout.CENTER);
-
-        creatorSearchField.getDocument().addDocumentListener(new DocumentListener() {
-            void updateSearch() {
-                scheduleCreatorSearch();
-            }
-
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                updateSearch();
-            }
-
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                updateSearch();
-            }
-
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                updateSearch();
-            }
-        });
-
-        contentPanel.add(creatorPanel);
-        contentPanel.add(Box.createVerticalStrut(15));
-
-        // First Appearance Series and Issue Dropdowns
-        JPanel firstAppearancePanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbcAppearance = new GridBagConstraints();
-        gbcAppearance.anchor = GridBagConstraints.WEST;
-        gbcAppearance.insets = new Insets(5, 5, 5, 5);
-        gbcAppearance.fill = GridBagConstraints.HORIZONTAL;
-        gbcAppearance.weightx = 1.0;
-
-        Set<Series> allSeries = seriesService.getAllSeries();
-        List<Series> seriesWithNull = new ArrayList<>();
-        seriesWithNull.add(null);
-        seriesWithNull.addAll(allSeries);
-        firstAppearanceSeriesDropdown = new JComboBox<>(seriesWithNull.toArray(new Series[0]));
-        firstAppearanceSeriesDropdown.setRenderer(new NullableItemRenderer("None"));
-        gbcAppearance.gridx = 0;
-        gbcAppearance.gridy = 0;
-        firstAppearancePanel.add(new JLabel("First appearance Series:"), gbcAppearance);
-        gbcAppearance.gridx = 1;
-        firstAppearancePanel.add(firstAppearanceSeriesDropdown, gbcAppearance);
-
-        firstAppearanceIssueDropdown = new JComboBox<>();
-        firstAppearanceIssueDropdown.setEnabled(false);
-        firstAppearanceIssueDropdown.setRenderer(new NullableItemRenderer("None"));
-        gbcAppearance.gridx = 0;
-        gbcAppearance.gridy = 1;
-        firstAppearancePanel.add(new JLabel("First appearance Issue:"), gbcAppearance);
-        gbcAppearance.gridx = 1;
-        firstAppearancePanel.add(firstAppearanceIssueDropdown, gbcAppearance);
-
-        firstAppearanceSeriesDropdown.addActionListener(_ -> populateIssuesDropdown());
-        contentPanel.add(firstAppearancePanel);
-        contentPanel.add(Box.createVerticalStrut(15));
-
-        add(new JScrollPane(contentPanel), BorderLayout.CENTER);
-        add(submitButton, BorderLayout.SOUTH);
-
-        // Load initial data for creator search.
-        loadInitialData();
-
-        addSubmitListener(_ -> {
-            String name = nameField.getText().trim();
-            String alias = aliasField.getText().trim();
-            Publisher selectedPublisher = (Publisher) publisherDropdown.getSelectedItem();
-            String overview = overviewTextArea.getText().trim();
-            List<Creator> selectedCreators = new ArrayList<>();
-            for (int i = 0; i < selectedCreatorsModel.size(); i++) {
-                selectedCreators.add(selectedCreatorsModel.get(i));
-            }
-            Issue selectedFirstAppearance = (Issue) firstAppearanceIssueDropdown.getSelectedItem();
-            Series selectedSeries = (Series) firstAppearanceSeriesDropdown.getSelectedItem();
-
-            if (name.isEmpty()) {
-                showError("Character name is required.");
-                return;
-            }
-
-            if (selectedSeries != null && selectedFirstAppearance == null) {
-                showError("You must select an Issue if you select a Series.");
-                return;
-            }
-
-            if (editingCharacter != null) {
-                updateCharacter(name, alias, selectedPublisher, overview, selectedCreators, selectedFirstAppearance);
-            } else {
-                addCharacter(name, alias, selectedPublisher, overview, selectedCreators, selectedFirstAppearance);
-            }
-        });
-    }
-
-    public CharacterForm(ComicCharacter character) {
-        this();
-        setSubmitButtonText("Save Changes");
-        this.editingCharacter = character;
-        nameField.setText(character.getName());
-        aliasField.setText(character.getAlias());
-        publisherDropdown.setSelectedItem(character.getPublisher());
-        overviewTextArea.setText(character.getOverview());
-
-        for (Creator creator : character.getCreators()) {
-            if (!selectedCreatorsModel.contains(creator)) {
-                selectedCreatorsModel.addElement(creator);
-            }
         }
 
-        firstAppearanceSeriesDropdown.setSelectedItem(character.getFirstAppearance() != null ? character.getFirstAppearance().getSeries() : null);
-        populateIssuesDropdown(character.getFirstAppearance());
-
-        removeAllSubmitListeners();
-        addSubmitListener(_ -> {
-            String name = nameField.getText().trim();
-            String alias = aliasField.getText().trim();
-            Publisher selectedPublisher = (Publisher) publisherDropdown.getSelectedItem();
-            String overview = overviewTextArea.getText().trim();
-            List<Creator> selectedCreators = new ArrayList<>();
-            for (int i = 0; i < selectedCreatorsModel.size(); i++) {
-                selectedCreators.add(selectedCreatorsModel.get(i));
-            }
-            Issue selectedFirstAppearance = (Issue) firstAppearanceIssueDropdown.getSelectedItem();
-            Series selectedSeries = (Series) firstAppearanceSeriesDropdown.getSelectedItem();
-
-            if (name.isEmpty()) {
-                showError("Character name is required.");
-                return;
-            }
-
-            if (selectedSeries != null && selectedFirstAppearance == null) {
-                showError("You must select an Issue if you select a Series.");
-                return;
-            }
-
-            updateCharacter(name, alias, selectedPublisher, overview, selectedCreators, selectedFirstAppearance);
-        });
-    }
-
-    private void addCharacter(String name, String alias, Publisher selectedPublisher, String overview, List<Creator> selectedCreators, Issue selectedFirstAppearance) {
-        characterService.addCharacter(name, alias, selectedPublisher, overview, selectedCreators, selectedFirstAppearance);
-        showSuccess("Character added!");
-        resetForm();
-    }
-
-    private void updateCharacter(String name, String alias, Publisher selectedPublisher, String overview, List<Creator> selectedCreators, Issue selectedFirstAppearance) {
-        editingCharacter.setName(name);
-        editingCharacter.setAlias(alias);
-        editingCharacter.setPublisher(selectedPublisher);
-        editingCharacter.setOverview(overview);
-        editingCharacter.setCreators(new HashSet<>(selectedCreators));
-        editingCharacter.setFirstAppearance(selectedFirstAppearance);
-        characterService.updateCharacter(editingCharacter);
-        showSuccess("Character updated!");
-        SwingUtilities.getWindowAncestor(this).dispose();
-    }
-
-    private void addCreatorRemovalListener() {
-        selectedCreatorsList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    int index = selectedCreatorsList.locationToIndex(e.getPoint());
-                    if (index >= 0 && index < selectedCreatorsModel.getSize()) {
-                        selectedCreatorsList.setSelectedIndex(index);
-                        JPopupMenu popupMenu = new JPopupMenu();
-                        JMenuItem removeItem = new JMenuItem("Remove Creator");
-                        removeItem.addActionListener(new AbstractAction() {
-                            @Override
-                            public void actionPerformed(ActionEvent event) {
-                                removeSelectedCreator();
-                            }
-                        });
-                        popupMenu.add(removeItem);
-                        popupMenu.show(selectedCreatorsList, e.getX(), e.getY());
-                    }
-                }
-            }
-        });
-    }
-
-    private void removeSelectedCreator() {
-        int selectedIndex = selectedCreatorsList.getSelectedIndex();
-        if (selectedIndex != -1) {
-            selectedCreatorsModel.remove(selectedIndex);
-        }
-    }
-
-    private void populateIssuesDropdown() {
-        Series selectedSeries = (Series) firstAppearanceSeriesDropdown.getSelectedItem();
-        firstAppearanceIssueDropdown.removeAllItems();
-        firstAppearanceIssueDropdown.setEnabled(selectedSeries != null);
-        if (selectedSeries != null) {
-            List<Issue> issues = seriesService.getIssuesBySeries(selectedSeries);
-            for (Issue issue : issues) {
-                firstAppearanceIssueDropdown.addItem(issue);
-            }
-        } else {
-            firstAppearanceIssueDropdown.addItem(null);
-            firstAppearanceIssueDropdown.setRenderer(new NullableItemRenderer("None"));
-        }
-    }
-
-    private void populateIssuesDropdown(Issue preselectedIssue) {
-        populateIssuesDropdown();
-        firstAppearanceIssueDropdown.setSelectedItem(preselectedIssue);
-    }
-
-    private void resetForm() {
-        nameField.setText("");
-        aliasField.setText("");
-        publisherDropdown.setSelectedIndex(0);
-        overviewTextArea.setText("");
-        selectedCreatorsModel.clear();
-        firstAppearanceSeriesDropdown.setSelectedIndex(0);
-        firstAppearanceIssueDropdown.removeAllItems();
-        firstAppearanceIssueDropdown.setEnabled(false);
-        firstAppearanceIssueDropdown.addItem(null);
-        firstAppearanceIssueDropdown.setRenderer(new NullableItemRenderer("None"));
-    }
-
-    private void scheduleCreatorSearch() {
-        if (creatorSearchTask != null) {
-            creatorSearchTask.cancel(true);
-        }
-        long SEARCH_DELAY = 300;
-        creatorSearchTask = scheduler.schedule(() -> {
-            String search = creatorSearchField.getText().trim().toLowerCase();
-            SwingUtilities.invokeLater(() -> {
-                searchResultsModel.clear();
-                allCreators.stream()
-                        .filter(creator -> creator.getName().toLowerCase().contains(search))
-                        .forEach(searchResultsModel::addElement);
-            });
-        }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
-    }
-
-    private void loadInitialData() {
-        Executors.newSingleThreadExecutor().submit(() -> {
-            allCreators = creatorService.getAllCreators();
-        });
-    }
-
-    private static class NullableItemRenderer extends DefaultListCellRenderer {
-        private final String nullText;
-
-        public NullableItemRenderer(String nullText) {
-            this.nullText = nullText;
-        }
-
-        @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            setText(value == null ? nullText : value.toString());
-            return this;
+        private void addCreatorRemovalListener() {
+            addItemRemovalListener(selectedCreatorsList, selectedCreatorsModel, "Remove Creator", null);
         }
     }
 }

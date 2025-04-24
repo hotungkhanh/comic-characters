@@ -4,10 +4,6 @@ import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.service.PublisherService;
 
 import javax.swing.*;
-import java.awt.*;
-
-import static com.tuka.comiccharacters.ui.MainApp.showError;
-import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
 
 public class PublisherForm extends AbstractForm {
 
@@ -15,81 +11,114 @@ public class PublisherForm extends AbstractForm {
     private final PublisherService publisherService = new PublisherService();
     private Publisher editingPublisher;
 
+    /**
+     * Creates a new publisher form for adding publishers
+     */
     public PublisherForm() {
         super("Add New Publisher");
-        setLayout(new GridBagLayout()); // Use GridBagLayout
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-
-        // Name Label and Field
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        add(new JLabel("Name:"), gbc);
-        gbc.gridx = 1;
-        add(nameField, gbc);
-
-        // Submit Button
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.CENTER;
-        add(submitButton, gbc);
-
-        addSubmitListener(_ -> {
-            String name = nameField.getText().trim();
-            if (name.isEmpty()) {
-                showError("Publisher name is required.");
-                return;
-            }
-            publisherService.addPublisher(name);
-            showSuccess("Publisher added!");
-            nameField.setText("");
-        });
+        buildUI();
+        setupSubmitAction();
     }
 
+    /**
+     * Creates a new publisher form for editing an existing publisher
+     *
+     * @param existingPublisher The publisher to edit
+     */
     public PublisherForm(Publisher existingPublisher) {
         super("Edit Publisher");
         this.editingPublisher = existingPublisher;
-        setLayout(new GridBagLayout()); // Use GridBagLayout
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
+        setEditMode(true);
+        buildUI();
+        populateFields(existingPublisher);
+        setupEditAction();
+    }
 
-        // Name Label and Field
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        add(new JLabel("Name:"), gbc);
-        gbc.gridx = 1;
-        add(nameField, gbc);
+    @Override
+    protected void buildUI() {
+        int row = 0;
 
-        // Submit Button
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.CENTER;
-        add(submitButton, gbc);
+        // Set up name field with label
+        row = addTextField("Name:", nameField, row, true);
+    }
 
-        nameField.setText(existingPublisher.getName());
-
-        addSubmitListener(_ -> {
-            String name = nameField.getText().trim();
-            if (name.isEmpty()) {
-                showError("Publisher name is required.");
+    /**
+     * Sets up the submit action for adding new publishers
+     */
+    private void setupSubmitAction() {
+        addSubmitListener(e -> {
+            if (!validateForm()) {
                 return;
             }
-            editingPublisher.setName(name);
-            publisherService.updatePublisher(editingPublisher);
-            showSuccess("Publisher updated!");
-            SwingUtilities.getWindowAncestor(this).dispose();
+
+            String name = nameField.getText().trim();
+            addPublisher(name);
         });
+    }
+
+    /**
+     * Sets up the submit action for editing publishers
+     */
+    private void setupEditAction() {
+        removeAllSubmitListeners();
+        addSubmitListener(e -> {
+            if (!validateForm()) {
+                return;
+            }
+
+            String name = nameField.getText().trim();
+            updatePublisher(name);
+        });
+    }
+
+    /**
+     * Validates the form fields
+     *
+     * @return Whether the form is valid
+     */
+    private boolean validateForm() {
+        if (nameField.getText().trim().isEmpty()) {
+            showError("Publisher name is required.");
+            nameField.requestFocus();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Populates form fields with data from an existing publisher
+     *
+     * @param publisher The publisher to load data from
+     */
+    private void populateFields(Publisher publisher) {
+        nameField.setText(publisher.getName());
+    }
+
+    /**
+     * Adds a new publisher to the database
+     *
+     * @param name The name of the publisher
+     */
+    private void addPublisher(String name) {
+        publisherService.addPublisher(name);
+        showSuccess("Publisher added!");
+        resetForm();
+    }
+
+    /**
+     * Updates an existing publisher in the database
+     *
+     * @param name The updated name of the publisher
+     */
+    private void updatePublisher(String name) {
+        editingPublisher.setName(name);
+        publisherService.updatePublisher(editingPublisher);
+        showSuccess("Publisher updated!");
+        SwingUtilities.getWindowAncestor(this).dispose();
+    }
+
+    @Override
+    protected void resetForm() {
+        nameField.setText("");
     }
 }

@@ -1,3 +1,4 @@
+
 package com.tuka.comiccharacters.ui.form;
 
 import com.tuka.comiccharacters.model.*;
@@ -24,36 +25,39 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.tuka.comiccharacters.ui.MainApp.showError;
-import static com.tuka.comiccharacters.ui.MainApp.showSuccess;
-
 public class IssueForm extends AbstractForm {
 
+    // Form fields
     private final JTextField issueNumberField = new JTextField(10);
     private final JTextArea overviewTextArea = new JTextArea(3, 20);
     private final JTextField releaseDateField = new JTextField(10);
     private final JTextField priceField = new JTextField(10);
     private final JCheckBox annualCheckBox = new JCheckBox("Annual Issue");
+    private JLabel seriesNameLabel;
 
-    private final DefaultTableModel creatorTableModel = new DefaultTableModel(new Object[]{"Name", "Role(s)"}, 0) {
+    // Creators section
+    private final DefaultTableModel creatorTableModel = new DefaultTableModel(
+            new Object[]{"Name", "Role(s)"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false; // Make table non-editable
         }
     };
     private final JTable creatorTable = new JTable(creatorTableModel);
-    private final JTextField creatorSearchField = new JTextField(15);
+    private JTextField creatorSearchField;
     private final JList<Role> roleSearchList = new JList<>(Role.values());
     private final DefaultListModel<Creator> matchedCreatorsListModel = new DefaultListModel<>();
     private final JList<Creator> matchedCreatorsList = new JList<>(matchedCreatorsListModel);
     private final List<IssueCreator> selectedCreators = new ArrayList<>();
 
+    // Characters section
     private final DefaultListModel<ComicCharacter> selectedCharactersListModel = new DefaultListModel<>();
     private final JList<ComicCharacter> selectedCharactersList = new JList<>(selectedCharactersListModel);
-    private final JTextField characterSearchField = new JTextField(15);
+    private JTextField characterSearchField;
     private final DefaultListModel<ComicCharacter> matchedCharactersListModel = new DefaultListModel<>();
     private final JList<ComicCharacter> matchedCharactersList = new JList<>(matchedCharactersListModel);
 
+    // Services and state
     private final Series currentSeries;
     private final CharacterService characterService = new CharacterService();
     private final CreatorService creatorService = new CreatorService();
@@ -66,132 +70,328 @@ public class IssueForm extends AbstractForm {
     private ScheduledFuture<?> creatorSearchTask;
     private ScheduledFuture<?> characterSearchTask;
 
+    // Callback for after form submission
+    private final Runnable callback;
+    private final JDialog parentDialog;
+
+    /**
+     * Creates a form for adding a new issue to a series
+     *
+     * @param series The series to add the issue to
+     * @param onIssueAdded Callback to run after adding an issue
+     * @param parentDialog The parent dialog to close after submission
+     */
     public IssueForm(Series series, Runnable onIssueAdded, JDialog parentDialog) {
-        this(series, onIssueAdded, parentDialog, null);
-    }
-
-    public IssueForm(Issue existingIssue, Runnable onIssueUpdated, JDialog parentDialog) {
-        this(existingIssue.getSeries(), onIssueUpdated, parentDialog, existingIssue);
-        setSubmitButtonText("Save Changes");
-
-        // Clear existing listeners and add the edit logic
-        removeAllSubmitListeners();
-        addSubmitListener(_ -> saveOrUpdateIssue(onIssueUpdated, parentDialog));
-    }
-
-    private IssueForm(Series series, Runnable callback, JDialog parentDialog, Issue existingIssue) {
         super("Add New Issue");
         this.currentSeries = series;
-        this.existingIssue = existingIssue; // Store the existing issue if available
-        JLabel seriesNameLabel = new JLabel();
-        seriesNameLabel.setText(series.toString());
-        setLayout(new BorderLayout());
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        JPanel annualPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        annualPanel.add(annualCheckBox);
+        this.existingIssue = null;
+        this.callback = onIssueAdded;
+        this.parentDialog = parentDialog;
 
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        buildUI();
+        loadInitialData();
+        setupSubmitAction();
+    }
 
-        // Main Issue Details
+    /**
+     * Creates a form for editing an existing issue
+     *
+     * @param existingIssue The issue to edit
+     * @param onIssueUpdated Callback to run after updating the issue
+     * @param parentDialog The parent dialog to close after submission
+     */
+    public IssueForm(Issue existingIssue, Runnable onIssueUpdated, JDialog parentDialog) {
+        super("Edit Issue");
+        this.currentSeries = existingIssue.getSeries();
+        this.existingIssue = existingIssue;
+        this.callback = onIssueUpdated;
+        this.parentDialog = parentDialog;
+
+        setEditMode(true);
+        buildUI();
+        loadInitialData();
+        populateFields(existingIssue);
+        setupEditAction();
+    }
+
+    @Override
+    protected void buildUI() {
+        int row = 0;
+
+        // Series label
+        seriesNameLabel = new JLabel(currentSeries.toString());
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         headerPanel.add(seriesNameLabel);
-        contentPanel.add(headerPanel);
+        row = addPanel(headerPanel, row);
 
-        JPanel issueInfoPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
+        // Main issue details
+        row = addTextField("Issue #:", issueNumberField, row, true);
+        row = addTextArea("Overview:", overviewTextArea, row, 3, false);
+        row = addTextField("Release Date:", releaseDateField, row, false);
+        row = addTextField("Price (USD):", priceField, row, false);
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        issueInfoPanel.add(new JLabel("Issue #:"), gbc);
-        gbc.gridx = 1;
-        issueInfoPanel.add(issueNumberField, gbc);
+        // Annual checkbox
+        row = addCheckbox(annualCheckBox, row);
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        issueInfoPanel.add(new JLabel("Overview:"), gbc);
-        gbc.gridx = 1;
-        overviewTextArea.setLineWrap(true);
-        overviewTextArea.setWrapStyleWord(true);
-        JScrollPane overviewScrollPane = new JScrollPane(overviewTextArea);
-        overviewScrollPane.setPreferredSize(new Dimension(300, 60));
-        issueInfoPanel.add(overviewScrollPane, gbc);
+        // Creators section
+        JPanel creatorsPanel = createCreatorsPanel();
+        row = addPanel(creatorsPanel, row);
 
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        issueInfoPanel.add(new JLabel("Release Date:"), gbc);
-        gbc.gridx = 1;
-        issueInfoPanel.add(releaseDateField, gbc);
+        // Characters section
+        JPanel charactersPanel = createCharactersPanel();
+        row = addPanel(charactersPanel, row);
+    }
 
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        issueInfoPanel.add(new JLabel("Price (USD):"), gbc);
-        gbc.gridx = 1;
-        issueInfoPanel.add(priceField, gbc);
+    /**
+     * Creates the panel for managing creators
+     *
+     * @return The creators panel
+     */
+    private JPanel createCreatorsPanel() {
+        JPanel creatorsPanel = createTitledPanel("Creators");
+        creatorsPanel.setLayout(new BorderLayout());
 
-        contentPanel.add(issueInfoPanel);
-        contentPanel.add(Box.createVerticalStrut(15));
-
-        // Annual Checkbox Panel
-        contentPanel.add(annualPanel);
-        contentPanel.add(Box.createVerticalStrut(15));
-
-        // Creators Section
-        JPanel creatorsPanel = new JPanel(new BorderLayout());
-        creatorsPanel.setBorder(BorderFactory.createTitledBorder("Creators"));
-        creatorsPanel.add(new JScrollPane(creatorTable), BorderLayout.CENTER);
+        // Setup creator table
         creatorTable.setRowHeight(creatorTable.getRowHeight() * 2);
-        creatorTable.setPreferredScrollableViewportSize(new Dimension(300, 80));
+        JScrollPane creatorTableScrollPane = new JScrollPane(creatorTable);
+        creatorTableScrollPane.setPreferredSize(new Dimension(300, 80));
+        creatorsPanel.add(creatorTableScrollPane, BorderLayout.CENTER);
         addCreatorRemovalListener();
 
+        // Creator search and selection panel
+        JPanel creatorInputPanel = new JPanel(new BorderLayout());
+
+        // Search field
+        creatorSearchField = createSearchField("Search for Creators...");
         JPanel creatorSearchPanel = new JPanel(new BorderLayout());
         creatorSearchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
-        creatorSearchField.setText("Search for Creators...");
-        creatorSearchField.setForeground(Color.GRAY);
-        creatorSearchField.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (creatorSearchField.getText().equals("Search for Creators...")) {
-                    creatorSearchField.setText("");
-                    creatorSearchField.setForeground(Color.BLACK);
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (creatorSearchField.getText().isEmpty()) {
-                    creatorSearchField.setForeground(Color.GRAY);
-                    creatorSearchField.setText("Search for Creators...");
-                }
-            }
-        });
         creatorSearchPanel.add(creatorSearchField, BorderLayout.CENTER);
+        creatorInputPanel.add(creatorSearchPanel, BorderLayout.NORTH);
 
+        // Role selection
         JPanel creatorRolePanel = new JPanel(new BorderLayout());
         creatorRolePanel.add(new JLabel("Roles:"), BorderLayout.NORTH);
         roleSearchList.setVisibleRowCount(4);
         roleSearchList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         creatorRolePanel.add(new JScrollPane(roleSearchList), BorderLayout.CENTER);
 
+        // Creator results and roles panel
         JPanel matchedAndRolesPanel = new JPanel(new BorderLayout());
         JScrollPane matchedCreatorsScrollPane = new JScrollPane(matchedCreatorsList);
         matchedCreatorsScrollPane.setPreferredSize(new Dimension(200, 80));
         matchedAndRolesPanel.add(matchedCreatorsScrollPane, BorderLayout.WEST);
         matchedAndRolesPanel.add(creatorRolePanel, BorderLayout.CENTER);
-
-        JPanel creatorInputPanel = new JPanel(new BorderLayout());
-        creatorInputPanel.add(creatorSearchPanel, BorderLayout.NORTH);
         creatorInputPanel.add(matchedAndRolesPanel, BorderLayout.CENTER);
+
+        // Add creator button
         JButton addCreatorByRolesButton = new JButton("Add Creator(s) by Roles");
-        creatorInputPanel.add(addCreatorByRolesButton, BorderLayout.SOUTH);
         addCreatorByRolesButton.addActionListener(e -> addCreatorsByRoles());
+        creatorInputPanel.add(addCreatorByRolesButton, BorderLayout.SOUTH);
 
         creatorsPanel.add(creatorInputPanel, BorderLayout.NORTH);
 
+        // Set up creator search functionality
+        setupCreatorSearchListener();
+
+        return creatorsPanel;
+    }
+
+    /**
+     * Creates the panel for managing characters
+     *
+     * @return The characters panel
+     */
+    private JPanel createCharactersPanel() {
+        JPanel charactersPanel = createTitledPanel("Characters");
+        charactersPanel.setLayout(new BorderLayout());
+
+        // Display selected characters
+        JScrollPane selectedCharactersScrollPane = new JScrollPane(selectedCharactersList);
+        selectedCharactersScrollPane.setPreferredSize(new Dimension(300, 80));
+        charactersPanel.add(selectedCharactersScrollPane, BorderLayout.CENTER);
+        addCharacterRemovalListener();
+
+        // Character search and selection panel
+        JPanel characterInputPanel = new JPanel(new BorderLayout());
+
+        // Search field
+        characterSearchField = createSearchField("Search for Characters...");
+        JPanel characterSearchPanel = new JPanel(new BorderLayout());
+        characterSearchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
+        characterSearchPanel.add(characterSearchField, BorderLayout.CENTER);
+        characterInputPanel.add(characterSearchPanel, BorderLayout.NORTH);
+
+        // Character results
+        JScrollPane matchedCharactersScrollPane = new JScrollPane(matchedCharactersList);
+        matchedCharactersScrollPane.setPreferredSize(new Dimension(300, 80));
+        characterInputPanel.add(matchedCharactersScrollPane, BorderLayout.CENTER);
+
+        // Add character button
+        JButton addCharactersButton = new JButton("Add Character(s)");
+        addCharactersButton.addActionListener(e -> addSelectedCharacters());
+        characterInputPanel.add(addCharactersButton, BorderLayout.SOUTH);
+
+        charactersPanel.add(characterInputPanel, BorderLayout.NORTH);
+
+        // Set up character search functionality
+        setupCharacterSearchListener();
+
+        return charactersPanel;
+    }
+
+    /**
+     * Sets up the submit action for adding a new issue
+     */
+    private void setupSubmitAction() {
+        addSubmitListener(e -> saveOrUpdateIssue());
+    }
+
+    /**
+     * Sets up the submit action for editing an existing issue
+     */
+    private void setupEditAction() {
+        removeAllSubmitListeners();
+        addSubmitListener(e -> saveOrUpdateIssue());
+    }
+
+    /**
+     * Validates and saves or updates an issue
+     */
+    private void saveOrUpdateIssue() {
+        if (!validateForm()) {
+            return;
+        }
+
+        String issueText = issueNumberField.getText().trim();
+        String overview = overviewTextArea.getText().trim();
+        String releaseDateText = releaseDateField.getText().trim();
+        String priceText = priceField.getText().trim();
+        boolean isAnnual = annualCheckBox.isSelected();
+
+        BigDecimal issueNumber;
+        try {
+            issueNumber = new BigDecimal(issueText);
+        } catch (NumberFormatException ex) {
+            showError("Issue number must be a number.");
+            issueNumberField.requestFocus();
+            return;
+        }
+
+        LocalDate releaseDate = null;
+        if (!releaseDateText.isEmpty()) {
+            try {
+                releaseDate = LocalDate.parse(releaseDateText, DateTimeFormatter.ISO_LOCAL_DATE);
+            } catch (DateTimeParseException ex) {
+                showError("Invalid date format. Please use YYYY-MM-DD.");
+                releaseDateField.requestFocus();
+                return;
+            }
+        }
+
+        BigDecimal price = null;
+        if (!priceText.isEmpty()) {
+            try {
+                price = new BigDecimal(priceText);
+            } catch (NumberFormatException ex) {
+                showError("Price must be a number.");
+                priceField.requestFocus();
+                return;
+            }
+        }
+
+        List<ComicCharacter> charactersToAdd = getSelectedCharacters();
+
+        if (isEditMode && existingIssue != null) {
+            updateIssue(issueNumber, overview, releaseDate, price, isAnnual, charactersToAdd);
+        } else {
+            addIssue(issueNumber, overview, releaseDate, price, isAnnual, charactersToAdd);
+        }
+
+        // Close window and execute callback
+        SwingUtilities.getWindowAncestor(this).dispose();
+        if (callback != null) {
+            callback.run();
+        }
+        if (parentDialog != null) {
+            parentDialog.dispose();
+        }
+    }
+
+    /**
+     * Updates an existing issue with new values
+     */
+    private void updateIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate,
+                             BigDecimal price, boolean isAnnual, List<ComicCharacter> characters) {
+        existingIssue.setIssueNumber(issueNumber);
+        existingIssue.setOverview(overview);
+        if (releaseDate != null) {
+            existingIssue.setReleaseDate(releaseDate);
+        }
+        if (price != null) {
+            existingIssue.setPriceUsd(price);
+        }
+        existingIssue.setAnnual(isAnnual);
+
+        // Update creators
+        existingIssue.getIssueCreators().clear();
+        for (IssueCreator ic : selectedCreators) {
+            ic.setIssue(existingIssue);
+        }
+        existingIssue.getIssueCreators().addAll(selectedCreators);
+
+        // Update characters
+        existingIssue.getCharacters().clear();
+        for (ComicCharacter character : characters) {
+            existingIssue.addCharacter(character);
+        }
+
+        issueService.updateIssue(existingIssue);
+        showSuccess("Issue updated successfully.");
+    }
+
+    /**
+     * Adds a new issue to the database
+     */
+    private void addIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate,
+                          BigDecimal price, boolean isAnnual, List<ComicCharacter> characters) {
+        issueService.addIssue(currentSeries, issueNumber, overview, releaseDate,
+                price, isAnnual, selectedCreators, characters);
+        showSuccess("Issue added!");
+    }
+
+    /**
+     * Gets all selected characters from the list model
+     *
+     * @return List of selected characters
+     */
+    private List<ComicCharacter> getSelectedCharacters() {
+        List<ComicCharacter> characters = new ArrayList<>();
+        for (int i = 0; i < selectedCharactersListModel.getSize(); i++) {
+            characters.add(selectedCharactersListModel.getElementAt(i));
+        }
+        return characters;
+    }
+
+    /**
+     * Validates the form fields
+     *
+     * @return Whether the form is valid
+     */
+    private boolean validateForm() {
+        // Check issue number is provided
+        if (issueNumberField.getText().trim().isEmpty()) {
+            showError("Issue number is required.");
+            issueNumberField.requestFocus();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Sets up listener for creator search field
+     */
+    private void setupCreatorSearchListener() {
         creatorSearchField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(javax.swing.event.DocumentEvent e) {
@@ -205,54 +405,15 @@ public class IssueForm extends AbstractForm {
 
             @Override
             public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                // Plain text components don't fire these events
             }
         });
+    }
 
-        contentPanel.add(creatorsPanel);
-        contentPanel.add(Box.createVerticalStrut(15));
-
-        // Characters Section
-        JPanel charactersPanel = new JPanel(new BorderLayout());
-        charactersPanel.setBorder(BorderFactory.createTitledBorder("Characters"));
-
-        // Display selected characters
-        JScrollPane selectedCharactersScrollPane = new JScrollPane(selectedCharactersList);
-        selectedCharactersScrollPane.setPreferredSize(new Dimension(300, 80));
-        charactersPanel.add(selectedCharactersScrollPane, BorderLayout.CENTER);
-        addCharacterRemovalListener();
-
-        JPanel characterInputPanel = new JPanel(new BorderLayout());
-        JPanel characterSearchPanel = new JPanel(new BorderLayout()); // Use BorderLayout for searchPanel
-        characterSearchField.setText("Search for Characters...");
-        characterSearchField.setForeground(Color.GRAY);
-        characterSearchField.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (characterSearchField.getText().equals("Search for Characters...")) {
-                    characterSearchField.setText("");
-                    characterSearchField.setForeground(Color.BLACK);
-                }
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (characterSearchField.getText().isEmpty()) {
-                    characterSearchField.setForeground(Color.GRAY);
-                    characterSearchField.setText("Search for Characters...");
-                }
-            }
-        });
-        characterSearchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
-        characterSearchPanel.add(characterSearchField, BorderLayout.CENTER); // Search field fills center
-        characterInputPanel.add(characterSearchPanel, BorderLayout.NORTH);
-        JScrollPane matchedCharactersScrollPane = new JScrollPane(matchedCharactersList);
-        matchedCharactersScrollPane.setPreferredSize(new Dimension(300, 80));
-        characterInputPanel.add(matchedCharactersScrollPane, BorderLayout.CENTER);
-        JButton addCharactersButton = new JButton("Add Character(s)");
-        characterInputPanel.add(addCharactersButton, BorderLayout.SOUTH); // Button at the bottom
-        addCharactersButton.addActionListener(e -> addSelectedCharacters());
-        charactersPanel.add(characterInputPanel, BorderLayout.NORTH);
-
+    /**
+     * Sets up listener for character search field
+     */
+    private void setupCharacterSearchListener() {
         characterSearchField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(javax.swing.event.DocumentEvent e) {
@@ -266,133 +427,14 @@ public class IssueForm extends AbstractForm {
 
             @Override
             public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                // Plain text components don't fire these events
             }
         });
-
-        contentPanel.add(charactersPanel);
-        contentPanel.add(Box.createVerticalStrut(15));
-
-        add(new JScrollPane(contentPanel), BorderLayout.CENTER);
-        add(submitButton, BorderLayout.SOUTH);
-
-        addSubmitListener(e -> saveOrUpdateIssue(callback, parentDialog));
-
-        // Load data in the background
-        loadInitialData();
-
-        if (existingIssue != null) {
-            // Fill in the existing data
-            seriesNameLabel.setText(existingIssue.getSeries().getTitle());
-            issueNumberField.setText(existingIssue.getIssueNumber() != null ? existingIssue.getIssueNumber().toString() : "");
-            overviewTextArea.setText(existingIssue.getOverview() != null ? existingIssue.getOverview() : "");
-            releaseDateField.setText(existingIssue.getReleaseDate() != null ? existingIssue.getReleaseDate().toString() : "");
-            priceField.setText(existingIssue.getPriceUsd() != null ? existingIssue.getPriceUsd().toString() : "");
-            annualCheckBox.setSelected(existingIssue.getAnnual() != null ? existingIssue.getAnnual() : false);
-
-            // Fill creators
-            for (IssueCreator issueCreator : existingIssue.getIssueCreators()) {
-                // Simulate adding creators by roles
-                Set<Role> roles = issueCreator.getRoles();
-                Creator creator = issueCreator.getCreator();
-
-                boolean alreadyAdded = selectedCreators.stream()
-                        .anyMatch(ic -> ic.getCreator().equals(creator));
-
-                if (!alreadyAdded) {
-                    selectedCreators.add(issueCreator);
-                    String roleNames = roles.stream().map(Enum::name).collect(Collectors.joining(", "));
-                    creatorTableModel.addRow(new Object[]{creator.getName(), roleNames});
-                }
-            }
-
-            // Fill characters
-            for (ComicCharacter character : existingIssue.getCharacters()) {
-                if (!selectedCharactersListModel.contains(character)) {
-                    selectedCharactersListModel.addElement(character);
-                }
-            }
-        }
     }
 
-    private void saveOrUpdateIssue(Runnable callback, JDialog parentDialog) {
-        String issueText = issueNumberField.getText().trim();
-        String overview = overviewTextArea.getText().trim();
-        String releaseDateText = releaseDateField.getText().trim();
-        String priceText = priceField.getText().trim();
-        boolean isAnnual = annualCheckBox.isSelected();
-
-        BigDecimal issueNumber;
-        try {
-            issueNumber = new BigDecimal(issueText);
-        } catch (NumberFormatException ex) {
-            showError("Issue number must be a number.");
-            return;
-        }
-
-        LocalDate releaseDate = null;
-        if (!releaseDateText.isEmpty()) {
-            try {
-                releaseDate = LocalDate.parse(releaseDateText, DateTimeFormatter.ISO_LOCAL_DATE);
-            } catch (DateTimeParseException ex) {
-                showError("Invalid date format. Please use <:code-block language=text>YYYY-MM-DD</:code-block>.");
-                return;
-            }
-        }
-
-        BigDecimal price = null;
-        if (!priceText.isEmpty()) {
-            try {
-                price = new BigDecimal(priceText);
-            } catch (NumberFormatException ex) {
-                showError("Price must be a number.");
-                return;
-            }
-        }
-
-        List<ComicCharacter> charactersToAdd = new ArrayList<>();
-        for (int i = 0; i < selectedCharactersListModel.getSize(); i++) {
-            charactersToAdd.add(selectedCharactersListModel.getElementAt(i));
-        }
-        if (existingIssue != null) { // Update existing issue
-            existingIssue.setIssueNumber(issueNumber);
-            existingIssue.setOverview(overview);
-            if (releaseDate != null) {
-                existingIssue.setReleaseDate(releaseDate);
-            }
-            if (price != null) {
-                existingIssue.setPriceUsd(price);
-            }
-            existingIssue.setAnnual(isAnnual);
-
-            // Update creators
-            existingIssue.getIssueCreators().clear(); // Clear existing creators
-            for (IssueCreator ic : selectedCreators) {
-                ic.setIssue(existingIssue);
-            }
-            existingIssue.getIssueCreators().addAll(selectedCreators);
-
-            // Update characters
-            existingIssue.getCharacters().clear(); // Clear existing characters
-            for (ComicCharacter character : charactersToAdd) {
-                existingIssue.addCharacter(character); // Use the addCharacter method to maintain bidirectional relationship
-            }
-            issueService.updateIssue(existingIssue);
-            showSuccess("Issue updated successfully.");
-        } else { // Save new issue
-            issueService.addIssue(currentSeries, issueNumber, overview, releaseDate, price, isAnnual, selectedCreators, charactersToAdd);
-            showSuccess("Issue added!");
-            resetForm(); // Only reset if a new issue was added
-        }
-
-        SwingUtilities.getWindowAncestor(this).dispose();
-        if (callback != null) {
-            callback.run();
-        }
-        if (parentDialog != null) {
-            parentDialog.dispose();
-        }
-    }
-
+    /**
+     * Adds a context menu for removing creators from the table
+     */
     private void addCreatorRemovalListener() {
         creatorTable.addMouseListener(new MouseAdapter() {
             @Override
@@ -403,12 +445,7 @@ public class IssueForm extends AbstractForm {
                         creatorTable.setRowSelectionInterval(row, row);
                         JPopupMenu popupMenu = new JPopupMenu();
                         JMenuItem removeItem = new JMenuItem("Remove Creator");
-                        removeItem.addActionListener(new AbstractAction() {
-                            @Override
-                            public void actionPerformed(ActionEvent event) {
-                                removeSelectedCreator();
-                            }
-                        });
+                        removeItem.addActionListener(event -> removeSelectedCreator());
                         popupMenu.add(removeItem);
                         popupMenu.show(creatorTable, e.getX(), e.getY());
                     }
@@ -417,6 +454,16 @@ public class IssueForm extends AbstractForm {
         });
     }
 
+    /**
+     * Adds a context menu for removing characters from the list
+     */
+    private void addCharacterRemovalListener() {
+        addItemRemovalListener(selectedCharactersList, selectedCharactersListModel, "Remove Character", null);
+    }
+
+    /**
+     * Removes the selected creator from the table
+     */
     private void removeSelectedCreator() {
         int selectedRow = creatorTable.getSelectedRow();
         if (selectedRow != -1) {
@@ -427,75 +474,9 @@ public class IssueForm extends AbstractForm {
         }
     }
 
-    private void addCharacterRemovalListener() {
-        selectedCharactersList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
-                    int index = selectedCharactersList.locationToIndex(e.getPoint());
-                    if (index >= 0 && index < selectedCharactersListModel.getSize()) {
-                        selectedCharactersList.setSelectedIndex(index);
-                        JPopupMenu popupMenu = new JPopupMenu();
-                        JMenuItem removeItem = new JMenuItem("Remove Character");
-                        removeItem.addActionListener(new AbstractAction() {
-                            @Override
-                            public void actionPerformed(ActionEvent event) {
-                                removeSelectedCharacter();
-                            }
-                        });
-                        popupMenu.add(removeItem);
-                        popupMenu.show(selectedCharactersList, e.getX(), e.getY());
-                    }
-                }
-            }
-        });
-    }
-
-    private void removeSelectedCharacter() {
-        int selectedIndex = selectedCharactersList.getSelectedIndex();
-        if (selectedIndex != -1) {
-            selectedCharactersListModel.remove(selectedIndex);
-        }
-    }
-
-    private void loadInitialData() {
-        Executors.newSingleThreadExecutor().submit(() -> {
-            allCreators = creatorService.getAllCreators();
-            allCharacters = characterService.getAllCharacters();
-        });
-    }
-
-    private void scheduleCreatorSearch() {
-        if (creatorSearchTask != null) {
-            creatorSearchTask.cancel(true);
-        }
-        creatorSearchTask = scheduler.schedule(() -> {
-            String search = creatorSearchField.getText().trim().toLowerCase();
-            SwingUtilities.invokeLater(() -> {
-                matchedCreatorsListModel.clear();
-                allCreators.stream()
-                        .filter(creator -> creator.getName().toLowerCase().contains(search))
-                        .forEach(matchedCreatorsListModel::addElement);
-            });
-        }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
-    }
-
-    private void scheduleCharacterSearch() {
-        if (characterSearchTask != null) {
-            characterSearchTask.cancel(true);
-        }
-        characterSearchTask = scheduler.schedule(() -> {
-            String search = characterSearchField.getText().trim().toLowerCase();
-            SwingUtilities.invokeLater(() -> {
-                matchedCharactersListModel.clear();
-                allCharacters.stream()
-                        .filter(character -> character.getName().toLowerCase().contains(search) ||
-                                (character.getAlias() != null && character.getAlias().toLowerCase().contains(search)))
-                        .forEach(matchedCharactersListModel::addElement);
-            });
-        }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
-    }
-
+    /**
+     * Adds selected creators with their roles
+     */
     private void addCreatorsByRoles() {
         List<Creator> creatorsToAdd = matchedCreatorsList.getSelectedValuesList();
         List<Role> selectedRoles = roleSearchList.getSelectedValuesList();
@@ -524,6 +505,9 @@ public class IssueForm extends AbstractForm {
         matchedCreatorsList.clearSelection();
     }
 
+    /**
+     * Adds selected characters to the list
+     */
     private void addSelectedCharacters() {
         List<ComicCharacter> charactersToAdd = matchedCharactersList.getSelectedValuesList();
         for (ComicCharacter character : charactersToAdd) {
@@ -534,7 +518,97 @@ public class IssueForm extends AbstractForm {
         matchedCharactersList.clearSelection();
     }
 
-    private void resetForm() {
+    /**
+     * Schedules a search for creators
+     */
+    private void scheduleCreatorSearch() {
+        if (creatorSearchTask != null) {
+            creatorSearchTask.cancel(true);
+        }
+        creatorSearchTask = scheduler.schedule(() -> {
+            String search = creatorSearchField.getText().trim().toLowerCase();
+            if (search.equals("search for creators...")) {
+                return;
+            }
+            SwingUtilities.invokeLater(() -> {
+                matchedCreatorsListModel.clear();
+                allCreators.stream()
+                        .filter(creator -> creator.getName().toLowerCase().contains(search))
+                        .forEach(matchedCreatorsListModel::addElement);
+            });
+        }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Schedules a search for characters
+     */
+    private void scheduleCharacterSearch() {
+        if (characterSearchTask != null) {
+            characterSearchTask.cancel(true);
+        }
+        characterSearchTask = scheduler.schedule(() -> {
+            String search = characterSearchField.getText().trim().toLowerCase();
+            if (search.equals("search for characters...")) {
+                return;
+            }
+            SwingUtilities.invokeLater(() -> {
+                matchedCharactersListModel.clear();
+                allCharacters.stream()
+                        .filter(character -> character.getName().toLowerCase().contains(search) ||
+                                (character.getAlias() != null && character.getAlias().toLowerCase().contains(search)))
+                        .forEach(matchedCharactersListModel::addElement);
+            });
+        }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Loads initial data for the form
+     */
+    private void loadInitialData() {
+        Executors.newSingleThreadExecutor().submit(() -> {
+            allCreators = creatorService.getAllCreators();
+            allCharacters = characterService.getAllCharacters();
+        });
+    }
+
+    /**
+     * Populates form fields with data from an existing issue
+     *
+     * @param issue The issue to load data from
+     */
+    private void populateFields(Issue issue) {
+        seriesNameLabel.setText(issue.getSeries().getTitle());
+        issueNumberField.setText(issue.getIssueNumber() != null ? issue.getIssueNumber().toString() : "");
+        overviewTextArea.setText(issue.getOverview() != null ? issue.getOverview() : "");
+        releaseDateField.setText(issue.getReleaseDate() != null ? issue.getReleaseDate().toString() : "");
+        priceField.setText(issue.getPriceUsd() != null ? issue.getPriceUsd().toString() : "");
+        annualCheckBox.setSelected(issue.getAnnual() != null ? issue.getAnnual() : false);
+
+        // Fill creators
+        for (IssueCreator issueCreator : issue.getIssueCreators()) {
+            Set<Role> roles = issueCreator.getRoles();
+            Creator creator = issueCreator.getCreator();
+
+            boolean alreadyAdded = selectedCreators.stream()
+                    .anyMatch(ic -> ic.getCreator().equals(creator));
+
+            if (!alreadyAdded) {
+                selectedCreators.add(issueCreator);
+                String roleNames = roles.stream().map(Enum::name).collect(Collectors.joining(", "));
+                creatorTableModel.addRow(new Object[]{creator.getName(), roleNames});
+            }
+        }
+
+        // Fill characters
+        for (ComicCharacter character : issue.getCharacters()) {
+            if (!selectedCharactersListModel.contains(character)) {
+                selectedCharactersListModel.addElement(character);
+            }
+        }
+    }
+
+    @Override
+    protected void resetForm() {
         issueNumberField.setText("");
         overviewTextArea.setText("");
         releaseDateField.setText("");
@@ -545,8 +619,10 @@ public class IssueForm extends AbstractForm {
         selectedCharactersListModel.clear();
         matchedCreatorsListModel.clear();
         matchedCharactersList.clearSelection();
-        characterSearchField.setText("");
-        creatorSearchField.setText("");
+        creatorSearchField.setText("Search for Creators...");
+        creatorSearchField.setForeground(Color.GRAY);
+        characterSearchField.setText("Search for Characters...");
+        characterSearchField.setForeground(Color.GRAY);
         roleSearchList.clearSelection();
     }
 }
