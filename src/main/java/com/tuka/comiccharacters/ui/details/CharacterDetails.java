@@ -171,7 +171,7 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
 
     @Override
     protected void deleteEntity() {
-        new CharacterService().deleteCharacter(entity.getId());
+        new CharacterService().delete(entity.getId());
         MainApp.showSuccess("Character deleted.");
     }
 

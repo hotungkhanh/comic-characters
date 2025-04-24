@@ -1,7 +1,6 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.CharacterDaoImpl;
-import com.tuka.comiccharacters.dao.Dao;
 import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.model.Issue;
@@ -10,53 +9,58 @@ import com.tuka.comiccharacters.model.Publisher;
 import java.util.List;
 import java.util.Set;
 
-public class CharacterService {
-    private final Dao<ComicCharacter> characterDao = new CharacterDaoImpl();
+public class CharacterService extends AbstractService<ComicCharacter> {
 
-    public void addCharacter(String name, String alias, Publisher publisher, String overview, List<Creator> creatorList, Issue firstAppearance) {
+    public CharacterService() {
+        super(new CharacterDaoImpl());
+    }
+
+    public void addCharacter(String name, String alias, Publisher publisher, String overview,
+                             List<Creator> creatorList, Issue firstAppearance) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Character name cannot be empty.");
         }
-        ComicCharacter comicCharacter = new ComicCharacter(name.trim(), alias != null ? alias.trim() : null, publisher, overview);
+        ComicCharacter comicCharacter = new ComicCharacter(name.trim(),
+                alias != null ? alias.trim() : null,
+                publisher,
+                overview);
         comicCharacter.setFirstAppearance(firstAppearance);
         if (creatorList != null && !creatorList.isEmpty()) {
             comicCharacter.getCreators().addAll(creatorList);
         }
-        characterDao.save(comicCharacter);
+        save(comicCharacter);
     }
 
     public Set<ComicCharacter> getAllCharacters() {
-        return characterDao.findAll();
+        return dao.findAll();
     }
 
     public ComicCharacter getCharacterByIdWithDetails(Long id) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Invalid character ID.");
-        }
-        return characterDao.findByIdWithDetails(id);
+        return findByIdWithDetails(id);
     }
 
     public void updateCharacter(ComicCharacter character) {
-        if (character == null || character.getId() == null || character.getId() <= 0) {
-            throw new IllegalArgumentException("Invalid character object for update.");
-        }
-        if (character.getName() == null || character.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Character name cannot be empty.");
-        }
+        validateEntity(character);
+
+        // Extra character-specific processing
         character.setName(character.getName().trim());
         if (character.getAlias() != null) {
             character.setAlias(character.getAlias().trim());
         }
-        characterDao.save(character);
+
+        save(character);
     }
 
-    public void deleteCharacter(Long id) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Invalid character ID for deletion.");
+    @Override
+    protected void validateEntity(ComicCharacter character) {
+        if (character == null) {
+            throw new IllegalArgumentException("Character cannot be null.");
         }
-        ComicCharacter character = characterDao.findById(id);
-        if (character != null) {
-            characterDao.delete(character);
+        if (character.getId() != null && character.getId() <= 0) {
+            throw new IllegalArgumentException("Invalid character ID.");
+        }
+        if (character.getName() == null || character.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Character name cannot be empty.");
         }
     }
 }
