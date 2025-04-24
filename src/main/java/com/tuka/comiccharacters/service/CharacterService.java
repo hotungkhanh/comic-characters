@@ -35,10 +35,6 @@ public class CharacterService extends AbstractService<ComicCharacter> {
         return dao.findAll();
     }
 
-    public ComicCharacter getCharacterByIdWithDetails(Long id) {
-        return findByIdWithDetails(id);
-    }
-
     public void updateCharacter(ComicCharacter character) {
         validateEntity(character);
 

@@ -37,7 +37,7 @@ public class CharacterBrowser extends AbstractBrowser<ComicCharacter> {
 
     @Override
     protected void showDetails(ComicCharacter character) {
-        ComicCharacter fullCharacter = characterService.getCharacterByIdWithDetails(character.getId());
+        ComicCharacter fullCharacter = characterService.getByIdWithDetails(character.getId());
         new CharacterDetails(this, fullCharacter, this::refreshEntities).showDetailsDialog();
     }
 

@@ -62,7 +62,7 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
         });
 
         JPanel charactersPanel = createInteractiveListPanel("Characters", sortedCharacters, ComicCharacter::toString, c -> {
-            ComicCharacter fetched = characterService.getCharacterByIdWithDetails(c.getId());
+            ComicCharacter fetched = characterService.getByIdWithDetails(c.getId());
             if (fetched != null) {
                 detailsDialog.dispose();
                 new CharacterDetails(parent, fetched, refreshCallback).showDetailsDialog();

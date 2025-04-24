@@ -14,12 +14,12 @@ public abstract class AbstractService<T> {
         this.dao = dao;
     }
 
-    public T findById(Long id) {
+    public T getById(Long id) {
         validateId(id);
         return dao.findById(id);
     }
 
-    public T findByIdWithDetails(Long id) {
+    public T getByIdWithDetails(Long id) {
         validateId(id);
         return dao.findByIdWithDetails(id);
     }
@@ -31,7 +31,7 @@ public abstract class AbstractService<T> {
 
     public void delete(Long id) {
         validateId(id);
-        T entity = findById(id);
+        T entity = getById(id);
         if (entity != null) {
             // Handle relationships before deletion
             dao.delete(entity);

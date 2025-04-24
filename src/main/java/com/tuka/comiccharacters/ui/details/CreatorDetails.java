@@ -59,7 +59,7 @@ public class CreatorDetails extends AbstractDetails<Creator> {
                 sortedCharacters,
                 ComicCharacter::toString,
                 selected -> {
-                    ComicCharacter fetched = characterService.getCharacterByIdWithDetails(selected.getId());
+                    ComicCharacter fetched = characterService.getByIdWithDetails(selected.getId());
                     if (fetched != null) {
                         detailsDialog.dispose();
                         new CharacterDetails(parent, fetched, refreshCallback).showDetailsDialog();

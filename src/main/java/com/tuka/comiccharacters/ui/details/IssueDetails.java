@@ -81,7 +81,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
         if (!characters.isEmpty()) {
             JList<String> charactersList = createStringList(characters, ComicCharacter::toString);
             charactersList.addMouseListener(getListDoubleClickListener(characters, character -> {
-                ComicCharacter fetched = characterService.getCharacterByIdWithDetails(character.getId());
+                ComicCharacter fetched = characterService.getByIdWithDetails(character.getId());
                 if (fetched != null) {
                     detailsDialog.dispose();
                     new CharacterDetails(parent, fetched, refreshCallback).showDetailsDialog();
