@@ -9,6 +9,7 @@ public class CreatorForm extends AbstractForm {
 
     private final JTextField nameField = new JTextField(20);
     private final JTextArea overviewArea = new JTextArea(5, 20);
+    private final JTextField imageUrlField = new JTextField(20);
     private final CreatorService creatorService = new CreatorService();
     private Creator editingCreator;
 
@@ -42,6 +43,9 @@ public class CreatorForm extends AbstractForm {
         // Set up text fields with proper labels
         row = addTextField("Name:", nameField, row, true);
 
+        // Add image URL field
+        row = addTextField("Image URL:", imageUrlField, row, false);
+
         // Set up text area with proper configuration
         overviewArea.setLineWrap(true);
         overviewArea.setWrapStyleWord(true);
@@ -59,8 +63,9 @@ public class CreatorForm extends AbstractForm {
 
             String name = nameField.getText().trim();
             String overview = overviewArea.getText().trim();
+            String imageUrl = imageUrlField.getText().trim();
 
-            addCreator(name, overview);
+            addCreator(name, overview, imageUrl);
         });
     }
 
@@ -76,8 +81,9 @@ public class CreatorForm extends AbstractForm {
 
             String name = nameField.getText().trim();
             String overview = overviewArea.getText().trim();
+            String imageUrl = imageUrlField.getText().trim();
 
-            updateCreator(name, overview);
+            updateCreator(name, overview, imageUrl);
         });
     }
 
@@ -103,6 +109,7 @@ public class CreatorForm extends AbstractForm {
     private void populateFields(Creator creator) {
         nameField.setText(creator.getName());
         overviewArea.setText(creator.getOverview() != null ? creator.getOverview() : "");
+        imageUrlField.setText(creator.getImageUrl() != null ? creator.getImageUrl() : "");
     }
 
     /**
@@ -110,9 +117,14 @@ public class CreatorForm extends AbstractForm {
      *
      * @param name     The name of the creator
      * @param overview The overview/description of the creator
+     * @param imageUrl The URL to the creator's image
      */
-    private void addCreator(String name, String overview) {
-        creatorService.addCreator(name, overview);
+    private void addCreator(String name, String overview, String imageUrl) {
+        if (imageUrl.isEmpty()) {
+            creatorService.addCreator(name, overview);
+        } else {
+            creatorService.addCreator(name, overview, imageUrl);
+        }
         showSuccess("Creator added!");
         resetForm();
     }
@@ -122,10 +134,12 @@ public class CreatorForm extends AbstractForm {
      *
      * @param name     The updated name of the creator
      * @param overview The updated overview/description of the creator
+     * @param imageUrl The URL to the creator's image
      */
-    private void updateCreator(String name, String overview) {
+    private void updateCreator(String name, String overview, String imageUrl) {
         editingCreator.setName(name);
         editingCreator.setOverview(overview);
+        editingCreator.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
         creatorService.updateCreator(editingCreator);
         showSuccess("Creator updated successfully.");
         SwingUtilities.getWindowAncestor(this).dispose();
@@ -135,5 +149,6 @@ public class CreatorForm extends AbstractForm {
     protected void resetForm() {
         nameField.setText("");
         overviewArea.setText("");
+        imageUrlField.setText("");
     }
 }

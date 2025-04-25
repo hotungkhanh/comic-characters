@@ -19,11 +19,14 @@ public class Creator {
     @Column(length = 1000)
     private String overview;
 
+    @Column(length = 2083)
+    private String imageUrl;
+
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<IssueCreator> issueCreators = new HashSet<>();
+    private final Set<IssueCreator> issueCreators = new HashSet<>();
 
     @ManyToMany(mappedBy = "creators")
-    private Set<ComicCharacter> creditedCharacters = new HashSet<>();
+    private final Set<ComicCharacter> creditedCharacters = new HashSet<>();
 
     public Creator() {
     }
@@ -35,6 +38,12 @@ public class Creator {
     public Creator(String name, String overview) {
         this.name = name;
         this.overview = overview;
+    }
+
+    public Creator(String name, String overview, String imageUrl) {
+        this.name = name;
+        this.overview = overview;
+        this.imageUrl = imageUrl;
     }
 
     public Long getId() {
@@ -61,20 +70,20 @@ public class Creator {
         this.overview = overview;
     }
 
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
     public Set<IssueCreator> getIssueCreators() {
         return issueCreators;
     }
 
-    public void setIssueCreators(Set<IssueCreator> issueCreators) {
-        this.issueCreators = issueCreators;
-    }
-
     public Set<ComicCharacter> getCreditedCharacters() {
         return creditedCharacters;
-    }
-
-    public void setCreditedCharacters(Set<ComicCharacter> creditedCharacters) {
-        this.creditedCharacters = creditedCharacters;
     }
 
     @Override

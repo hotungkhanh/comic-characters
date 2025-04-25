@@ -13,8 +13,30 @@ public class CreatorService extends AbstractService<Creator> {
         super(new CreatorDaoImpl());
     }
 
+    /**
+     * Adds a new creator with name and overview
+     *
+     * @param name The name of the creator
+     * @param overview The overview/description of the creator
+     */
     public void addCreator(String name, String overview) {
-        save(new Creator(name, overview));
+        Creator creator = new Creator(name, overview);
+        save(creator);
+    }
+
+    /**
+     * Adds a new creator with name, overview and image URL
+     *
+     * @param name The name of the creator
+     * @param overview The overview/description of the creator
+     * @param imageUrl The URL to the creator's image
+     */
+    public void addCreator(String name, String overview, String imageUrl) {
+        Creator creator = new Creator(name, overview);
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            creator.setImageUrl(imageUrl);
+        }
+        save(creator);
     }
 
     public void updateCreator(Creator creator) {
