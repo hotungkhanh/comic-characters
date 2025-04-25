@@ -2,6 +2,7 @@ package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.service.PublisherService;
+import com.tuka.comiccharacters.ui.details.AbstractDetails;
 import com.tuka.comiccharacters.ui.details.PublisherDetails;
 import com.tuka.comiccharacters.ui.form.PublisherForm;
 
@@ -16,7 +17,7 @@ public class PublisherBrowser extends AbstractBrowser<Publisher, PublisherServic
 
     @Override
     protected boolean matchesQuery(Publisher publisher, String query) {
-        return publisher.getName().toLowerCase().contains(query.toLowerCase());
+        return matchesNameField(publisher.getName(), query);
     }
 
     @Override
@@ -25,18 +26,17 @@ public class PublisherBrowser extends AbstractBrowser<Publisher, PublisherServic
     }
 
     @Override
-    protected void showDetails(Publisher publisher) {
-        Publisher fullPublisher = service.getByIdWithDetails(publisher.getId());
-        new PublisherDetails(this, fullPublisher, this::refreshEntities).showDetailsDialog();
+    protected Long getEntityId(Publisher entity) {
+        return entity.getId();
     }
 
     @Override
-    protected void showAddForm() {
-        JDialog dialog = new JDialog(parentFrame, "Add New Publisher", true);
-        dialog.setContentPane(new PublisherForm());
-        dialog.pack();
-        dialog.setLocationRelativeTo(parentFrame);
-        dialog.setVisible(true);
-        refreshEntities();
+    protected JComponent createForm() {
+        return new PublisherForm();
+    }
+
+    @Override
+    protected AbstractDetails<Publisher> createDetailsDialog(Publisher publisher, Runnable refreshCallback) {
+        return new PublisherDetails(this, publisher, refreshCallback);
     }
 }

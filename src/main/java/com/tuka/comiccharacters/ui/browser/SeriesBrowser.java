@@ -2,6 +2,7 @@ package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.Series;
 import com.tuka.comiccharacters.service.SeriesService;
+import com.tuka.comiccharacters.ui.details.AbstractDetails;
 import com.tuka.comiccharacters.ui.details.SeriesDetails;
 import com.tuka.comiccharacters.ui.form.SeriesForm;
 
@@ -16,7 +17,7 @@ public class SeriesBrowser extends AbstractBrowser<Series, SeriesService> {
 
     @Override
     protected boolean matchesQuery(Series series, String query) {
-        return series.getTitle().toLowerCase().contains(query.toLowerCase());
+        return matchesNameField(series.getTitle(), query);
     }
 
     @Override
@@ -25,18 +26,17 @@ public class SeriesBrowser extends AbstractBrowser<Series, SeriesService> {
     }
 
     @Override
-    protected void showDetails(Series series) {
-        Series fullSeries = service.getByIdWithDetails(series.getId());
-        new SeriesDetails(this, fullSeries, this::refreshEntities).showDetailsDialog();
+    protected Long getEntityId(Series series) {
+        return series.getId();
     }
 
     @Override
-    protected void showAddForm() {
-        JDialog dialog = new JDialog(parentFrame, "Add New Series", true);
-        dialog.setContentPane(new SeriesForm());
-        dialog.pack();
-        dialog.setLocationRelativeTo(parentFrame);
-        dialog.setVisible(true);
-        refreshEntities();
+    protected JComponent createForm() {
+        return new SeriesForm();
+    }
+
+    @Override
+    protected AbstractDetails<Series> createDetailsDialog(Series series, Runnable refreshCallback) {
+        return new SeriesDetails(this, series, refreshCallback);
     }
 }

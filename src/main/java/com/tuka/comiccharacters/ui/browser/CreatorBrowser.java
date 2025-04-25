@@ -2,6 +2,7 @@ package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.service.CreatorService;
+import com.tuka.comiccharacters.ui.details.AbstractDetails;
 import com.tuka.comiccharacters.ui.details.CreatorDetails;
 import com.tuka.comiccharacters.ui.form.CreatorForm;
 
@@ -16,7 +17,7 @@ public class CreatorBrowser extends AbstractBrowser<Creator, CreatorService> {
 
     @Override
     protected boolean matchesQuery(Creator creator, String query) {
-        return creator.getName().toLowerCase().contains(query.toLowerCase());
+        return matchesNameField(creator.getName(), query);
     }
 
     @Override
@@ -25,18 +26,17 @@ public class CreatorBrowser extends AbstractBrowser<Creator, CreatorService> {
     }
 
     @Override
-    protected void showDetails(Creator creator) {
-        Creator fullCreator = service.getByIdWithDetails(creator.getId());
-        new CreatorDetails(this, fullCreator, this::refreshEntities).showDetailsDialog();
+    protected Long getEntityId(Creator creator) {
+        return creator.getId();
     }
 
     @Override
-    protected void showAddForm() {
-        JDialog dialog = new JDialog(parentFrame, "Add New Creator", true);
-        dialog.setContentPane(new CreatorForm());
-        dialog.pack();
-        dialog.setLocationRelativeTo(parentFrame);
-        dialog.setVisible(true);
-        refreshEntities();
+    protected JComponent createForm() {
+        return new CreatorForm();
+    }
+
+    @Override
+    protected AbstractDetails<Creator> createDetailsDialog(Creator creator, Runnable refreshCallback) {
+        return new CreatorDetails(this, creator, refreshCallback);
     }
 }

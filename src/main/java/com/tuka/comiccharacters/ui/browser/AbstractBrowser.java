@@ -1,6 +1,7 @@
 package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.service.AbstractService;
+import com.tuka.comiccharacters.ui.details.AbstractDetails;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,15 +15,17 @@ public abstract class AbstractBrowser<T, S extends AbstractService<T>> extends J
     protected final JList<T> entityList = new JList<>(listModel);
     protected final List<T> allEntities = new ArrayList<>();
     protected final JFrame parentFrame;
-    protected final S service; // New generic service field
+    protected final S service;
+    protected final String entityTypeName;
 
-    public AbstractBrowser(String title, JFrame parentFrame, S service) {
+    public AbstractBrowser(String entityTypeName, JFrame parentFrame, S service) {
         super(new BorderLayout(5, 5));
         this.parentFrame = parentFrame;
         this.service = service;
+        this.entityTypeName = entityTypeName;
 
         // Title label
-        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel(entityTypeName, SwingConstants.CENTER);
         add(titleLabel, BorderLayout.NORTH);
 
         // Entity list with scrolling
@@ -30,8 +33,8 @@ public abstract class AbstractBrowser<T, S extends AbstractService<T>> extends J
         add(scrollPane, BorderLayout.CENTER);
 
         // Add New button at the bottom
-        JButton addButton = new JButton("Add New " + title);
-        addButton.addActionListener(e -> showAddForm());
+        JButton addButton = new JButton("Add New " + entityTypeName);
+        addButton.addActionListener(_ -> showAddForm());
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(addButton);
@@ -44,7 +47,7 @@ public abstract class AbstractBrowser<T, S extends AbstractService<T>> extends J
             }
         });
 
-        // Refresh entities at initialization
+        // Refresh entities at initialisation
         refreshEntities();
     }
 
@@ -76,8 +79,31 @@ public abstract class AbstractBrowser<T, S extends AbstractService<T>> extends J
         }
     }
 
+    protected void showDetails(T entity) {
+        // Get the full entity with details
+        T fullEntity = service.getByIdWithDetails(getEntityId(entity));
+        // Create and show the details dialogue
+        AbstractDetails<T> detailsDialog = createDetailsDialog(fullEntity, this::refreshEntities);
+        detailsDialog.showDetailsDialog();
+    }
+
+    protected void showAddForm() {
+        JDialog dialog = new JDialog(parentFrame, "Add New " + entityTypeName, true);
+        dialog.setContentPane(createForm());
+        dialog.pack();
+        dialog.setLocationRelativeTo(parentFrame);
+        dialog.setVisible(true);
+        refreshEntities();
+    }
+
+    protected boolean matchesNameField(String name, String query) {
+        return name != null && name.toLowerCase().contains(query.toLowerCase());
+    }
+
+    // Abstract methods that must be implemented
     protected abstract boolean matchesQuery(T entity, String query);
     protected abstract Comparator<T> getComparator();
-    protected abstract void showDetails(T entity);
-    protected abstract void showAddForm();
+    protected abstract Long getEntityId(T entity);
+    protected abstract JComponent createForm();
+    protected abstract AbstractDetails<T> createDetailsDialog(T entity, Runnable refreshCallback);
 }

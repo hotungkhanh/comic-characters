@@ -28,8 +28,9 @@ public class SeriesDetails extends AbstractDetails<Series> {
         super(parent, series, refreshCallback);
     }
 
+    @Override
     public void showDetailsDialog() {
-        super.showDetailsDialog(600, 500);
+        super.showDetailsDialog(600, 750);
     }
 
     @Override

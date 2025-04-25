@@ -29,8 +29,9 @@ public class IssueDetails extends AbstractDetails<Issue> {
         super(parent, issue, refreshCallback);
     }
 
+    @Override
     public void showDetailsDialog() {
-        super.showDetailsDialog(800, 900);
+        super.showDetailsDialog(800, 700);
     }
 
     @Override

@@ -27,8 +27,9 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
         super(parent, publisher, refreshCallback);
     }
 
+    @Override
     public void showDetailsDialog() {
-        super.showDetailsDialog(800, 500);
+        super.showDetailsDialog(900, 500);
     }
 
     @Override

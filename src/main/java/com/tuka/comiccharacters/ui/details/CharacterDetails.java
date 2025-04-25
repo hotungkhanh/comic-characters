@@ -30,8 +30,9 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
         super(parent, character, refreshCallback);
     }
 
+    @Override
     public void showDetailsDialog() {
-        super.showDetailsDialog(600, 500);
+        super.showDetailsDialog(600, 800);
     }
 
     @Override

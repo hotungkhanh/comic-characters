@@ -2,6 +2,7 @@ package com.tuka.comiccharacters.ui.browser;
 
 import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.service.CharacterService;
+import com.tuka.comiccharacters.ui.details.AbstractDetails;
 import com.tuka.comiccharacters.ui.details.CharacterDetails;
 import com.tuka.comiccharacters.ui.form.CharacterForm;
 
@@ -26,18 +27,17 @@ public class CharacterBrowser extends AbstractBrowser<ComicCharacter, CharacterS
     }
 
     @Override
-    protected void showDetails(ComicCharacter character) {
-        ComicCharacter fullCharacter = service.getByIdWithDetails(character.getId());
-        new CharacterDetails(this, fullCharacter, this::refreshEntities).showDetailsDialog();
+    protected Long getEntityId(ComicCharacter entity) {
+        return entity.getId();
     }
 
     @Override
-    protected void showAddForm() {
-        JDialog dialog = new JDialog(parentFrame, "Add New Character", true);
-        dialog.setContentPane(new CharacterForm());
-        dialog.pack();
-        dialog.setLocationRelativeTo(parentFrame);
-        dialog.setVisible(true);
-        refreshEntities();
+    protected JComponent createForm() {
+        return new CharacterForm();
+    }
+
+    @Override
+    protected AbstractDetails<ComicCharacter> createDetailsDialog(ComicCharacter entity, Runnable refreshCallback) {
+        return new CharacterDetails(this, entity, refreshCallback);
     }
 }

@@ -28,6 +28,7 @@ public class CreatorDetails extends AbstractDetails<Creator> {
         super(parent, creator, refreshCallback);
     }
 
+    @Override
     public void showDetailsDialog() {
         super.showDetailsDialog(600, 620);
     }

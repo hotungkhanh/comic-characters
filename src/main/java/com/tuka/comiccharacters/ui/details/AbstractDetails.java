@@ -20,6 +20,11 @@ public abstract class AbstractDetails<T> {
         this.gbc = defaultGbc();
     }
 
+    public void showDetailsDialog() {
+        // Default size - child classes should override this method to specify their own dimensions
+        showDetailsDialog(600, 500);
+    }
+
     public void showDetailsDialog(int windowWidth, int windowHeight) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), getTitle(), true);
         dialog.setLayout(new BorderLayout(10, 10));
