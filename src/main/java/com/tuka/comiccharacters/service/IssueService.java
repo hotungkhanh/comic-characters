@@ -1,10 +1,7 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.IssueDaoImpl;
-import com.tuka.comiccharacters.model.ComicCharacter;
-import com.tuka.comiccharacters.model.Issue;
-import com.tuka.comiccharacters.model.IssueCreator;
-import com.tuka.comiccharacters.model.Series;
+import com.tuka.comiccharacters.model.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,9 +15,7 @@ public class IssueService extends AbstractService<Issue> {
         super(new IssueDaoImpl());
     }
 
-    public void addIssue(Series series, BigDecimal issueNumber, String overview, LocalDate releaseDate,
-                         BigDecimal priceUsd, boolean isAnnual, List<IssueCreator> issueCreators,
-                         List<ComicCharacter> characters) {
+    public void addIssue(Series series, BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal priceUsd, boolean isAnnual, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
         try {
             executeInTransaction(em -> {
                 // Create the new issue with basic properties
@@ -73,17 +68,29 @@ public class IssueService extends AbstractService<Issue> {
                 managedIssue.setOverview(existingIssue.getOverview());
                 managedIssue.setReleaseDate(existingIssue.getReleaseDate());
                 managedIssue.setPriceUsd(existingIssue.getPriceUsd());
+                managedIssue.setImageUrl(existingIssue.getImageUrl());
                 managedIssue.setAnnual(existingIssue.getAnnual());
 
-                // Update creators
-                managedIssue.getIssueCreators().clear();
+                // Update creators - completely remove old ones and create new ones
+                Set<IssueCreator> oldCreators = new HashSet<>(managedIssue.getIssueCreators());
+                for (IssueCreator ic : oldCreators) {
+                    managedIssue.getIssueCreators().remove(ic);
+                    em.remove(ic);
+                }
+
+                // Add new creators
                 Set<IssueCreator> updatedIssueCreators = existingIssue.getIssueCreators();
                 if (updatedIssueCreators != null) {
                     for (IssueCreator ic : updatedIssueCreators) {
-                        ic.setIssue(managedIssue);
-                        em.merge(ic);
+                        // Create new IssueCreator entities instead of reusing existing ones
+                        IssueCreator newIc = new IssueCreator();
+                        newIc.setIssue(managedIssue);
+                        newIc.setCreator(em.find(Creator.class, ic.getCreator().getId()));
+                        newIc.setRoles(ic.getRoles());
+
+                        em.persist(newIc);
+                        managedIssue.getIssueCreators().add(newIc);
                     }
-                    managedIssue.getIssueCreators().addAll(updatedIssueCreators);
                 }
 
                 // Update characters

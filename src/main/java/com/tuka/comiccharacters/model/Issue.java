@@ -25,6 +25,9 @@ public class Issue {
     @Column(length = 1000)
     private String overview;
 
+    @Column(length = 2083)
+    private String imageUrl;
+
     private LocalDate releaseDate;
 
     @Column(precision = 6, scale = 2)
@@ -34,11 +37,7 @@ public class Issue {
     private Set<IssueCreator> issueCreators = new HashSet<>();
 
     @ManyToMany
-    @JoinTable(
-            name = "issue_characters",
-            joinColumns = @JoinColumn(name = "issue_id"),
-            inverseJoinColumns = @JoinColumn(name = "character_id")
-    )
+    @JoinTable(name = "issue_characters", joinColumns = @JoinColumn(name = "issue_id"), inverseJoinColumns = @JoinColumn(name = "character_id"))
     private Set<ComicCharacter> characters = new HashSet<>();
 
     @Column(nullable = false)
@@ -84,6 +83,14 @@ public class Issue {
 
     public void setOverview(String overview) {
         this.overview = overview;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public LocalDate getReleaseDate() {

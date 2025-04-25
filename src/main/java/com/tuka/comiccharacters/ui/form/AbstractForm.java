@@ -315,6 +315,16 @@ public abstract class AbstractForm extends JPanel {
     }
 
     /**
+     * Simple validation for URLs - could be enhanced for better validation
+     *
+     * @param url URL to validate
+     * @return true if the URL seems valid
+     */
+    protected boolean isValidUrl(String url) {
+        return url.startsWith("http://") || url.startsWith("https://");
+    }
+
+    /**
      * Resets the form fields
      */
     protected abstract void resetForm();

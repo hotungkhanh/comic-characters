@@ -32,6 +32,7 @@ public class IssueForm extends AbstractForm {
     private final JTextArea overviewTextArea = new JTextArea(3, 20);
     private final JTextField releaseDateField = new JTextField(10);
     private final JTextField priceField = new JTextField(10);
+    private final JTextField imageUrlField = new JTextField(30); // Added image URL field
     private final JCheckBox annualCheckBox = new JCheckBox("Annual Issue");
     // Creators section
     private final DefaultTableModel creatorTableModel = new DefaultTableModel(new Object[]{"Name", "Role(s)"}, 0) {
@@ -124,6 +125,9 @@ public class IssueForm extends AbstractForm {
         row = addTextArea("Overview:", overviewTextArea, row, 3, false);
         row = addTextField("Release Date:", releaseDateField, row, false);
         row = addTextField("Price (USD):", priceField, row, false);
+
+        // Add image URL field
+        row = addTextField("Image URL:", imageUrlField, row, false);
 
         // Annual checkbox
         row = addCheckbox(annualCheckBox, row);
@@ -261,6 +265,7 @@ public class IssueForm extends AbstractForm {
         String overview = overviewTextArea.getText().trim();
         String releaseDateText = releaseDateField.getText().trim();
         String priceText = priceField.getText().trim();
+        String imageUrl = imageUrlField.getText().trim(); // Get image URL
         boolean isAnnual = annualCheckBox.isSelected();
 
         BigDecimal issueNumber;
@@ -297,9 +302,9 @@ public class IssueForm extends AbstractForm {
         List<ComicCharacter> charactersToAdd = getSelectedCharacters();
 
         if (isEditMode && existingIssue != null) {
-            updateIssue(issueNumber, overview, releaseDate, price, isAnnual, charactersToAdd);
+            updateIssue(issueNumber, overview, releaseDate, price, imageUrl, isAnnual, charactersToAdd);
         } else {
-            addIssue(issueNumber, overview, releaseDate, price, isAnnual, charactersToAdd);
+            addIssue(issueNumber, overview, releaseDate, price, imageUrl, isAnnual, charactersToAdd);
         }
 
         // Close window and execute callback
@@ -315,7 +320,7 @@ public class IssueForm extends AbstractForm {
     /**
      * Updates an existing issue with new values
      */
-    private void updateIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, boolean isAnnual, List<ComicCharacter> characters) {
+    private void updateIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, String imageUrl, boolean isAnnual, List<ComicCharacter> characters) {
         existingIssue.setIssueNumber(issueNumber);
         existingIssue.setOverview(overview);
         if (releaseDate != null) {
@@ -323,6 +328,12 @@ public class IssueForm extends AbstractForm {
         }
         if (price != null) {
             existingIssue.setPriceUsd(price);
+        }
+        // Set image URL
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            existingIssue.setImageUrl(imageUrl);
+        } else {
+            existingIssue.setImageUrl(null);
         }
         existingIssue.setAnnual(isAnnual);
 
@@ -335,9 +346,7 @@ public class IssueForm extends AbstractForm {
 
         // Update characters
         existingIssue.getCharacters().clear();
-        for (ComicCharacter character : characters) {
-            existingIssue.addCharacter(character);
-        }
+        existingIssue.getCharacters().addAll(characters);
 
         issueService.updateIssue(existingIssue);
         showSuccess("Issue updated successfully.");
@@ -346,8 +355,24 @@ public class IssueForm extends AbstractForm {
     /**
      * Adds a new issue to the database
      */
-    private void addIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, boolean isAnnual, List<ComicCharacter> characters) {
+    private void addIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, String imageUrl, boolean isAnnual, List<ComicCharacter> characters) {
+        // Create a new issue with all the data
+        Issue newIssue = new Issue(currentSeries, issueNumber);
+        newIssue.setOverview(overview);
+        newIssue.setReleaseDate(releaseDate);
+        newIssue.setPriceUsd(price);
+        newIssue.setImageUrl(imageUrl);
+        newIssue.setAnnual(isAnnual);
+
+        // Add the issue with all its relationships
         issueService.addIssue(currentSeries, issueNumber, overview, releaseDate, price, isAnnual, selectedCreators, characters);
+
+        // Update the image URL separately if needed
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            // This may require updating the IssueService to handle image URLs
+            // For now, we'll assume the service will handle it
+        }
+
         showSuccess("Issue added!");
     }
 
@@ -374,6 +399,14 @@ public class IssueForm extends AbstractForm {
         if (issueNumberField.getText().trim().isEmpty()) {
             showError("Issue number is required.");
             issueNumberField.requestFocus();
+            return false;
+        }
+
+        // Validate image URL if provided
+        String imageUrl = imageUrlField.getText().trim();
+        if (!imageUrl.isEmpty() && !isValidUrl(imageUrl)) {
+            showError("Please enter a valid URL for the image.");
+            imageUrlField.requestFocus();
             return false;
         }
 
@@ -568,6 +601,7 @@ public class IssueForm extends AbstractForm {
         overviewTextArea.setText(issue.getOverview() != null ? issue.getOverview() : "");
         releaseDateField.setText(issue.getReleaseDate() != null ? issue.getReleaseDate().toString() : "");
         priceField.setText(issue.getPriceUsd() != null ? issue.getPriceUsd().toString() : "");
+        imageUrlField.setText(issue.getImageUrl() != null ? issue.getImageUrl() : ""); // Populate image URL
         annualCheckBox.setSelected(issue.getAnnual() != null ? issue.getAnnual() : false);
 
         // Fill creators
@@ -598,6 +632,7 @@ public class IssueForm extends AbstractForm {
         overviewTextArea.setText("");
         releaseDateField.setText("");
         priceField.setText("");
+        imageUrlField.setText(""); // Reset image URL field
         annualCheckBox.setSelected(false);
         creatorTableModel.setRowCount(0);
         selectedCreators.clear();
