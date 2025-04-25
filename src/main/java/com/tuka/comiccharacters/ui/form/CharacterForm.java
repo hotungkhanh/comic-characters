@@ -70,7 +70,7 @@ public class CharacterForm extends AbstractForm {
         row = addTextField("Alias:", aliasField, row, false);
 
         // Publisher dropdown
-        Set<Publisher> allPublishers = publisherService.getAllPublishers();
+        Set<Publisher> allPublishers = publisherService.getAllEntities();
         List<Publisher> publishersWithNull = new ArrayList<>();
         publishersWithNull.add(null);
         publishersWithNull.addAll(allPublishers);

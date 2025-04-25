@@ -86,7 +86,7 @@ public class SeriesForm extends AbstractForm {
         List<Publisher> publishers = new ArrayList<>();
         publishers.add(null); // for "None"
         PublisherService publisherService = new PublisherService();
-        publishers.addAll(publisherService.getAllPublishers());
+        publishers.addAll(publisherService.getAllEntities());
 
         return createNullableDropdown(publishers.toArray(new Publisher[0]), "None");
     }

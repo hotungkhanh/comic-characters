@@ -20,7 +20,7 @@ public class PublisherBrowser extends AbstractBrowser<Publisher> {
 
     @Override
     protected Collection<Publisher> getEntities() {
-        return publisherService.getAllPublishers();
+        return publisherService.getAllEntities();
     }
 
     @Override

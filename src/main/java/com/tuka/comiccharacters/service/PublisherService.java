@@ -22,10 +22,6 @@ public class PublisherService extends AbstractService<Publisher> {
         save(publisher);
     }
 
-    public Set<Publisher> getAllPublishers() {
-        return dao.findAll();
-    }
-
     public void updatePublisher(Publisher publisher) {
         save(publisher);
     }
