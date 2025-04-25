@@ -3,7 +3,9 @@ package com.tuka.comiccharacters.ui.details;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public abstract class AbstractDetails<T> {
@@ -12,6 +14,7 @@ public abstract class AbstractDetails<T> {
     protected final T entity;
     protected final Runnable refreshCallback;
     protected final GridBagConstraints gbc;
+    protected JDialog currentDialog;
 
     public AbstractDetails(Component parent, T entity, Runnable refreshCallback) {
         this.parent = parent;
@@ -27,6 +30,7 @@ public abstract class AbstractDetails<T> {
 
     public void showDetailsDialog(int windowWidth, int windowHeight) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), getTitle(), true);
+        this.currentDialog = dialog;
         dialog.setLayout(new BorderLayout(10, 10));
         dialog.setSize(windowWidth, windowHeight);
         dialog.setLocationRelativeTo(parent);
@@ -71,6 +75,8 @@ public abstract class AbstractDetails<T> {
 
     protected abstract String getDeleteConfirmationMessage();
 
+    // ===== Common UI Component Methods =====
+
     protected int addLabelValue(JPanel panel, String label, String value, int row) {
         if (value == null || value.isBlank()) return row;
 
@@ -99,36 +105,13 @@ public abstract class AbstractDetails<T> {
         return row + 1;
     }
 
-    protected <E> JList<String> createStringList(List<E> items, Function<E, String> toStringMapper) {
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-        for (E item : items) {
-            listModel.addElement(toStringMapper.apply(item));
-        }
-        JList<String> jList = new JList<>(listModel);
-        jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        return jList;
-    }
-
-    protected JPanel createListPanel(JList<?> list, int preferredHeight) {
-        JPanel panel = new JPanel(new BorderLayout());
-        JScrollPane scrollPane = new JScrollPane(list);
-        scrollPane.setPreferredSize(new Dimension(400, preferredHeight));
-        panel.add(scrollPane, BorderLayout.CENTER);
-        return panel;
-    }
-
-    protected JPanel createTitledPanel(Component component, String title) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder(title));
-        panel.add(component, BorderLayout.CENTER);
-        return panel;
-    }
-
     protected JPanel createMainInfoPanel() {
         return new JPanel(new GridBagLayout());
     }
 
     protected int addClickableLabel(JPanel panel, String labelText, String valueText, int row, MouseAdapter mouseAdapter, Cursor cursor) {
+        if (valueText == null || valueText.isBlank()) return row;
+
         panel.add(createLabel(labelText, row, 0, false), labelConstraints(row));
 
         JLabel valueLabel = new JLabel(valueText);
@@ -142,7 +125,73 @@ public abstract class AbstractDetails<T> {
         return row + 1;
     }
 
-    // === Helper Methods ===
+    // ===== New Methods for Navigable Lists =====
+
+    /**
+     * Creates a clickable list panel with items that can be navigated to on double-click
+     */
+    protected <T> JPanel createClickableListPanel(String title, List<T> items, Function<T, String> nameExtractor, Consumer<T> onDoubleClick) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createTitledBorder(title));
+
+        DefaultListModel<T> listModel = new DefaultListModel<>();
+        items.forEach(listModel::addElement);
+
+        JList<T> list = new JList<>(listModel);
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        list.setCellRenderer((list1, value, index, isSelected, cellHasFocus) -> {
+            JLabel label = new JLabel(nameExtractor.apply(value));
+            if (isSelected) {
+                label.setBackground(list1.getSelectionBackground());
+                label.setForeground(list1.getSelectionForeground());
+                label.setOpaque(true);
+            }
+            return label;
+        });
+
+        list.addMouseListener(getListDoubleClickListener(items, onDoubleClick));
+
+        JScrollPane scrollPane = new JScrollPane(list);
+        scrollPane.setPreferredSize(new Dimension(200, 120));
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    /**
+     * Adds a clickable list panel to the parent panel and updates the grid position
+     */
+    protected <T> int addNavigableListPanel(JPanel parentPanel, String title, List<T> items, Function<T, String> nameExtractor, Consumer<T> onDoubleClick, int row) {
+        if (items == null || items.isEmpty()) return row;
+
+        JPanel panel = createClickableListPanel(title, items, nameExtractor, onDoubleClick);
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        parentPanel.add(panel, gbc);
+        return row;
+    }
+
+    /**
+     * Creates a mouse adapter for handling double-click navigation on lists
+     */
+    protected <T> MouseAdapter getListDoubleClickListener(List<T> items, Consumer<T> onDoubleClick) {
+        return new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    JList<?> list = (JList<?>) e.getSource();
+                    int selectedIndex = list.getSelectedIndex();
+                    if (selectedIndex >= 0 && selectedIndex < items.size()) {
+                        onDoubleClick.accept(items.get(selectedIndex));
+                    }
+                }
+            }
+        };
+    }
+
+    // ===== Constraint and Layout Helper Methods =====
 
     private GridBagConstraints defaultGbc() {
         GridBagConstraints c = new GridBagConstraints();

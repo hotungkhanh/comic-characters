@@ -14,19 +14,21 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class IssueDetails extends AbstractDetails<Issue> {
 
-    private final IssueService issueService = new IssueService();
-    private final PublisherService publisherService = new PublisherService();
-    private final CreatorService creatorService = new CreatorService();
-    private final CharacterService characterService = new CharacterService();
-    private JDialog detailsDialog;
+    private final IssueService issueService;
+    private final PublisherService publisherService;
+    private final CreatorService creatorService;
+    private final CharacterService characterService;
 
     public IssueDetails(Component parent, Issue issue, Runnable refreshCallback) {
         super(parent, issue, refreshCallback);
+        this.issueService = new IssueService();
+        this.publisherService = new PublisherService();
+        this.creatorService = new CreatorService();
+        this.characterService = new CharacterService();
     }
 
     @Override
@@ -36,14 +38,15 @@ public class IssueDetails extends AbstractDetails<Issue> {
 
     @Override
     protected JPanel getMainPanel(JDialog dialog) {
-        this.detailsDialog = dialog;
-
         JPanel infoPanel = createMainInfoPanel();
         int row = 0;
+
+        // Basic information
         row = addLabelValue(infoPanel, "Issue:", entity.toString(), row);
 
-        // Publisher
-        row = addClickablePublisher(infoPanel, row, (entity.getSeries() != null) ? entity.getSeries().getPublisher() : null);
+        // Publisher (if available)
+        Publisher publisher = (entity.getSeries() != null) ? entity.getSeries().getPublisher() : null;
+        row = addClickablePublisher(infoPanel, row, publisher);
 
         // Overview
         row = addTextArea(infoPanel, "Overview:", entity.getOverview(), row, 3);
@@ -58,95 +61,82 @@ public class IssueDetails extends AbstractDetails<Issue> {
             row = addLabelValue(infoPanel, "Price (USD):", String.format("$%.2f", entity.getPriceUsd()), row);
         }
 
-        // Creators
-        List<IssueCreator> issueCreators = List.copyOf(entity.getIssueCreators()); // Convert Set to List
-        if (!issueCreators.isEmpty()) {
-            List<Creator> creators = issueCreators.stream()
-                    .map(IssueCreator::getCreator)
-                    .collect(Collectors.toList());
-            JList<String> creatorsList = createStringList(creators, this::getCreatorNameAndRoles); // Use method reference
-            creatorsList.addMouseListener(getListDoubleClickListener(creators, creator -> {
-                Creator fetched = creatorService.getByIdWithDetails(creator.getId());
-                if (fetched != null) {
-                    detailsDialog.dispose();
-                    new CreatorDetails(parent, fetched, refreshCallback).showDetailsDialog();
-                } else {
-                    MainApp.showError("Could not load creator details.");
-                }
-            }));
-            row = addTitledListPanel(infoPanel, "Creators", creatorsList, row, 100);
-        }
+        // Creators list
+        row = addCreatorsList(infoPanel, row);
 
-        // Characters
-        List<ComicCharacter> characters = List.copyOf(entity.getCharacters()); // Convert Set to List
-        if (!characters.isEmpty()) {
-            JList<String> charactersList = createStringList(characters, ComicCharacter::toString);
-            charactersList.addMouseListener(getListDoubleClickListener(characters, character -> {
-                ComicCharacter fetched = characterService.getByIdWithDetails(character.getId());
-                if (fetched != null) {
-                    detailsDialog.dispose();
-                    new CharacterDetails(parent, fetched, refreshCallback).showDetailsDialog();
-                } else {
-                    MainApp.showError("Could not load character details.");
-                }
-            }));
-            row = addTitledListPanel(infoPanel, "Characters", charactersList, row, 100);
-        }
+        // Characters list
+        row = addCharactersList(infoPanel, row);
 
+        // Create scrollable panel
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.add(new JScrollPane(infoPanel), BorderLayout.NORTH);
+        mainPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
         return mainPanel;
     }
 
+    private int addCreatorsList(JPanel panel, int row) {
+        if (entity.getIssueCreators() == null || entity.getIssueCreators().isEmpty()) {
+            return row;
+        }
+
+        List<Creator> creators = entity.getIssueCreators().stream().map(IssueCreator::getCreator).collect(Collectors.toList());
+
+        return addNavigableListPanel(panel, "Creators", creators, this::getCreatorNameAndRoles, this::navigateToCreator, row);
+    }
+
+    private int addCharactersList(JPanel panel, int row) {
+        if (entity.getCharacters() == null || entity.getCharacters().isEmpty()) {
+            return row;
+        }
+
+        List<ComicCharacter> characters = List.copyOf(entity.getCharacters());
+
+        return addNavigableListPanel(panel, "Characters", characters, ComicCharacter::toString, this::navigateToCharacter, row);
+    }
+
     private String getCreatorNameAndRoles(Creator creator) {
-        String rolesText = entity.getIssueCreators().stream()
-                .filter(ic -> ic.getCreator().equals(creator))
-                .flatMap(ic -> ic.getRoles().stream())
-                .map(Role::name)
-                .collect(Collectors.joining(", "));
+        String rolesText = entity.getIssueCreators().stream().filter(ic -> ic.getCreator().equals(creator)).flatMap(ic -> ic.getRoles().stream()).map(Role::name).collect(Collectors.joining(", "));
         return creator.getName() + (rolesText.isEmpty() ? "" : " (" + rolesText + ")");
     }
 
     private int addClickablePublisher(JPanel panel, int row, Publisher publisher) {
-        MouseAdapter mouseAdapter = null;
-        String publisherName = null;
-        if (publisher != null) {
-            publisherName = publisher.getName();
-            mouseAdapter = new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    detailsDialog.dispose();
-                    Publisher fetchedPublisher = publisherService.getByIdWithDetails(publisher.getId());
-                    new PublisherDetails(parent, fetchedPublisher, refreshCallback).showDetailsDialog();
-                }
-            };
+        if (publisher == null) {
+            return row;
         }
-        return addClickableLabel(panel, "Publisher:", publisherName, row, mouseAdapter, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    }
 
-    private <T> MouseAdapter getListDoubleClickListener(List<T> items, Consumer<T> onDoubleClick) {
-        return new MouseAdapter() {
+        MouseAdapter mouseAdapter = new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    JList<?> list = (JList<?>) e.getSource();
-                    int selectedIndex = list.getSelectedIndex();
-                    if (selectedIndex >= 0 && selectedIndex < items.size()) {
-                        onDoubleClick.accept(items.get(selectedIndex));
-                    }
+                Publisher fetchedPublisher = publisherService.getByIdWithDetails(publisher.getId());
+                if (fetchedPublisher != null) {
+                    currentDialog.dispose();
+                    new PublisherDetails(parent, fetchedPublisher, refreshCallback).showDetailsDialog();
+                } else {
+                    MainApp.showError("Could not load publisher details.");
                 }
             }
         };
+
+        return addClickableLabel(panel, "Publisher:", publisher.getName(), row, mouseAdapter, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
-    private int addTitledListPanel(JPanel parentPanel, String title, JList<?> list, int row, int preferredHeight) {
-        JPanel panel = createTitledPanel(createListPanel(list, preferredHeight), title);
-        gbc.gridx = 0;
-        gbc.gridy = row++;
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.BOTH;
-        parentPanel.add(panel, gbc);
-        return row;
+    private void navigateToCreator(Creator creator) {
+        Creator fetched = creatorService.getByIdWithDetails(creator.getId());
+        if (fetched != null) {
+            currentDialog.dispose();
+            new CreatorDetails(parent, fetched, refreshCallback).showDetailsDialog();
+        } else {
+            MainApp.showError("Could not load creator details.");
+        }
+    }
+
+    private void navigateToCharacter(ComicCharacter character) {
+        ComicCharacter fetched = characterService.getByIdWithDetails(character.getId());
+        if (fetched != null) {
+            currentDialog.dispose();
+            new CharacterDetails(parent, fetched, refreshCallback).showDetailsDialog();
+        } else {
+            MainApp.showError("Could not load character details.");
+        }
     }
 
     @Override

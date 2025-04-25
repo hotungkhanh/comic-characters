@@ -11,20 +11,20 @@ import com.tuka.comiccharacters.ui.form.PublisherForm;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.List;
 
 public class PublisherDetails extends AbstractDetails<Publisher> {
 
-    private final PublisherService publisherService = new PublisherService();
-    private final SeriesService seriesService = new SeriesService();
-    private final CharacterService characterService = new CharacterService();
-    private JDialog detailsDialog;
+    private final PublisherService publisherService;
+    private final SeriesService seriesService;
+    private final CharacterService characterService;
 
     public PublisherDetails(Component parent, Publisher publisher, Runnable refreshCallback) {
         super(parent, publisher, refreshCallback);
+        this.publisherService = new PublisherService();
+        this.seriesService = new SeriesService();
+        this.characterService = new CharacterService();
     }
 
     @Override
@@ -34,47 +34,29 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
 
     @Override
     protected JPanel getMainPanel(JDialog dialog) {
-        this.detailsDialog = dialog;
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setPreferredSize(new Dimension(500, 500));
 
+        // Create the basic info panel
         JPanel infoPanel = createMainInfoPanel();
         int row = 0;
         row = addLabelValue(infoPanel, "Name:", entity.getName(), row);
 
-        List<Series> sortedSeries = entity.getPublisherSeries()
-                .stream()
-                .sorted(Comparator.comparing(Series::getTitle, String.CASE_INSENSITIVE_ORDER))
-                .toList();
+        // Get sorted collections
+        List<Series> sortedSeries = getSortedSeries();
+        List<ComicCharacter> sortedCharacters = getSortedCharacters();
 
-        List<ComicCharacter> sortedCharacters = entity.getPublisherCharacters()
-                .stream()
-                .sorted(Comparator.comparing(ComicCharacter::getName, String.CASE_INSENSITIVE_ORDER))
-                .toList();
-
-        JPanel seriesPanel = createInteractiveListPanel("Series", sortedSeries, Series::toString, s -> {
-            Series fetched = seriesService.getByIdWithDetails(s.getId());
-            if (fetched != null) {
-                detailsDialog.dispose();
-                new SeriesDetails(parent, fetched, refreshCallback).showDetailsDialog();
-            } else {
-                MainApp.showError("Could not load series details.");
-            }
-        });
-
-        JPanel charactersPanel = createInteractiveListPanel("Characters", sortedCharacters, ComicCharacter::toString, c -> {
-            ComicCharacter fetched = characterService.getByIdWithDetails(c.getId());
-            if (fetched != null) {
-                detailsDialog.dispose();
-                new CharacterDetails(parent, fetched, refreshCallback).showDetailsDialog();
-            } else {
-                MainApp.showError("Could not load character details.");
-            }
-        });
-
+        // Create the side-by-side panels for series and characters
         JPanel centerPanel = new JPanel(new GridLayout(1, 2, 10, 10));
-        centerPanel.add(seriesPanel);
-        centerPanel.add(charactersPanel);
+
+        if (!sortedSeries.isEmpty()) {
+            JPanel seriesPanel = createClickableListPanel("Series", sortedSeries, Series::toString, this::navigateToSeries);
+            centerPanel.add(seriesPanel);
+        }
+
+        if (!sortedCharacters.isEmpty()) {
+            JPanel charactersPanel = createClickableListPanel("Characters", sortedCharacters, ComicCharacter::toString, this::navigateToCharacter);
+            centerPanel.add(charactersPanel);
+        }
 
         panel.add(infoPanel, BorderLayout.NORTH);
         panel.add(centerPanel, BorderLayout.CENTER);
@@ -82,39 +64,32 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
         return panel;
     }
 
-    private <T> JPanel createInteractiveListPanel(String title, List<T> items, java.util.function.Function<T, String> nameExtractor, java.util.function.Consumer<T> onDoubleClick) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder(title));
+    private List<Series> getSortedSeries() {
+        return entity.getPublisherSeries().stream().sorted(Comparator.comparing(Series::getTitle, String.CASE_INSENSITIVE_ORDER)).toList();
+    }
 
-        DefaultListModel<T> model = new DefaultListModel<>();
-        items.forEach(model::addElement);
-        JList<T> list = new JList<>(model);
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        list.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    T selected = list.getSelectedValue();
-                    if (selected != null) {
-                        onDoubleClick.accept(selected);
-                    }
-                }
-            }
-        });
-        list.setCellRenderer((JList<? extends T> l, T value, int index, boolean isSelected, boolean cellHasFocus) -> {
-            JLabel label = new JLabel(nameExtractor.apply(value));
-            label.setOpaque(true);
-            if (isSelected) {
-                label.setBackground(l.getSelectionBackground());
-                label.setForeground(l.getSelectionForeground());
-            } else {
-                label.setBackground(l.getBackground());
-                label.setForeground(l.getForeground());
-            }
-            return label;
-        });
-        panel.add(new JScrollPane(list), BorderLayout.CENTER);
-        return panel;
+    private List<ComicCharacter> getSortedCharacters() {
+        return entity.getPublisherCharacters().stream().sorted(Comparator.comparing(ComicCharacter::getName, String.CASE_INSENSITIVE_ORDER)).toList();
+    }
+
+    private void navigateToSeries(Series series) {
+        Series fetched = seriesService.getByIdWithDetails(series.getId());
+        if (fetched != null) {
+            currentDialog.dispose();
+            new SeriesDetails(parent, fetched, refreshCallback).showDetailsDialog();
+        } else {
+            MainApp.showError("Could not load series details.");
+        }
+    }
+
+    private void navigateToCharacter(ComicCharacter character) {
+        ComicCharacter fetched = characterService.getByIdWithDetails(character.getId());
+        if (fetched != null) {
+            currentDialog.dispose();
+            new CharacterDetails(parent, fetched, refreshCallback).showDetailsDialog();
+        } else {
+            MainApp.showError("Could not load character details.");
+        }
     }
 
     @Override
