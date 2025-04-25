@@ -1,5 +1,9 @@
 package com.tuka.comiccharacters.ui.details;
 
+import com.tuka.comiccharacters.model.Publisher;
+import com.tuka.comiccharacters.service.PublisherService;
+import com.tuka.comiccharacters.ui.MainApp;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -21,6 +25,21 @@ public abstract class AbstractDetails<T> {
         this.entity = entity;
         this.refreshCallback = refreshCallback;
         this.gbc = defaultGbc();
+    }
+
+    private static <T> JList<T> createSelectableList(Function<T, String> nameExtractor, DefaultListModel<T> listModel) {
+        JList<T> list = new JList<>(listModel);
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        list.setCellRenderer((list1, value, index, isSelected, cellHasFocus) -> {
+            JLabel label = new JLabel(nameExtractor.apply(value));
+            if (isSelected) {
+                label.setBackground(list1.getSelectionBackground());
+                label.setForeground(list1.getSelectionForeground());
+                label.setOpaque(true);
+            }
+            return label;
+        });
+        return list;
     }
 
     public void showDetailsDialog() {
@@ -73,9 +92,9 @@ public abstract class AbstractDetails<T> {
 
     protected abstract void deleteEntity();
 
-    protected abstract String getDeleteConfirmationMessage();
-
     // ===== Common UI Component Methods =====
+
+    protected abstract String getDeleteConfirmationMessage();
 
     protected int addLabelValue(JPanel panel, String label, String value, int row) {
         if (value == null || value.isBlank()) return row;
@@ -109,6 +128,38 @@ public abstract class AbstractDetails<T> {
         return new JPanel(new GridBagLayout());
     }
 
+    // ===== Navigable Lists =====
+
+    /**
+     * Adds a clickable publisher row that navigates to publisher details when clicked
+     *
+     * @param panel            The panel to add the clickable publisher to
+     * @param row              The current row in the grid layout
+     * @param publisher        The publisher entity to display and navigate to
+     * @param publisherService The service used to fetch the full publisher details
+     * @return The next available row number
+     */
+    protected int addClickablePublisher(JPanel panel, int row, Publisher publisher, PublisherService publisherService) {
+        if (publisher == null) {
+            return row;
+        }
+
+        MouseAdapter mouseAdapter = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Publisher fetchedPublisher = publisherService.getByIdWithDetails(publisher.getId());
+                if (fetchedPublisher != null) {
+                    currentDialog.dispose();
+                    new PublisherDetails(parent, fetchedPublisher, refreshCallback).showDetailsDialog();
+                } else {
+                    MainApp.showError("Could not load publisher details.");
+                }
+            }
+        };
+
+        return addClickableLabel(panel, "Publisher:", publisher.getName(), row, mouseAdapter, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+
     protected int addClickableLabel(JPanel panel, String labelText, String valueText, int row, MouseAdapter mouseAdapter, Cursor cursor) {
         if (valueText == null || valueText.isBlank()) return row;
 
@@ -125,29 +176,17 @@ public abstract class AbstractDetails<T> {
         return row + 1;
     }
 
-    // ===== New Methods for Navigable Lists =====
-
     /**
      * Creates a clickable list panel with items that can be navigated to on double-click
      */
-    protected <T> JPanel createClickableListPanel(String title, List<T> items, Function<T, String> nameExtractor, Consumer<T> onDoubleClick) {
+    protected <E> JPanel createClickableListPanel(String title, List<E> items, Function<E, String> nameExtractor, Consumer<E> onDoubleClick) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder(title));
 
-        DefaultListModel<T> listModel = new DefaultListModel<>();
+        DefaultListModel<E> listModel = new DefaultListModel<>();
         items.forEach(listModel::addElement);
 
-        JList<T> list = new JList<>(listModel);
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        list.setCellRenderer((list1, value, index, isSelected, cellHasFocus) -> {
-            JLabel label = new JLabel(nameExtractor.apply(value));
-            if (isSelected) {
-                label.setBackground(list1.getSelectionBackground());
-                label.setForeground(list1.getSelectionForeground());
-                label.setOpaque(true);
-            }
-            return label;
-        });
+        JList<E> list = createSelectableList(nameExtractor, listModel);
 
         list.addMouseListener(getListDoubleClickListener(items, onDoubleClick));
 
@@ -161,7 +200,7 @@ public abstract class AbstractDetails<T> {
     /**
      * Adds a clickable list panel to the parent panel and updates the grid position
      */
-    protected <T> int addNavigableListPanel(JPanel parentPanel, String title, List<T> items, Function<T, String> nameExtractor, Consumer<T> onDoubleClick, int row) {
+    protected <E> int addNavigableListPanel(JPanel parentPanel, String title, List<E> items, Function<E, String> nameExtractor, Consumer<E> onDoubleClick, int row) {
         if (items == null || items.isEmpty()) return row;
 
         JPanel panel = createClickableListPanel(title, items, nameExtractor, onDoubleClick);
@@ -176,7 +215,7 @@ public abstract class AbstractDetails<T> {
     /**
      * Creates a mouse adapter for handling double-click navigation on lists
      */
-    protected <T> MouseAdapter getListDoubleClickListener(List<T> items, Consumer<T> onDoubleClick) {
+    protected <E> MouseAdapter getListDoubleClickListener(List<E> items, Consumer<E> onDoubleClick) {
         return new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {

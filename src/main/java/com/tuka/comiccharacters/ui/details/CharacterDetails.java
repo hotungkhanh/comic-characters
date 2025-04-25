@@ -3,7 +3,6 @@ package com.tuka.comiccharacters.ui.details;
 import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Creator;
 import com.tuka.comiccharacters.model.Issue;
-import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.service.CharacterService;
 import com.tuka.comiccharacters.service.CreatorService;
 import com.tuka.comiccharacters.service.IssueService;
@@ -79,22 +78,7 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
     }
 
     private int addClickablePublisher(JPanel panel, int row) {
-        Publisher publisher = entity.getPublisher();
-        if (publisher == null) return row;
-
-        MouseAdapter mouseAdapter = new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                Publisher fetchedPublisher = publisherService.getByIdWithDetails(publisher.getId());
-                if (fetchedPublisher != null) {
-                    currentDialog.dispose();
-                    new PublisherDetails(parent, fetchedPublisher, refreshCallback).showDetailsDialog();
-                } else {
-                    MainApp.showError("Could not load publisher details.");
-                }
-            }
-        };
-        return addClickableLabel(panel, "Publisher:", publisher.getName(), row, mouseAdapter, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return addClickablePublisher(panel, row, entity.getPublisher(), publisherService);
     }
 
     private int addFirstAppearance(JPanel panel, int row) {

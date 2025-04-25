@@ -10,8 +10,6 @@ import com.tuka.comiccharacters.ui.form.IssueForm;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,8 +43,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
         row = addLabelValue(infoPanel, "Issue:", entity.toString(), row);
 
         // Publisher (if available)
-        Publisher publisher = (entity.getSeries() != null) ? entity.getSeries().getPublisher() : null;
-        row = addClickablePublisher(infoPanel, row, publisher);
+        row = addClickablePublisher(infoPanel, row);
 
         // Overview
         row = addTextArea(infoPanel, "Overview:", entity.getOverview(), row, 3);
@@ -98,25 +95,9 @@ public class IssueDetails extends AbstractDetails<Issue> {
         return creator.getName() + (rolesText.isEmpty() ? "" : " (" + rolesText + ")");
     }
 
-    private int addClickablePublisher(JPanel panel, int row, Publisher publisher) {
-        if (publisher == null) {
-            return row;
-        }
-
-        MouseAdapter mouseAdapter = new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                Publisher fetchedPublisher = publisherService.getByIdWithDetails(publisher.getId());
-                if (fetchedPublisher != null) {
-                    currentDialog.dispose();
-                    new PublisherDetails(parent, fetchedPublisher, refreshCallback).showDetailsDialog();
-                } else {
-                    MainApp.showError("Could not load publisher details.");
-                }
-            }
-        };
-
-        return addClickableLabel(panel, "Publisher:", publisher.getName(), row, mouseAdapter, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    private int addClickablePublisher(JPanel panel, int row) {
+        Publisher publisher = (entity.getSeries() != null) ? entity.getSeries().getPublisher() : null;
+        return addClickablePublisher(panel, row, publisher, publisherService);
     }
 
     private void navigateToCreator(Creator creator) {
