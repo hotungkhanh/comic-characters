@@ -16,7 +16,7 @@ public class CreatorService extends AbstractService<Creator> {
     /**
      * Adds a new creator with name and overview
      *
-     * @param name The name of the creator
+     * @param name     The name of the creator
      * @param overview The overview/description of the creator
      */
     public void addCreator(String name, String overview) {
@@ -27,7 +27,7 @@ public class CreatorService extends AbstractService<Creator> {
     /**
      * Adds a new creator with name, overview and image URL
      *
-     * @param name The name of the creator
+     * @param name     The name of the creator
      * @param overview The overview/description of the creator
      * @param imageUrl The URL to the creator's image
      */

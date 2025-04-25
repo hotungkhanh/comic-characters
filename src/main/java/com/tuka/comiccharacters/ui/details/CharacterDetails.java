@@ -14,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.net.URL;
 import java.util.Comparator;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
 
     @Override
     public void showDetailsDialog() {
-        super.showDetailsDialog(600, 800);
+        super.showDetailsDialog(750, 800); // Made wider to accommodate the image
     }
 
     @Override
@@ -63,10 +64,76 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
         List<Issue> sortedIssues = getSortedIssues();
         row = addNavigableListPanel(infoPanel, "Appears in", sortedIssues, Issue::toString, this::navigateToIssue, row);
 
-        // Create scrollable panel
+        // Create the main scrollable panel
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+
+        // Add image panel on the left if imageUrl is not null
+        if (entity.getImageUrl() != null && !entity.getImageUrl().isEmpty()) {
+            JPanel imagePanel = createImagePanel(entity.getImageUrl());
+            mainPanel.add(imagePanel, BorderLayout.WEST);
+        }
+
         mainPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
         return mainPanel;
+    }
+
+    /**
+     * Creates a panel with the character's image
+     *
+     * @param imageUrl The URL of the image to display
+     * @return A panel containing the image
+     */
+    private JPanel createImagePanel(String imageUrl) {
+        JPanel imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setPreferredSize(new Dimension(200, 300));
+        imagePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 0));
+
+        try {
+            // Try to load the image from the URL
+            ImageIcon originalIcon = new ImageIcon(new URL(imageUrl));
+            Image originalImage = originalIcon.getImage();
+
+            // Scale the image to fit the panel while maintaining aspect ratio
+            Image scaledImage = getScaledImage(originalImage, 180, 280);
+            ImageIcon scaledIcon = new ImageIcon(scaledImage);
+
+            JLabel imageLabel = new JLabel(scaledIcon);
+            imageLabel.setHorizontalAlignment(JLabel.CENTER);
+            imagePanel.add(imageLabel, BorderLayout.CENTER);
+        } catch (Exception e) {
+            // If loading fails, show a placeholder
+            JLabel errorLabel = new JLabel("Image not available");
+            errorLabel.setHorizontalAlignment(JLabel.CENTER);
+            imagePanel.add(errorLabel, BorderLayout.CENTER);
+        }
+
+        return imagePanel;
+    }
+
+    /**
+     * Scales an image while maintaining its aspect ratio
+     *
+     * @param image     The image to scale
+     * @param maxWidth  The maximum width of the scaled image
+     * @param maxHeight The maximum height of the scaled image
+     * @return The scaled image
+     */
+    private Image getScaledImage(Image image, int maxWidth, int maxHeight) {
+        int originalWidth = image.getWidth(null);
+        int originalHeight = image.getHeight(null);
+
+        if (originalWidth <= 0 || originalHeight <= 0) {
+            return image; // Cannot scale
+        }
+
+        double widthRatio = (double) maxWidth / originalWidth;
+        double heightRatio = (double) maxHeight / originalHeight;
+        double ratio = Math.min(widthRatio, heightRatio);
+
+        int scaledWidth = (int) (originalWidth * ratio);
+        int scaledHeight = (int) (originalHeight * ratio);
+
+        return image.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH);
     }
 
     private List<Creator> getSortedCreators() {

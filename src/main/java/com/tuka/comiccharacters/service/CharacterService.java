@@ -15,20 +15,31 @@ public class CharacterService extends AbstractService<ComicCharacter> {
         super(new CharacterDaoImpl());
     }
 
-    public void addCharacter(String name, String alias, Publisher publisher, String overview,
-                             List<Creator> creatorList, Issue firstAppearance) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Character name cannot be empty.");
-        }
-        ComicCharacter comicCharacter = new ComicCharacter(name.trim(),
-                alias != null ? alias.trim() : null,
-                publisher,
-                overview);
-        comicCharacter.setFirstAppearance(firstAppearance);
-        if (creatorList != null && !creatorList.isEmpty()) {
-            comicCharacter.getCreators().addAll(creatorList);
-        }
-        save(comicCharacter);
+    /**
+     * Adds a new character to the database
+     *
+     * @param character The character to add
+     */
+    public void addCharacter(ComicCharacter character) {
+        validateEntity(character);
+        save(character);
+    }
+
+    /**
+     * Adds a new character to the database
+     *
+     * @param name            The name of the character
+     * @param alias           The alias of the character
+     * @param publisher       The publisher of the character
+     * @param overview        The overview/description of the character
+     * @param creators        The creators associated with the character
+     * @param firstAppearance The issue in which the character first appeared
+     */
+    public void addCharacter(String name, String alias, Publisher publisher, String overview, List<Creator> creators, Issue firstAppearance) {
+        ComicCharacter character = new ComicCharacter(name, alias, publisher, overview);
+        character.setCreators(new HashSet<>(creators));
+        character.setFirstAppearance(firstAppearance);
+        save(character);
     }
 
     public void updateCharacter(ComicCharacter character) {

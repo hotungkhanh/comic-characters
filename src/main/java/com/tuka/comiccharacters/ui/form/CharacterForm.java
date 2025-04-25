@@ -20,6 +20,7 @@ public class CharacterForm extends AbstractForm {
     // Form fields
     private final JTextField nameField = new JTextField(20);
     private final JTextField aliasField = new JTextField(20);
+    private final JTextField imageUrlField = new JTextField(20);
     private final JTextArea overviewTextArea = new JTextArea(5, 20);
     // Services - initialized once
     private final CharacterService characterService = new CharacterService();
@@ -68,6 +69,9 @@ public class CharacterForm extends AbstractForm {
         // Character basic info section
         row = addTextField("Name:", nameField, row, true);
         row = addTextField("Alias:", aliasField, row, false);
+
+        // Add image URL field
+        row = addTextField("Image URL:", imageUrlField, row, false);
 
         // Publisher dropdown
         Set<Publisher> allPublishers = publisherService.getAllEntities();
@@ -201,13 +205,33 @@ public class CharacterForm extends AbstractForm {
                 return;
             }
             CharacterData data = collectFormData();
-            characterService.addCharacter(
-                    data.name, data.alias, data.publisher,
-                    data.overview, data.creators, data.firstAppearance
-            );
+            addCharacter(data);
             showSuccess("Character added!");
             resetForm();
         });
+    }
+
+    /**
+     * Adds a new character to the database
+     *
+     * @param data The character data to add
+     */
+    private void addCharacter(CharacterData data) {
+        // Create the character with all data except creators and first appearance
+        ComicCharacter character = new ComicCharacter(
+                data.name,
+                data.alias,
+                data.publisher,
+                data.overview,
+                data.imageUrl
+        );
+
+        // Set creators and first appearance
+        character.setCreators(new HashSet<>(data.creators));
+        character.setFirstAppearance(data.firstAppearance);
+
+        // Save the character
+        characterService.addCharacter(character);
     }
 
     /**
@@ -224,6 +248,7 @@ public class CharacterForm extends AbstractForm {
             editingCharacter.setAlias(data.alias);
             editingCharacter.setPublisher(data.publisher);
             editingCharacter.setOverview(data.overview);
+            editingCharacter.setImageUrl(data.imageUrl.isEmpty() ? null : data.imageUrl);
             editingCharacter.setCreators(new HashSet<>(data.creators));
             editingCharacter.setFirstAppearance(data.firstAppearance);
 
@@ -240,6 +265,7 @@ public class CharacterForm extends AbstractForm {
         CharacterData data = new CharacterData();
         data.name = nameField.getText().trim();
         data.alias = aliasField.getText().trim();
+        data.imageUrl = imageUrlField.getText().trim();
         data.publisher = (Publisher) publisherDropdown.getSelectedItem();
         data.overview = overviewTextArea.getText().trim();
         data.creators = creatorSelectionPanel.getSelectedCreators();
@@ -280,6 +306,7 @@ public class CharacterForm extends AbstractForm {
     private void populateFields(ComicCharacter character) {
         nameField.setText(character.getName());
         aliasField.setText(character.getAlias() != null ? character.getAlias() : "");
+        imageUrlField.setText(character.getImageUrl() != null ? character.getImageUrl() : "");
         publisherDropdown.setSelectedItem(character.getPublisher());
         overviewTextArea.setText(character.getOverview() != null ? character.getOverview() : "");
 
@@ -307,6 +334,7 @@ public class CharacterForm extends AbstractForm {
     protected void resetForm() {
         nameField.setText("");
         aliasField.setText("");
+        imageUrlField.setText("");
         publisherDropdown.setSelectedIndex(0);
         overviewTextArea.setText("");
         creatorSelectionPanel.clearSelection();
@@ -321,6 +349,7 @@ public class CharacterForm extends AbstractForm {
     private static class CharacterData {
         String name;
         String alias;
+        String imageUrl;
         Publisher publisher;
         String overview;
         List<Creator> creators;
