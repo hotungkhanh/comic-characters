@@ -64,10 +64,15 @@ public class IssueDetails extends AbstractDetails<Issue> {
         // Characters list
         row = addCharactersList(infoPanel, row);
 
-        // Create scrollable panel
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
-        return mainPanel;
+        // If there's an image URL, use the standard layout with image on the left, otherwise use the original layout
+        if (entity.getImageUrl() != null && !entity.getImageUrl().isEmpty()) {
+            return createStandardLayout(dialog, infoPanel, entity.getImageUrl());
+        } else {
+            // Create scrollable panel (original layout)
+            JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+            mainPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
+            return mainPanel;
+        }
     }
 
     private int addCreatorsList(JPanel panel, int row) {
