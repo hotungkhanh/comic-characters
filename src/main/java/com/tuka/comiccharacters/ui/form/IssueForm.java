@@ -1,4 +1,3 @@
-
 package com.tuka.comiccharacters.ui.form;
 
 import com.tuka.comiccharacters.model.*;
@@ -10,7 +9,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -33,30 +33,23 @@ public class IssueForm extends AbstractForm {
     private final JTextField releaseDateField = new JTextField(10);
     private final JTextField priceField = new JTextField(10);
     private final JCheckBox annualCheckBox = new JCheckBox("Annual Issue");
-    private JLabel seriesNameLabel;
-
     // Creators section
-    private final DefaultTableModel creatorTableModel = new DefaultTableModel(
-            new Object[]{"Name", "Role(s)"}, 0) {
+    private final DefaultTableModel creatorTableModel = new DefaultTableModel(new Object[]{"Name", "Role(s)"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false; // Make table non-editable
         }
     };
     private final JTable creatorTable = new JTable(creatorTableModel);
-    private JTextField creatorSearchField;
     private final JList<Role> roleSearchList = new JList<>(Role.values());
     private final DefaultListModel<Creator> matchedCreatorsListModel = new DefaultListModel<>();
     private final JList<Creator> matchedCreatorsList = new JList<>(matchedCreatorsListModel);
     private final List<IssueCreator> selectedCreators = new ArrayList<>();
-
     // Characters section
     private final DefaultListModel<ComicCharacter> selectedCharactersListModel = new DefaultListModel<>();
     private final JList<ComicCharacter> selectedCharactersList = new JList<>(selectedCharactersListModel);
-    private JTextField characterSearchField;
     private final DefaultListModel<ComicCharacter> matchedCharactersListModel = new DefaultListModel<>();
     private final JList<ComicCharacter> matchedCharactersList = new JList<>(matchedCharactersListModel);
-
     // Services and state
     private final Series currentSeries;
     private final CharacterService characterService = new CharacterService();
@@ -65,21 +58,23 @@ public class IssueForm extends AbstractForm {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final long SEARCH_DELAY = 300; // milliseconds
     private final Issue existingIssue; // To hold the issue being edited
+    // Callback for after form submission
+    private final Runnable callback;
+    private final JDialog parentDialog;
+    private JLabel seriesNameLabel;
+    private JTextField creatorSearchField;
+    private JTextField characterSearchField;
     private Set<ComicCharacter> allCharacters = new HashSet<>();
     private Set<Creator> allCreators = new HashSet<>();
     private ScheduledFuture<?> creatorSearchTask;
     private ScheduledFuture<?> characterSearchTask;
 
-    // Callback for after form submission
-    private final Runnable callback;
-    private final JDialog parentDialog;
-
     /**
      * Creates a form for adding a new issue to a series
      *
-     * @param series The series to add the issue to
+     * @param series       The series to add the issue to
      * @param onIssueAdded Callback to run after adding an issue
-     * @param parentDialog The parent dialog to close after submission
+     * @param parentDialog The parent dialogue to close after submission
      */
     public IssueForm(Series series, Runnable onIssueAdded, JDialog parentDialog) {
         super("Add New Issue");
@@ -96,9 +91,9 @@ public class IssueForm extends AbstractForm {
     /**
      * Creates a form for editing an existing issue
      *
-     * @param existingIssue The issue to edit
+     * @param existingIssue  The issue to edit
      * @param onIssueUpdated Callback to run after updating the issue
-     * @param parentDialog The parent dialog to close after submission
+     * @param parentDialog   The parent dialogue to close after submission
      */
     public IssueForm(Issue existingIssue, Runnable onIssueUpdated, JDialog parentDialog) {
         super("Edit Issue");
@@ -320,8 +315,7 @@ public class IssueForm extends AbstractForm {
     /**
      * Updates an existing issue with new values
      */
-    private void updateIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate,
-                             BigDecimal price, boolean isAnnual, List<ComicCharacter> characters) {
+    private void updateIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, boolean isAnnual, List<ComicCharacter> characters) {
         existingIssue.setIssueNumber(issueNumber);
         existingIssue.setOverview(overview);
         if (releaseDate != null) {
@@ -352,10 +346,8 @@ public class IssueForm extends AbstractForm {
     /**
      * Adds a new issue to the database
      */
-    private void addIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate,
-                          BigDecimal price, boolean isAnnual, List<ComicCharacter> characters) {
-        issueService.addIssue(currentSeries, issueNumber, overview, releaseDate,
-                price, isAnnual, selectedCreators, characters);
+    private void addIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, boolean isAnnual, List<ComicCharacter> characters) {
+        issueService.addIssue(currentSeries, issueNumber, overview, releaseDate, price, isAnnual, selectedCreators, characters);
         showSuccess("Issue added!");
     }
 
@@ -491,8 +483,7 @@ public class IssueForm extends AbstractForm {
             issueCreator.setCreator(creator);
             issueCreator.setRoles(new HashSet<>(selectedRoles));
 
-            boolean alreadyAdded = selectedCreators.stream()
-                    .anyMatch(ic -> ic.getCreator().equals(creator));
+            boolean alreadyAdded = selectedCreators.stream().anyMatch(ic -> ic.getCreator().equals(creator));
 
             if (!alreadyAdded) {
                 selectedCreators.add(issueCreator);
@@ -532,9 +523,7 @@ public class IssueForm extends AbstractForm {
             }
             SwingUtilities.invokeLater(() -> {
                 matchedCreatorsListModel.clear();
-                allCreators.stream()
-                        .filter(creator -> creator.getName().toLowerCase().contains(search))
-                        .forEach(matchedCreatorsListModel::addElement);
+                allCreators.stream().filter(creator -> creator.getName().toLowerCase().contains(search)).forEach(matchedCreatorsListModel::addElement);
             });
         }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
     }
@@ -553,10 +542,7 @@ public class IssueForm extends AbstractForm {
             }
             SwingUtilities.invokeLater(() -> {
                 matchedCharactersListModel.clear();
-                allCharacters.stream()
-                        .filter(character -> character.getName().toLowerCase().contains(search) ||
-                                (character.getAlias() != null && character.getAlias().toLowerCase().contains(search)))
-                        .forEach(matchedCharactersListModel::addElement);
+                allCharacters.stream().filter(character -> character.getName().toLowerCase().contains(search) || (character.getAlias() != null && character.getAlias().toLowerCase().contains(search))).forEach(matchedCharactersListModel::addElement);
             });
         }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
     }
@@ -589,8 +575,7 @@ public class IssueForm extends AbstractForm {
             Set<Role> roles = issueCreator.getRoles();
             Creator creator = issueCreator.getCreator();
 
-            boolean alreadyAdded = selectedCreators.stream()
-                    .anyMatch(ic -> ic.getCreator().equals(creator));
+            boolean alreadyAdded = selectedCreators.stream().anyMatch(ic -> ic.getCreator().equals(creator));
 
             if (!alreadyAdded) {
                 selectedCreators.add(issueCreator);
