@@ -17,10 +17,6 @@ public class CreatorService extends AbstractService<Creator> {
         save(new Creator(name, overview));
     }
 
-    public Set<Creator> getAllCreators() {
-        return dao.findAll();
-    }
-
     public void updateCreator(Creator creator) {
         save(creator);
     }

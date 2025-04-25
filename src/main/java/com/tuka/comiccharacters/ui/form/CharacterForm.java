@@ -387,7 +387,7 @@ public class CharacterForm extends AbstractForm {
 
         public void loadCreators() {
             Executors.newSingleThreadExecutor().submit(() -> {
-                allCreators = creatorService.getAllCreators();
+                allCreators = creatorService.getAllEntities();
             });
         }
 

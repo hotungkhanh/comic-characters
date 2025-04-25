@@ -21,7 +21,7 @@ public class CreatorBrowser extends AbstractBrowser<Creator> {
 
     @Override
     protected Collection<Creator> getEntities() {
-        return creatorService.getAllCreators();
+        return creatorService.getAllEntities();
     }
 
     @Override
