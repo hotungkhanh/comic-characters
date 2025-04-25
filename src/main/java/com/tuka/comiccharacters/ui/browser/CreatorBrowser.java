@@ -6,22 +6,12 @@ import com.tuka.comiccharacters.ui.details.CreatorDetails;
 import com.tuka.comiccharacters.ui.form.CreatorForm;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.Comparator;
 
-public class CreatorBrowser extends AbstractBrowser<Creator> {
-
-    private final CreatorService creatorService;
+public class CreatorBrowser extends AbstractBrowser<Creator, CreatorService> {
 
     public CreatorBrowser(JFrame parentFrame) {
-        super("Creators", parentFrame);
-        this.creatorService = new CreatorService();
-        refreshEntities();
-    }
-
-    @Override
-    protected Collection<Creator> getEntities() {
-        return creatorService.getAllEntities();
+        super("Creators", parentFrame, new CreatorService());
     }
 
     @Override
@@ -36,7 +26,7 @@ public class CreatorBrowser extends AbstractBrowser<Creator> {
 
     @Override
     protected void showDetails(Creator creator) {
-        Creator fullCreator = creatorService.getByIdWithDetails(creator.getId());
+        Creator fullCreator = service.getByIdWithDetails(creator.getId());
         new CreatorDetails(this, fullCreator, this::refreshEntities).showDetailsDialog();
     }
 

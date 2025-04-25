@@ -6,22 +6,12 @@ import com.tuka.comiccharacters.ui.details.SeriesDetails;
 import com.tuka.comiccharacters.ui.form.SeriesForm;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.Comparator;
 
-public class SeriesBrowser extends AbstractBrowser<Series> {
-
-    private final SeriesService seriesService;
+public class SeriesBrowser extends AbstractBrowser<Series, SeriesService> {
 
     public SeriesBrowser(JFrame parentFrame) {
-        super("Series", parentFrame);
-        this.seriesService = new SeriesService();
-        refreshEntities();
-    }
-
-    @Override
-    protected Collection<Series> getEntities() {
-        return seriesService.getAllEntities();
+        super("Series", parentFrame, new SeriesService());
     }
 
     @Override
@@ -36,7 +26,7 @@ public class SeriesBrowser extends AbstractBrowser<Series> {
 
     @Override
     protected void showDetails(Series series) {
-        Series fullSeries = seriesService.getByIdWithDetails(series.getId());
+        Series fullSeries = service.getByIdWithDetails(series.getId());
         new SeriesDetails(this, fullSeries, this::refreshEntities).showDetailsDialog();
     }
 

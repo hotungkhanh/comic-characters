@@ -6,22 +6,12 @@ import com.tuka.comiccharacters.ui.details.CharacterDetails;
 import com.tuka.comiccharacters.ui.form.CharacterForm;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.Comparator;
 
-public class CharacterBrowser extends AbstractBrowser<ComicCharacter> {
-
-    private final CharacterService characterService;
+public class CharacterBrowser extends AbstractBrowser<ComicCharacter, CharacterService> {
 
     public CharacterBrowser(JFrame parentFrame) {
-        super("Characters", parentFrame);
-        this.characterService = new CharacterService();
-        refreshEntities();
-    }
-
-    @Override
-    protected Collection<ComicCharacter> getEntities() {
-        return characterService.getAllEntities();
+        super("Characters", parentFrame, new CharacterService());
     }
 
     @Override
@@ -37,7 +27,7 @@ public class CharacterBrowser extends AbstractBrowser<ComicCharacter> {
 
     @Override
     protected void showDetails(ComicCharacter character) {
-        ComicCharacter fullCharacter = characterService.getByIdWithDetails(character.getId());
+        ComicCharacter fullCharacter = service.getByIdWithDetails(character.getId());
         new CharacterDetails(this, fullCharacter, this::refreshEntities).showDetailsDialog();
     }
 

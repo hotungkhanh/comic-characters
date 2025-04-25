@@ -1,5 +1,7 @@
 package com.tuka.comiccharacters.ui.browser;
 
+import com.tuka.comiccharacters.service.AbstractService;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -7,15 +9,17 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-public abstract class AbstractBrowser<T> extends JPanel {
+public abstract class AbstractBrowser<T, S extends AbstractService<T>> extends JPanel {
     protected final DefaultListModel<T> listModel = new DefaultListModel<>();
     protected final JList<T> entityList = new JList<>(listModel);
     protected final List<T> allEntities = new ArrayList<>();
     protected final JFrame parentFrame;
+    protected final S service; // New generic service field
 
-    public AbstractBrowser(String title, JFrame parentFrame) {
+    public AbstractBrowser(String title, JFrame parentFrame, S service) {
         super(new BorderLayout(5, 5));
         this.parentFrame = parentFrame;
+        this.service = service;
 
         // Title label
         JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
@@ -39,6 +43,13 @@ public abstract class AbstractBrowser<T> extends JPanel {
                 showDetails(entityList.getSelectedValue());
             }
         });
+
+        // Refresh entities at initialization
+        refreshEntities();
+    }
+
+    protected Collection<T> getEntities() {
+        return service.getAllEntities();
     }
 
     public void refreshEntities() {
@@ -65,13 +76,8 @@ public abstract class AbstractBrowser<T> extends JPanel {
         }
     }
 
-    protected abstract Collection<T> getEntities();
-
     protected abstract boolean matchesQuery(T entity, String query);
-
     protected abstract Comparator<T> getComparator();
-
     protected abstract void showDetails(T entity);
-
     protected abstract void showAddForm();
 }

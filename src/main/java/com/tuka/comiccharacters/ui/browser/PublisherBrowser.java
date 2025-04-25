@@ -6,21 +6,12 @@ import com.tuka.comiccharacters.ui.details.PublisherDetails;
 import com.tuka.comiccharacters.ui.form.PublisherForm;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.Comparator;
 
-public class PublisherBrowser extends AbstractBrowser<Publisher> {
-    private final PublisherService publisherService;
+public class PublisherBrowser extends AbstractBrowser<Publisher, PublisherService> {
 
     public PublisherBrowser(JFrame parentFrame) {
-        super("Publishers", parentFrame);
-        this.publisherService = new PublisherService();
-        refreshEntities();
-    }
-
-    @Override
-    protected Collection<Publisher> getEntities() {
-        return publisherService.getAllEntities();
+        super("Publishers", parentFrame, new PublisherService());
     }
 
     @Override
@@ -35,7 +26,7 @@ public class PublisherBrowser extends AbstractBrowser<Publisher> {
 
     @Override
     protected void showDetails(Publisher publisher) {
-        Publisher fullPublisher = publisherService.getByIdWithDetails(publisher.getId());
+        Publisher fullPublisher = service.getByIdWithDetails(publisher.getId());
         new PublisherDetails(this, fullPublisher, this::refreshEntities).showDetailsDialog();
     }
 
