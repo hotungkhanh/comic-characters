@@ -1,6 +1,12 @@
 package com.tuka.comiccharacters.ui.details;
 
+import com.tuka.comiccharacters.model.ComicCharacter;
+import com.tuka.comiccharacters.model.Creator;
+import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.Publisher;
+import com.tuka.comiccharacters.service.CharacterService;
+import com.tuka.comiccharacters.service.CreatorService;
+import com.tuka.comiccharacters.service.IssueService;
 import com.tuka.comiccharacters.service.PublisherService;
 import com.tuka.comiccharacters.ui.MainApp;
 
@@ -8,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.net.URL;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -40,6 +47,20 @@ public abstract class AbstractDetails<T> {
             return label;
         });
         return list;
+    }
+
+    private static JPanel getErrorPanel() {
+        JPanel errorPanel = new JPanel(new BorderLayout());
+
+        // Create a label with HTML to allow text wrapping
+        JLabel errorLabel = new JLabel("<html><div style='text-align: center;'>Image not available</div></html>");
+        errorLabel.setHorizontalAlignment(JLabel.CENTER);
+        errorLabel.setVerticalAlignment(JLabel.CENTER);
+
+        // Set a minimum size to ensure the text has enough space
+        errorPanel.setPreferredSize(new Dimension(180, 100));
+        errorPanel.add(errorLabel, BorderLayout.CENTER);
+        return errorPanel;
     }
 
     public void showDetailsDialog() {
@@ -84,15 +105,38 @@ public abstract class AbstractDetails<T> {
         return panel;
     }
 
+    /**
+     * Create a standard two-panel layout with an image panel on the left (if imageUrl is provided)
+     * and the information panel on the right.
+     *
+     * @param dialog    The parent dialog
+     * @param infoPanel The panel containing the entity information
+     * @param imageUrl  The URL of the image to display, or null if no image
+     * @return A panel with the standard layout
+     */
+    protected JPanel createStandardLayout(JDialog dialog, JPanel infoPanel, String imageUrl) {
+        // Create the main scrollable panel
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+
+        // Add image panel on the left if imageUrl is not null
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            JPanel imagePanel = createImagePanel(imageUrl);
+            mainPanel.add(imagePanel, BorderLayout.WEST);
+        }
+
+        mainPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
+        return mainPanel;
+    }
+
     protected abstract JPanel getMainPanel(JDialog dialog);
 
     protected abstract String getTitle();
 
     protected abstract void showEditDialog();
 
-    protected abstract void deleteEntity();
-
     // ===== Common UI Component Methods =====
+
+    protected abstract void deleteEntity();
 
     protected abstract String getDeleteConfirmationMessage();
 
@@ -126,6 +170,116 @@ public abstract class AbstractDetails<T> {
 
     protected JPanel createMainInfoPanel() {
         return new JPanel(new GridBagLayout());
+    }
+
+    /**
+     * Creates a panel with an image from a URL
+     *
+     * @param imageUrl The URL of the image to display
+     * @return A panel containing the image
+     */
+    protected JPanel createImagePanel(String imageUrl) {
+        JPanel imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setPreferredSize(new Dimension(200, 300));
+        imagePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 0));
+
+        try {
+            // Try to load the image from the URL
+            ImageIcon originalIcon = new ImageIcon(new URL(imageUrl));
+            Image originalImage = originalIcon.getImage();
+
+            // Wait for the image to load completely
+            if (originalIcon.getImageLoadStatus() != MediaTracker.COMPLETE) {
+                throw new Exception("Image failed to load completely");
+            }
+
+            // Check if image is valid
+            if (originalImage.getWidth(null) <= 0 || originalImage.getHeight(null) <= 0) {
+                throw new Exception("Invalid image dimensions");
+            }
+
+            // Scale the image to fit the panel while maintaining aspect ratio
+            Image scaledImage = getScaledImage(originalImage, 180, 280);
+            ImageIcon scaledIcon = new ImageIcon(scaledImage);
+
+            JLabel imageLabel = new JLabel(scaledIcon);
+            imageLabel.setHorizontalAlignment(JLabel.CENTER);
+            imagePanel.add(imageLabel, BorderLayout.CENTER);
+        } catch (Exception e) {
+            // If loading fails, show a placeholder with wrapped text
+            JPanel errorPanel = getErrorPanel();
+
+            imagePanel.add(errorPanel, BorderLayout.CENTER);
+        }
+
+        return imagePanel;
+    }
+
+    /**
+     * Scales an image while maintaining its aspect ratio
+     *
+     * @param image     The image to scale
+     * @param maxWidth  The maximum width of the scaled image
+     * @param maxHeight The maximum height of the scaled image
+     * @return The scaled image
+     */
+    protected Image getScaledImage(Image image, int maxWidth, int maxHeight) {
+        int originalWidth = image.getWidth(null);
+        int originalHeight = image.getHeight(null);
+
+        if (originalWidth <= 0 || originalHeight <= 0) {
+            return image; // Cannot scale
+        }
+
+        double widthRatio = (double) maxWidth / originalWidth;
+        double heightRatio = (double) maxHeight / originalHeight;
+        double ratio = Math.min(widthRatio, heightRatio);
+
+        int scaledWidth = (int) (originalWidth * ratio);
+        int scaledHeight = (int) (originalHeight * ratio);
+
+        return image.getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH);
+    }
+
+    // ===== Navigation Methods =====
+
+    /**
+     * Navigates to Character details screen
+     */
+    protected void navigateToCharacter(ComicCharacter character, CharacterService characterService) {
+        ComicCharacter fetched = characterService.getByIdWithDetails(character.getId());
+        if (fetched != null) {
+            currentDialog.dispose();
+            new CharacterDetails(parent, fetched, refreshCallback).showDetailsDialog();
+        } else {
+            MainApp.showError("Could not load character details.");
+        }
+    }
+
+    /**
+     * Navigates to Creator details screen
+     */
+    protected void navigateToCreator(Creator creator, CreatorService creatorService) {
+        Creator fetched = creatorService.getByIdWithDetails(creator.getId());
+        if (fetched != null) {
+            currentDialog.dispose();
+            new CreatorDetails(parent, fetched, refreshCallback).showDetailsDialog();
+        } else {
+            MainApp.showError("Could not load creator details.");
+        }
+    }
+
+    /**
+     * Navigates to Issue details screen
+     */
+    protected void navigateToIssue(Issue issue, IssueService issueService) {
+        Issue fetched = issueService.getByIdWithDetails(issue.getId());
+        if (fetched != null) {
+            currentDialog.dispose();
+            new IssueDetails(parent, fetched, refreshCallback).showDetailsDialog();
+        } else {
+            MainApp.showError("Could not load issue details.");
+        }
     }
 
     // ===== Navigable Lists =====
