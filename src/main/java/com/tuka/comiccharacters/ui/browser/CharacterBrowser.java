@@ -21,7 +21,7 @@ public class CharacterBrowser extends AbstractBrowser<ComicCharacter> {
 
     @Override
     protected Collection<ComicCharacter> getEntities() {
-        return characterService.getAllCharacters();
+        return characterService.getAllEntities();
     }
 
     @Override

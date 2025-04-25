@@ -4,6 +4,8 @@ import com.tuka.comiccharacters.dao.Dao;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
+import java.util.Set;
+
 import static com.tuka.comiccharacters.util.JPAUtil.getEntityManager;
 
 public abstract class AbstractService<T> {
@@ -12,6 +14,10 @@ public abstract class AbstractService<T> {
 
     protected AbstractService(Dao<T> dao) {
         this.dao = dao;
+    }
+
+    public Set<T> getAllEntities() {
+        return dao.findAll();
     }
 
     public T getById(Long id) {
@@ -33,7 +39,7 @@ public abstract class AbstractService<T> {
         validateId(id);
         T entity = getById(id);
         if (entity != null) {
-            // Handle relationships before deletion
+            // Needs to handle relationships before deletion
             dao.delete(entity);
         }
     }

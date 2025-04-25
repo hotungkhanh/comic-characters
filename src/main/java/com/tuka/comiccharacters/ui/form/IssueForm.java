@@ -567,7 +567,7 @@ public class IssueForm extends AbstractForm {
     private void loadInitialData() {
         Executors.newSingleThreadExecutor().submit(() -> {
             allCreators = creatorService.getAllCreators();
-            allCharacters = characterService.getAllCharacters();
+            allCharacters = characterService.getAllEntities();
         });
     }
 
