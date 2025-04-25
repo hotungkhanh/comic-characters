@@ -7,7 +7,6 @@ import com.tuka.comiccharacters.model.Series;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class SeriesService extends AbstractService<Series> {
 
@@ -18,10 +17,6 @@ public class SeriesService extends AbstractService<Series> {
     public void addSeries(String title, Integer startYear, Integer endYear, String overview, Publisher publisher) {
         Series series = new Series(title, startYear, endYear, overview, publisher);
         save(series);
-    }
-
-    public Set<Series> getAllSeries() {
-        return dao.findAll();
     }
 
     public void updateSeries(Series updatedSeries) {

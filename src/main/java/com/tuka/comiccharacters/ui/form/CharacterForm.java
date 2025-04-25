@@ -107,7 +107,7 @@ public class CharacterForm extends AbstractForm {
         contentPanel.add(new JLabel("Series:"), gbc);
 
         // Get all series and sort them alphabetically
-        Set<Series> allSeriesSet = seriesService.getAllSeries();
+        Set<Series> allSeriesSet = seriesService.getAllEntities();
         List<Series> allSeriesList = new ArrayList<>(allSeriesSet);
 
         // Sort series by title for better usability

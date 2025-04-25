@@ -21,7 +21,7 @@ public class SeriesBrowser extends AbstractBrowser<Series> {
 
     @Override
     protected Collection<Series> getEntities() {
-        return seriesService.getAllSeries();
+        return seriesService.getAllEntities();
     }
 
     @Override
