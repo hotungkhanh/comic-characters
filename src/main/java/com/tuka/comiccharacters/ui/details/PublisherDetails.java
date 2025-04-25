@@ -34,42 +34,42 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
 
     @Override
     protected JPanel getMainPanel(JDialog dialog) {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        // Create the main panel with a scrollable view
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
 
         // Create the basic info panel
         JPanel infoPanel = createMainInfoPanel();
         int row = 0;
+
+        // Basic info
         row = addLabelValue(infoPanel, "Name:", entity.getName(), row);
 
+        contentPanel.add(infoPanel, BorderLayout.NORTH);
+
         // Get sorted collections
-        List<Series> sortedSeries = getSortedSeries();
-        List<ComicCharacter> sortedCharacters = getSortedCharacters();
+        List<Series> sortedSeries = entity.getPublisherSeries().stream().sorted(Comparator.comparing(Series::getTitle, String.CASE_INSENSITIVE_ORDER)).toList();
+
+        List<ComicCharacter> sortedCharacters = entity.getPublisherCharacters().stream().sorted(Comparator.comparing(ComicCharacter::getName, String.CASE_INSENSITIVE_ORDER)).toList();
 
         // Create the side-by-side panels for series and characters
-        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 10, 10));
+        JPanel listsPanel = new JPanel(new GridLayout(1, 2, 10, 10));
 
+        // Only add panels if they have content
         if (!sortedSeries.isEmpty()) {
-            JPanel seriesPanel = createClickableListPanel("Series", sortedSeries, Series::toString, this::navigateToSeries);
-            centerPanel.add(seriesPanel);
+            JPanel seriesPanel = createClickableListPanel("Series", sortedSeries, Series::getTitle, this::navigateToSeries);
+            listsPanel.add(seriesPanel);
         }
 
         if (!sortedCharacters.isEmpty()) {
-            JPanel charactersPanel = createClickableListPanel("Characters", sortedCharacters, ComicCharacter::toString, this::navigateToCharacter);
-            centerPanel.add(charactersPanel);
+            JPanel charactersPanel = createClickableListPanel("Characters", sortedCharacters, ComicCharacter::getName, this::navigateToCharacter);
+            listsPanel.add(charactersPanel);
         }
 
-        panel.add(infoPanel, BorderLayout.NORTH);
-        panel.add(centerPanel, BorderLayout.CENTER);
+        contentPanel.add(listsPanel, BorderLayout.CENTER);
+        mainPanel.add(new JScrollPane(contentPanel), BorderLayout.CENTER);
 
-        return panel;
-    }
-
-    private List<Series> getSortedSeries() {
-        return entity.getPublisherSeries().stream().sorted(Comparator.comparing(Series::getTitle, String.CASE_INSENSITIVE_ORDER)).toList();
-    }
-
-    private List<ComicCharacter> getSortedCharacters() {
-        return entity.getPublisherCharacters().stream().sorted(Comparator.comparing(ComicCharacter::getName, String.CASE_INSENSITIVE_ORDER)).toList();
+        return mainPanel;
     }
 
     private void navigateToSeries(Series series) {
@@ -83,13 +83,7 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
     }
 
     private void navigateToCharacter(ComicCharacter character) {
-        ComicCharacter fetched = characterService.getByIdWithDetails(character.getId());
-        if (fetched != null) {
-            currentDialog.dispose();
-            new CharacterDetails(parent, fetched, refreshCallback).showDetailsDialog();
-        } else {
-            MainApp.showError("Could not load character details.");
-        }
+        navigateToCharacter(character, characterService);
     }
 
     @Override
