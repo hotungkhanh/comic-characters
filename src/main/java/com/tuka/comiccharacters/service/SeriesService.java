@@ -2,7 +2,6 @@ package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.SeriesDaoImpl;
 import com.tuka.comiccharacters.model.Issue;
-import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.model.Series;
 
 import java.util.ArrayList;
@@ -12,15 +11,6 @@ public class SeriesService extends AbstractService<Series> {
 
     public SeriesService() {
         super(new SeriesDaoImpl());
-    }
-
-    public void addSeries(String title, Integer startYear, Integer endYear, String overview, Publisher publisher) {
-        Series series = new Series(title, startYear, endYear, overview, publisher);
-        save(series);
-    }
-
-    public void updateSeries(Series updatedSeries) {
-        save(updatedSeries);
     }
 
     public List<Issue> getIssuesBySeries(Series series) {
