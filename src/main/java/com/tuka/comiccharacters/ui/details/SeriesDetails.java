@@ -92,10 +92,9 @@ public class SeriesDetails extends AbstractDetails<Series> {
         JButton addIssueButton = new JButton("Add New Issues");
         addIssueButton.addActionListener(_ -> {
             JDialog addIssueDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Add New Issues", true);
-            IssueForm issueForm = new IssueForm(entity, this::refreshDetails, addIssueDialog);
+            IssueForm issueForm = new IssueForm(entity, this::refreshDetails);
             addIssueDialog.setContentPane(issueForm);
             addIssueDialog.pack();
-            addIssueDialog.setSize(700, 900);
             addIssueDialog.setLocationRelativeTo(parent);
             addIssueDialog.setVisible(true);
         });

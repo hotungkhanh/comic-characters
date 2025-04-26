@@ -61,7 +61,6 @@ public class IssueForm extends AbstractForm {
     private final Issue existingIssue; // To hold the issue being edited
     // Callback for after form submission
     private final Runnable callback;
-    private final JDialog parentDialog;
     private JLabel seriesNameLabel;
     private JTextField creatorSearchField;
     private JTextField characterSearchField;
@@ -75,14 +74,12 @@ public class IssueForm extends AbstractForm {
      *
      * @param series       The series to add the issue to
      * @param onIssueAdded Callback to run after adding an issue
-     * @param parentDialog The parent dialogue to close after submission
      */
-    public IssueForm(Series series, Runnable onIssueAdded, JDialog parentDialog) {
+    public IssueForm(Series series, Runnable onIssueAdded) {
         super("Add New Issue");
         this.currentSeries = series;
         this.existingIssue = null;
         this.callback = onIssueAdded;
-        this.parentDialog = parentDialog;
 
         buildUI();
         loadInitialData();
@@ -94,14 +91,12 @@ public class IssueForm extends AbstractForm {
      *
      * @param existingIssue  The issue to edit
      * @param onIssueUpdated Callback to run after updating the issue
-     * @param parentDialog   The parent dialogue to close after submission
      */
-    public IssueForm(Issue existingIssue, Runnable onIssueUpdated, JDialog parentDialog) {
+    public IssueForm(Issue existingIssue, Runnable onIssueUpdated) {
         super("Edit Issue");
         this.currentSeries = existingIssue.getSeries();
         this.existingIssue = existingIssue;
         this.callback = onIssueUpdated;
-        this.parentDialog = parentDialog;
 
         setEditMode(true);
         buildUI();
@@ -242,7 +237,10 @@ public class IssueForm extends AbstractForm {
      * Sets up the submit action for adding a new issue
      */
     private void setupSubmitAction() {
-        addSubmitListener(e -> saveOrUpdateIssue());
+        addSubmitListener(e -> {
+            saveOrUpdateIssue();
+            resetForm();
+        });
     }
 
     /**
@@ -250,7 +248,10 @@ public class IssueForm extends AbstractForm {
      */
     private void setupEditAction() {
         removeAllSubmitListeners();
-        addSubmitListener(e -> saveOrUpdateIssue());
+        addSubmitListener(e -> {
+            saveOrUpdateIssue();
+            SwingUtilities.getWindowAncestor(this).dispose();
+        });
     }
 
     /**
@@ -307,13 +308,9 @@ public class IssueForm extends AbstractForm {
             addIssue(issueNumber, overview, releaseDate, price, imageUrl, isAnnual, charactersToAdd);
         }
 
-        // Close window and execute callback
-        SwingUtilities.getWindowAncestor(this).dispose();
+        // execute callback
         if (callback != null) {
             callback.run();
-        }
-        if (parentDialog != null) {
-            parentDialog.dispose();
         }
     }
 
