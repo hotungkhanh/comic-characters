@@ -31,7 +31,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
 
     @Override
     public void showDetailsDialog() {
-        super.showDetailsDialog(800, 700);
+        super.showDetailsDialog(800, 700, "Issue");
     }
 
     @Override

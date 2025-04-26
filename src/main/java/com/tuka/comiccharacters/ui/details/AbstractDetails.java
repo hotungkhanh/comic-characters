@@ -64,11 +64,11 @@ public abstract class AbstractDetails<T> {
     }
 
     public void showDetailsDialog() {
-        // Default size - child classes should override this method to specify their own dimensions
-        showDetailsDialog(600, 500);
+        // Override in child classes to set custom window size
+        showDetailsDialog(400, 300, "");
     }
 
-    public void showDetailsDialog(int windowWidth, int windowHeight) {
+    public void showDetailsDialog(int windowWidth, int windowHeight, String entityString) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), getTitle(), true);
         this.currentDialog = dialog;
         dialog.setLayout(new BorderLayout(10, 10));
@@ -76,15 +76,15 @@ public abstract class AbstractDetails<T> {
         dialog.setLocationRelativeTo(parent);
 
         dialog.add(getMainPanel(dialog), BorderLayout.CENTER);
-        dialog.add(getButtonPanel(dialog), BorderLayout.SOUTH);
+        dialog.add(getButtonPanel(dialog, entityString), BorderLayout.SOUTH);
 
         dialog.setVisible(true);
     }
 
-    protected JPanel getButtonPanel(JDialog dialog) {
+    protected JPanel getButtonPanel(JDialog dialog, String entityString) {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton editButton = new JButton("Edit");
-        JButton deleteButton = new JButton("Delete");
+        JButton editButton = new JButton("Edit " + entityString);
+        JButton deleteButton = new JButton("Delete " + entityString);
 
         editButton.addActionListener(_ -> {
             dialog.dispose();

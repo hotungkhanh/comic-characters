@@ -29,7 +29,7 @@ public class CreatorDetails extends AbstractDetails<Creator> {
 
     @Override
     public void showDetailsDialog() {
-        super.showDetailsDialog(750, 620);  // Made wider to accommodate the image
+        super.showDetailsDialog(750, 620, "Creator");  // Made wider to accommodate the image
     }
 
     @Override

@@ -29,7 +29,7 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
 
     @Override
     public void showDetailsDialog() {
-        super.showDetailsDialog(900, 500);
+        super.showDetailsDialog(900, 500, "Publisher");
     }
 
     @Override
