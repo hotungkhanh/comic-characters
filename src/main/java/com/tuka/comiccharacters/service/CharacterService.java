@@ -13,18 +13,6 @@ public class CharacterService extends AbstractService<ComicCharacter> {
         super(new CharacterDaoImpl());
     }
 
-    public void updateCharacter(ComicCharacter character) {
-        validateEntity(character);
-
-        // Extra character-specific processing
-        character.setName(character.getName().trim());
-        if (character.getAlias() != null) {
-            character.setAlias(character.getAlias().trim());
-        }
-
-        save(character);
-    }
-
     @Override
     protected void validateEntity(ComicCharacter character) {
         if (character == null) {

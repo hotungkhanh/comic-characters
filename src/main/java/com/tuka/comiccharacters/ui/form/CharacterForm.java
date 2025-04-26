@@ -204,34 +204,12 @@ public class CharacterForm extends AbstractForm {
             if (!validateForm()) {
                 return;
             }
-            CharacterData data = collectFormData();
-            addCharacter(data);
+            ComicCharacter character = collectFormData();
+            // Save the character
+            characterService.save(character);
             showSuccess("Character added!");
             resetForm();
         });
-    }
-
-    /**
-     * Adds a new character to the database
-     *
-     * @param data The character data to add
-     */
-    private void addCharacter(CharacterData data) {
-        // Create the character with all data except creators and first appearance
-        ComicCharacter character = new ComicCharacter(
-                data.name,
-                data.alias,
-                data.publisher,
-                data.overview,
-                data.imageUrl
-        );
-
-        // Set creators and first appearance
-        character.setCreators(new HashSet<>(data.creators));
-        character.setFirstAppearance(data.firstAppearance);
-
-        // Save the character
-        characterService.save(character);
     }
 
     /**
@@ -243,16 +221,16 @@ public class CharacterForm extends AbstractForm {
             if (!validateForm()) {
                 return;
             }
-            CharacterData data = collectFormData();
-            editingCharacter.setName(data.name);
-            editingCharacter.setAlias(data.alias);
-            editingCharacter.setPublisher(data.publisher);
-            editingCharacter.setOverview(data.overview);
-            editingCharacter.setImageUrl(data.imageUrl.isEmpty() ? null : data.imageUrl);
-            editingCharacter.setCreators(new HashSet<>(data.creators));
-            editingCharacter.setFirstAppearance(data.firstAppearance);
+            ComicCharacter characterData = collectFormData();
+            editingCharacter.setName(characterData.getName());
+            editingCharacter.setAlias(characterData.getAlias());
+            editingCharacter.setPublisher(characterData.getPublisher());
+            editingCharacter.setOverview(characterData.getOverview());
+            editingCharacter.setImageUrl(characterData.getImageUrl().isEmpty() ? null : characterData.getImageUrl());
+            editingCharacter.setCreators(characterData.getCreators());
+            editingCharacter.setFirstAppearance(characterData.getFirstAppearance());
 
-            characterService.updateCharacter(editingCharacter);
+            characterService.save(editingCharacter);
             showSuccess("Character updated!");
             SwingUtilities.getWindowAncestor(this).dispose();
         });
@@ -261,16 +239,16 @@ public class CharacterForm extends AbstractForm {
     /**
      * Helper method to collect all form data into a single object
      */
-    private CharacterData collectFormData() {
-        CharacterData data = new CharacterData();
-        data.name = nameField.getText().trim();
-        data.alias = aliasField.getText().trim();
-        data.imageUrl = imageUrlField.getText().trim();
-        data.publisher = (Publisher) publisherDropdown.getSelectedItem();
-        data.overview = overviewTextArea.getText().trim();
-        data.creators = creatorSelectionPanel.getSelectedCreators();
-        data.firstAppearance = (Issue) issueDropdown.getSelectedItem();
-        return data;
+    private ComicCharacter collectFormData() {
+        ComicCharacter character = new ComicCharacter();
+        character.setName(nameField.getText().trim());
+        character.setAlias(aliasField.getText().trim());
+        character.setImageUrl(imageUrlField.getText().trim());
+        character.setPublisher((Publisher) publisherDropdown.getSelectedItem());
+        character.setOverview(overviewTextArea.getText().trim());
+        character.setCreators(new HashSet<>(creatorSelectionPanel.getSelectedCreators()));
+        character.setFirstAppearance((Issue) issueDropdown.getSelectedItem());
+        return character;
     }
 
     /**
@@ -341,19 +319,6 @@ public class CharacterForm extends AbstractForm {
         seriesDropdown.setSelectedIndex(0);
         issueDropdown.removeAllItems();
         issueDropdownPanel.setVisible(false);
-    }
-
-    /**
-     * Data class to hold character form data
-     */
-    private static class CharacterData {
-        String name;
-        String alias;
-        String imageUrl;
-        Publisher publisher;
-        String overview;
-        List<Creator> creators;
-        Issue firstAppearance;
     }
 
     /**

@@ -31,12 +31,6 @@ public class IssueCreator {
     public IssueCreator() {
     }
 
-    public IssueCreator(Issue issue, Creator creator, Set<Role> roles) {
-        this.issue = issue;
-        this.creator = creator;
-        this.roles = roles;
-    }
-
     public Long getId() {
         return id;
     }
