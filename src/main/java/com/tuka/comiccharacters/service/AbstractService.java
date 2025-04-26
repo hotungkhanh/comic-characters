@@ -44,7 +44,6 @@ public abstract class AbstractService<T> {
         }
     }
 
-    // Template method to be implemented by concrete services
     protected abstract void validateEntity(T entity);
 
     protected void validateId(Long id) {

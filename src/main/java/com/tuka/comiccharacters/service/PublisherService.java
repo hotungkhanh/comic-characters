@@ -14,18 +14,6 @@ public class PublisherService extends AbstractService<Publisher> {
         super(new PublisherDaoImpl());
     }
 
-    public void addPublisher(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Publisher name cannot be empty.");
-        }
-        Publisher publisher = new Publisher(name.trim());
-        save(publisher);
-    }
-
-    public void updatePublisher(Publisher publisher) {
-        save(publisher);
-    }
-
     @Override
     public void delete(Long id) {
         validateId(id);
