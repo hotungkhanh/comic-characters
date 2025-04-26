@@ -5,11 +5,21 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 public abstract class AbstractForm extends JPanel {
 
+    protected static final long DEFAULT_SEARCH_DELAY = 300; // milliseconds
+    protected final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     protected JPanel formPanel;
     protected JButton submitButton;
     protected List<JComponent> requiredFields;
@@ -194,8 +204,7 @@ public abstract class AbstractForm extends JPanel {
         JComboBox<T> dropdown = new JComboBox<>(items);
         dropdown.setRenderer(new DefaultListCellRenderer() {
             @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                          boolean isSelected, boolean cellHasFocus) {
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 setText(value == null ? nullText : value.toString());
                 return this;
@@ -253,8 +262,7 @@ public abstract class AbstractForm extends JPanel {
      * @param menuItemText  The text for the removal menu item
      * @param removalAction Optional additional action to perform after removal
      */
-    protected <T> void addItemRemovalListener(JList<T> list, DefaultListModel<T> model,
-                                              String menuItemText, Runnable removalAction) {
+    protected <T> void addItemRemovalListener(JList<T> list, DefaultListModel<T> model, String menuItemText, Runnable removalAction) {
         list.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -322,6 +330,161 @@ public abstract class AbstractForm extends JPanel {
      */
     protected boolean isValidUrl(String url) {
         return url.startsWith("http://") || url.startsWith("https://");
+    }
+
+    /**
+     * Sets up a delayed search handler for text search fields
+     *
+     * @param searchTask     Reference to the current search task that can be cancelled
+     * @param searchField    The text field to monitor for changes
+     * @param searchFunction The function to execute when search is triggered
+     * @param delay          The delay in milliseconds before executing the search
+     * @return ScheduledFuture representing the scheduled search task
+     */
+    protected ScheduledFuture<?> setupDelayedSearch(ScheduledFuture<?> searchTask, JTextField searchField, Runnable searchFunction, long delay) {
+        // Cancel previous search if it exists
+        if (searchTask != null) {
+            searchTask.cancel(true);
+        }
+
+        // Schedule new search with delay
+        return scheduler.schedule(searchFunction, delay, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Creates a reusable search panel with a label and search field
+     *
+     * @param label       The label text for the search field
+     * @param searchField The search field component
+     * @return The configured search panel
+     */
+    protected JPanel createSearchPanel(String label, JTextField searchField) {
+        JPanel searchPanel = new JPanel(new BorderLayout());
+        searchPanel.add(new JLabel(label), BorderLayout.WEST);
+        searchPanel.add(searchField, BorderLayout.CENTER);
+        return searchPanel;
+    }
+
+    /**
+     * Filters a list model based on search text and a filter predicate
+     *
+     * @param <T>             The type of elements in the model
+     * @param searchText      The text to search for
+     * @param sourceItems     The collection of all items to search within
+     * @param targetModel     The model to populate with filtered results
+     * @param filterPredicate The predicate to determine if an item matches
+     */
+    protected <T> void performFilteredSearch(String searchText, Iterable<T> sourceItems, DefaultListModel<T> targetModel, Predicate<T> filterPredicate) {
+        // Clear the target model
+        targetModel.clear();
+
+        // If search is empty or placeholder, return
+        if (searchText == null || searchText.isEmpty()) {
+            return;
+        }
+
+        // Add matching items to the model
+        for (T item : sourceItems) {
+            if (filterPredicate.test(item)) {
+                targetModel.addElement(item);
+            }
+        }
+    }
+
+    /**
+     * Adds selected items from one list to another
+     *
+     * @param <T>         The type of elements in the lists
+     * @param sourceList  The list containing items to add
+     * @param targetModel The model to add items to
+     * @param postAction  Optional action to perform after items are added
+     */
+    protected <T> void addSelectedItemsToModel(JList<T> sourceList, DefaultListModel<T> targetModel, Runnable postAction) {
+        List<T> selectedItems = sourceList.getSelectedValuesList();
+        for (T item : selectedItems) {
+            if (!listModelContains(targetModel, item)) {
+                targetModel.addElement(item);
+            }
+        }
+
+        // Clear selection after adding
+        sourceList.clearSelection();
+
+        // Run post-action if provided
+        if (postAction != null) {
+            postAction.run();
+        }
+    }
+
+    /**
+     * Checks if a list model contains a specific item
+     *
+     * @param <T>   The type of elements in the model
+     * @param model The model to check
+     * @param item  The item to look for
+     * @return true if the model contains the item
+     */
+    protected <T> boolean listModelContains(DefaultListModel<T> model, T item) {
+        for (int i = 0; i < model.getSize(); i++) {
+            if (model.getElementAt(i).equals(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Parses a string to a LocalDate, with helpful error message
+     *
+     * @param dateString The string to parse
+     * @param fieldName  The name of the field for error reporting
+     * @return The parsed LocalDate or null if parsing failed
+     */
+    protected LocalDate parseLocalDate(String dateString, String fieldName) {
+        if (dateString == null || dateString.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            return LocalDate.parse(dateString, DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (DateTimeParseException ex) {
+            showError("Invalid date format in " + fieldName + ". Please use YYYY-MM-DD.");
+            return null;
+        }
+    }
+
+    /**
+     * Creates a typical search and results panel with add button
+     *
+     * @param <T>           The type of elements in the lists
+     * @param title         The title for the panel
+     * @param searchField   The search field component
+     * @param resultsList   The list to display search results
+     * @param addButtonText The text for the add button
+     * @param addAction     The action to perform when add button is clicked
+     * @return The configured panel
+     */
+    protected <T> JPanel createSearchAndResultsPanel(String title, JTextField searchField, JList<T> resultsList, String addButtonText, ActionListener addAction) {
+        JPanel panel = createTitledPanel(title);
+        panel.setLayout(new BorderLayout());
+
+        // Create search panel
+        JPanel searchPanel = createSearchPanel("Search:", searchField);
+        panel.add(searchPanel, BorderLayout.NORTH);
+
+        // Create results panel
+        JScrollPane resultsScrollPane = new JScrollPane(resultsList);
+        resultsScrollPane.setPreferredSize(new Dimension(300, 80));
+        panel.add(resultsScrollPane, BorderLayout.CENTER);
+
+        // Create add button
+        JButton addButton = new JButton(addButtonText);
+        addButton.addActionListener(addAction);
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.add(addButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return panel;
     }
 
     /**

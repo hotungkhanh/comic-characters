@@ -15,7 +15,7 @@ public class IssueService extends AbstractService<Issue> {
         super(new IssueDaoImpl());
     }
 
-    public void addIssue(Series series, BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal priceUsd, boolean isAnnual, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
+    public void addIssue(Series series, BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal priceUsd, String imageUrl, boolean isAnnual, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
         try {
             executeInTransaction(em -> {
                 // Create the new issue with basic properties
@@ -23,6 +23,7 @@ public class IssueService extends AbstractService<Issue> {
                 issue.setOverview(overview);
                 issue.setReleaseDate(releaseDate);
                 issue.setPriceUsd(priceUsd);
+                issue.setImageUrl(imageUrl);
                 issue.setAnnual(isAnnual);
 
                 // Handle issue creators

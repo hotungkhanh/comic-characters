@@ -13,16 +13,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class IssueForm extends AbstractForm {
@@ -32,13 +28,14 @@ public class IssueForm extends AbstractForm {
     private final JTextArea overviewTextArea = new JTextArea(3, 20);
     private final JTextField releaseDateField = new JTextField(10);
     private final JTextField priceField = new JTextField(10);
-    private final JTextField imageUrlField = new JTextField(30); // Added image URL field
+    private final JTextField imageUrlField = new JTextField(30);
     private final JCheckBox annualCheckBox = new JCheckBox("Annual Issue");
+
     // Creators section
     private final DefaultTableModel creatorTableModel = new DefaultTableModel(new Object[]{"Name", "Role(s)"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
-            return false; // Make table non-editable
+            return false;
         }
     };
     private final JTable creatorTable = new JTable(creatorTableModel);
@@ -46,24 +43,27 @@ public class IssueForm extends AbstractForm {
     private final DefaultListModel<Creator> matchedCreatorsListModel = new DefaultListModel<>();
     private final JList<Creator> matchedCreatorsList = new JList<>(matchedCreatorsListModel);
     private final List<IssueCreator> selectedCreators = new ArrayList<>();
+
     // Characters section
     private final DefaultListModel<ComicCharacter> selectedCharactersListModel = new DefaultListModel<>();
     private final JList<ComicCharacter> selectedCharactersList = new JList<>(selectedCharactersListModel);
     private final DefaultListModel<ComicCharacter> matchedCharactersListModel = new DefaultListModel<>();
     private final JList<ComicCharacter> matchedCharactersList = new JList<>(matchedCharactersListModel);
+
     // Services and state
     private final Series currentSeries;
     private final CharacterService characterService = new CharacterService();
     private final CreatorService creatorService = new CreatorService();
     private final IssueService issueService = new IssueService();
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private final long SEARCH_DELAY = 300; // milliseconds
-    private final Issue existingIssue; // To hold the issue being edited
-    // Callback for after form submission
+    private final Issue existingIssue;
     private final Runnable callback;
+
+    // UI components
     private JLabel seriesNameLabel;
     private JTextField creatorSearchField;
     private JTextField characterSearchField;
+
+    // Data
     private Set<ComicCharacter> allCharacters = new HashSet<>();
     private Set<Creator> allCreators = new HashSet<>();
     private ScheduledFuture<?> creatorSearchTask;
@@ -120,11 +120,7 @@ public class IssueForm extends AbstractForm {
         row = addTextArea("Overview:", overviewTextArea, row, 3, false);
         row = addTextField("Release Date:", releaseDateField, row, false);
         row = addTextField("Price (USD):", priceField, row, false);
-
-        // Add image URL field
         row = addTextField("Image URL:", imageUrlField, row, false);
-
-        // Annual checkbox
         row = addCheckbox(annualCheckBox, row);
 
         // Creators section
@@ -138,8 +134,6 @@ public class IssueForm extends AbstractForm {
 
     /**
      * Creates the panel for managing creators
-     *
-     * @return The creators panel
      */
     private JPanel createCreatorsPanel() {
         JPanel creatorsPanel = createTitledPanel("Creators");
@@ -157,9 +151,7 @@ public class IssueForm extends AbstractForm {
 
         // Search field
         creatorSearchField = createSearchField("Search for Creators...");
-        JPanel creatorSearchPanel = new JPanel(new BorderLayout());
-        creatorSearchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
-        creatorSearchPanel.add(creatorSearchField, BorderLayout.CENTER);
+        JPanel creatorSearchPanel = createSearchPanel("Search:", creatorSearchField);
         creatorInputPanel.add(creatorSearchPanel, BorderLayout.NORTH);
 
         // Role selection
@@ -192,8 +184,6 @@ public class IssueForm extends AbstractForm {
 
     /**
      * Creates the panel for managing characters
-     *
-     * @return The characters panel
      */
     private JPanel createCharactersPanel() {
         JPanel charactersPanel = createTitledPanel("Characters");
@@ -205,25 +195,11 @@ public class IssueForm extends AbstractForm {
         charactersPanel.add(selectedCharactersScrollPane, BorderLayout.CENTER);
         addCharacterRemovalListener();
 
-        // Character search and selection panel
-        JPanel characterInputPanel = new JPanel(new BorderLayout());
-
-        // Search field
+        // Character search panel
         characterSearchField = createSearchField("Search for Characters...");
-        JPanel characterSearchPanel = new JPanel(new BorderLayout());
-        characterSearchPanel.add(new JLabel("Search:"), BorderLayout.WEST);
-        characterSearchPanel.add(characterSearchField, BorderLayout.CENTER);
-        characterInputPanel.add(characterSearchPanel, BorderLayout.NORTH);
 
-        // Character results
-        JScrollPane matchedCharactersScrollPane = new JScrollPane(matchedCharactersList);
-        matchedCharactersScrollPane.setPreferredSize(new Dimension(300, 80));
-        characterInputPanel.add(matchedCharactersScrollPane, BorderLayout.CENTER);
-
-        // Add character button
-        JButton addCharactersButton = new JButton("Add Character(s)");
-        addCharactersButton.addActionListener(e -> addSelectedCharacters());
-        characterInputPanel.add(addCharactersButton, BorderLayout.SOUTH);
+        // Create the search and results panel using the base class method
+        JPanel characterInputPanel = createSearchAndResultsPanel("Search Characters", characterSearchField, matchedCharactersList, "Add Character(s)", e -> addSelectedCharacters());
 
         charactersPanel.add(characterInputPanel, BorderLayout.NORTH);
 
@@ -266,9 +242,10 @@ public class IssueForm extends AbstractForm {
         String overview = overviewTextArea.getText().trim();
         String releaseDateText = releaseDateField.getText().trim();
         String priceText = priceField.getText().trim();
-        String imageUrl = imageUrlField.getText().trim(); // Get image URL
+        String imageUrl = imageUrlField.getText().trim();
         boolean isAnnual = annualCheckBox.isSelected();
 
+        // Parse issue number
         BigDecimal issueNumber;
         try {
             issueNumber = new BigDecimal(issueText);
@@ -278,17 +255,14 @@ public class IssueForm extends AbstractForm {
             return;
         }
 
-        LocalDate releaseDate = null;
-        if (!releaseDateText.isEmpty()) {
-            try {
-                releaseDate = LocalDate.parse(releaseDateText, DateTimeFormatter.ISO_LOCAL_DATE);
-            } catch (DateTimeParseException ex) {
-                showError("Invalid date format. Please use YYYY-MM-DD.");
-                releaseDateField.requestFocus();
-                return;
-            }
+        // Parse release date using the helper method from AbstractForm
+        LocalDate releaseDate = parseLocalDate(releaseDateText, "Release Date");
+        if (releaseDate == null && !releaseDateText.isEmpty()) {
+            releaseDateField.requestFocus();
+            return;
         }
 
+        // Parse price
         BigDecimal price = null;
         if (!priceText.isEmpty()) {
             try {
@@ -308,7 +282,7 @@ public class IssueForm extends AbstractForm {
             addIssue(issueNumber, overview, releaseDate, price, imageUrl, isAnnual, charactersToAdd);
         }
 
-        // execute callback
+        // Execute callback
         if (callback != null) {
             callback.run();
         }
@@ -320,18 +294,9 @@ public class IssueForm extends AbstractForm {
     private void updateIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, String imageUrl, boolean isAnnual, List<ComicCharacter> characters) {
         existingIssue.setIssueNumber(issueNumber);
         existingIssue.setOverview(overview);
-        if (releaseDate != null) {
-            existingIssue.setReleaseDate(releaseDate);
-        }
-        if (price != null) {
-            existingIssue.setPriceUsd(price);
-        }
-        // Set image URL
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            existingIssue.setImageUrl(imageUrl);
-        } else {
-            existingIssue.setImageUrl(null);
-        }
+        existingIssue.setReleaseDate(releaseDate);
+        existingIssue.setPriceUsd(price);
+        existingIssue.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
         existingIssue.setAnnual(isAnnual);
 
         // Update creators
@@ -353,30 +318,12 @@ public class IssueForm extends AbstractForm {
      * Adds a new issue to the database
      */
     private void addIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, String imageUrl, boolean isAnnual, List<ComicCharacter> characters) {
-        // Create a new issue with all the data
-        Issue newIssue = new Issue(currentSeries, issueNumber);
-        newIssue.setOverview(overview);
-        newIssue.setReleaseDate(releaseDate);
-        newIssue.setPriceUsd(price);
-        newIssue.setImageUrl(imageUrl);
-        newIssue.setAnnual(isAnnual);
-
-        // Add the issue with all its relationships
-        issueService.addIssue(currentSeries, issueNumber, overview, releaseDate, price, isAnnual, selectedCreators, characters);
-
-        // Update the image URL separately if needed
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            // This may require updating the IssueService to handle image URLs
-            // For now, we'll assume the service will handle it
-        }
-
+        issueService.addIssue(currentSeries, issueNumber, overview, releaseDate, price, imageUrl, isAnnual, selectedCreators, characters);
         showSuccess("Issue added!");
     }
 
     /**
      * Gets all selected characters from the list model
-     *
-     * @return List of selected characters
      */
     private List<ComicCharacter> getSelectedCharacters() {
         List<ComicCharacter> characters = new ArrayList<>();
@@ -388,8 +335,6 @@ public class IssueForm extends AbstractForm {
 
     /**
      * Validates the form fields
-     *
-     * @return Whether the form is valid
      */
     private boolean validateForm() {
         // Check issue number is provided
@@ -530,51 +475,45 @@ public class IssueForm extends AbstractForm {
      * Adds selected characters to the list
      */
     private void addSelectedCharacters() {
-        List<ComicCharacter> charactersToAdd = matchedCharactersList.getSelectedValuesList();
-        for (ComicCharacter character : charactersToAdd) {
-            if (!selectedCharactersListModel.contains(character)) {
-                selectedCharactersListModel.addElement(character);
-            }
-        }
-        matchedCharactersList.clearSelection();
+        addSelectedItemsToModel(matchedCharactersList, selectedCharactersListModel, null);
     }
 
     /**
      * Schedules a search for creators
      */
     private void scheduleCreatorSearch() {
-        if (creatorSearchTask != null) {
-            creatorSearchTask.cancel(true);
+        creatorSearchTask = setupDelayedSearch(creatorSearchTask, creatorSearchField, this::performCreatorSearch, DEFAULT_SEARCH_DELAY);
+    }
+
+    /**
+     * Performs the actual creator search
+     */
+    private void performCreatorSearch() {
+        String searchText = creatorSearchField.getText().trim().toLowerCase();
+        if (searchText.equals("search for creators...")) {
+            return;
         }
-        creatorSearchTask = scheduler.schedule(() -> {
-            String search = creatorSearchField.getText().trim().toLowerCase();
-            if (search.equals("search for creators...")) {
-                return;
-            }
-            SwingUtilities.invokeLater(() -> {
-                matchedCreatorsListModel.clear();
-                allCreators.stream().filter(creator -> creator.getName().toLowerCase().contains(search)).forEach(matchedCreatorsListModel::addElement);
-            });
-        }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
+
+        SwingUtilities.invokeLater(() -> performFilteredSearch(searchText, allCreators, matchedCreatorsListModel, creator -> creator.getName().toLowerCase().contains(searchText)));
     }
 
     /**
      * Schedules a search for characters
      */
     private void scheduleCharacterSearch() {
-        if (characterSearchTask != null) {
-            characterSearchTask.cancel(true);
+        characterSearchTask = setupDelayedSearch(characterSearchTask, characterSearchField, this::performCharacterSearch, DEFAULT_SEARCH_DELAY);
+    }
+
+    /**
+     * Performs the actual character search
+     */
+    private void performCharacterSearch() {
+        String searchText = characterSearchField.getText().trim().toLowerCase();
+        if (searchText.equals("search for characters...")) {
+            return;
         }
-        characterSearchTask = scheduler.schedule(() -> {
-            String search = characterSearchField.getText().trim().toLowerCase();
-            if (search.equals("search for characters...")) {
-                return;
-            }
-            SwingUtilities.invokeLater(() -> {
-                matchedCharactersListModel.clear();
-                allCharacters.stream().filter(character -> character.getName().toLowerCase().contains(search) || (character.getAlias() != null && character.getAlias().toLowerCase().contains(search))).forEach(matchedCharactersListModel::addElement);
-            });
-        }, SEARCH_DELAY, TimeUnit.MILLISECONDS);
+
+        SwingUtilities.invokeLater(() -> performFilteredSearch(searchText, allCharacters, matchedCharactersListModel, character -> character.getName().toLowerCase().contains(searchText) || (character.getAlias() != null && character.getAlias().toLowerCase().contains(searchText))));
     }
 
     /**
@@ -589,35 +528,45 @@ public class IssueForm extends AbstractForm {
 
     /**
      * Populates form fields with data from an existing issue
-     *
-     * @param issue The issue to load data from
      */
     private void populateFields(Issue issue) {
+        // Set basic fields
         seriesNameLabel.setText(issue.getSeries().getTitle());
         issueNumberField.setText(issue.getIssueNumber() != null ? issue.getIssueNumber().toString() : "");
         overviewTextArea.setText(issue.getOverview() != null ? issue.getOverview() : "");
         releaseDateField.setText(issue.getReleaseDate() != null ? issue.getReleaseDate().toString() : "");
         priceField.setText(issue.getPriceUsd() != null ? issue.getPriceUsd().toString() : "");
-        imageUrlField.setText(issue.getImageUrl() != null ? issue.getImageUrl() : ""); // Populate image URL
+        imageUrlField.setText(issue.getImageUrl() != null ? issue.getImageUrl() : "");
         annualCheckBox.setSelected(issue.getAnnual() != null ? issue.getAnnual() : false);
 
         // Fill creators
-        for (IssueCreator issueCreator : issue.getIssueCreators()) {
-            Set<Role> roles = issueCreator.getRoles();
-            Creator creator = issueCreator.getCreator();
+        populateCreators(issue);
 
-            boolean alreadyAdded = selectedCreators.stream().anyMatch(ic -> ic.getCreator().equals(creator));
+        // Fill characters
+        populateCharacters(issue);
+    }
+
+    /**
+     * Populates creator data from an existing issue
+     */
+    private void populateCreators(Issue issue) {
+        for (IssueCreator issueCreator : issue.getIssueCreators()) {
+            boolean alreadyAdded = selectedCreators.stream().anyMatch(ic -> ic.getCreator().equals(issueCreator.getCreator()));
 
             if (!alreadyAdded) {
                 selectedCreators.add(issueCreator);
-                String roleNames = roles.stream().map(Enum::name).collect(Collectors.joining(", "));
-                creatorTableModel.addRow(new Object[]{creator.getName(), roleNames});
+                String roleNames = issueCreator.getRoles().stream().map(Enum::name).collect(Collectors.joining(", "));
+                creatorTableModel.addRow(new Object[]{issueCreator.getCreator().getName(), roleNames});
             }
         }
+    }
 
-        // Fill characters
+    /**
+     * Populates character data from an existing issue
+     */
+    private void populateCharacters(Issue issue) {
         for (ComicCharacter character : issue.getCharacters()) {
-            if (!selectedCharactersListModel.contains(character)) {
+            if (!listModelContains(selectedCharactersListModel, character)) {
                 selectedCharactersListModel.addElement(character);
             }
         }
@@ -625,21 +574,27 @@ public class IssueForm extends AbstractForm {
 
     @Override
     protected void resetForm() {
+        // Reset basic fields
         issueNumberField.setText("");
         overviewTextArea.setText("");
         releaseDateField.setText("");
         priceField.setText("");
-        imageUrlField.setText(""); // Reset image URL field
+        imageUrlField.setText("");
         annualCheckBox.setSelected(false);
+
+        // Reset creators
         creatorTableModel.setRowCount(0);
         selectedCreators.clear();
-        selectedCharactersListModel.clear();
         matchedCreatorsListModel.clear();
-        matchedCharactersList.clearSelection();
+        roleSearchList.clearSelection();
         creatorSearchField.setText("Search for Creators...");
         creatorSearchField.setForeground(Color.GRAY);
+
+        // Reset characters
+        selectedCharactersListModel.clear();
+        matchedCharactersListModel.clear();
+        matchedCharactersList.clearSelection();
         characterSearchField.setText("Search for Characters...");
         characterSearchField.setForeground(Color.GRAY);
-        roleSearchList.clearSelection();
     }
 }
