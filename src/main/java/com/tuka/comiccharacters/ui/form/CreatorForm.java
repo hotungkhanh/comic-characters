@@ -121,9 +121,9 @@ public class CreatorForm extends AbstractForm {
      */
     private void addCreator(String name, String overview, String imageUrl) {
         if (imageUrl.isEmpty()) {
-            creatorService.addCreator(name, overview);
+            creatorService.save(new Creator(name, overview));
         } else {
-            creatorService.addCreator(name, overview, imageUrl);
+            creatorService.save(new Creator(name, overview, imageUrl));
         }
         showSuccess("Creator added!");
         resetForm();
@@ -140,7 +140,7 @@ public class CreatorForm extends AbstractForm {
         editingCreator.setName(name);
         editingCreator.setOverview(overview);
         editingCreator.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
-        creatorService.updateCreator(editingCreator);
+        creatorService.save(editingCreator);
         showSuccess("Creator updated successfully.");
         SwingUtilities.getWindowAncestor(this).dispose();
     }
