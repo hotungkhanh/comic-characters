@@ -231,7 +231,7 @@ public class CharacterForm extends AbstractForm {
         character.setFirstAppearance(data.firstAppearance);
 
         // Save the character
-        characterService.addCharacter(character);
+        characterService.save(character);
     }
 
     /**
