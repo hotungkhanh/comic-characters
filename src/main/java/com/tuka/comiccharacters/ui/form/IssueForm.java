@@ -276,11 +276,7 @@ public class IssueForm extends AbstractForm {
 
         List<ComicCharacter> charactersToAdd = getSelectedCharacters();
 
-        if (isEditMode && existingIssue != null) {
-            updateIssue(issueNumber, overview, releaseDate, price, imageUrl, isAnnual, charactersToAdd);
-        } else {
-            addIssue(issueNumber, overview, releaseDate, price, imageUrl, isAnnual, charactersToAdd);
-        }
+        saveIssue(issueNumber, overview, releaseDate, price, imageUrl, isAnnual, charactersToAdd);
 
         // Execute callback
         if (callback != null) {
@@ -289,37 +285,43 @@ public class IssueForm extends AbstractForm {
     }
 
     /**
-     * Updates an existing issue with new values
+     * Saves an issue (either new or existing) with the provided details
+     *
+     * @param issueNumber The issue number
+     * @param overview    The issue overview text
+     * @param releaseDate The release date
+     * @param price       The price in USD
+     * @param imageUrl    The URL to the issue's image
+     * @param isAnnual    Whether this is an annual issue
+     * @param characters  The list of characters in the issue
      */
-    private void updateIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, String imageUrl, boolean isAnnual, List<ComicCharacter> characters) {
-        existingIssue.setIssueNumber(issueNumber);
-        existingIssue.setOverview(overview);
-        existingIssue.setReleaseDate(releaseDate);
-        existingIssue.setPriceUsd(price);
-        existingIssue.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
-        existingIssue.setAnnual(isAnnual);
+    private void saveIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, String imageUrl, boolean isAnnual, List<ComicCharacter> characters) {
 
-        // Update creators
-        existingIssue.getIssueCreators().clear();
-        for (IssueCreator ic : selectedCreators) {
-            ic.setIssue(existingIssue);
+        Issue issue;
+        boolean isNew = false;
+
+        if (isEditMode && existingIssue != null) {
+            // Update existing issue
+            issue = existingIssue;
+        } else {
+            // Create new issue
+            issue = new Issue(currentSeries, issueNumber);
+            isNew = true;
         }
-        existingIssue.getIssueCreators().addAll(selectedCreators);
 
-        // Update characters
-        existingIssue.getCharacters().clear();
-        existingIssue.getCharacters().addAll(characters);
+        // Set common properties for both new and existing issues
+        issue.setIssueNumber(issueNumber);
+        issue.setOverview(overview);
+        issue.setReleaseDate(releaseDate);
+        issue.setPriceUsd(price);
+        issue.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
+        issue.setAnnual(isAnnual);
 
-        issueService.updateIssue(existingIssue);
-        showSuccess("Issue updated successfully.");
-    }
+        // Save the issue
+        issueService.saveIssue(issue, selectedCreators, characters);
 
-    /**
-     * Adds a new issue to the database
-     */
-    private void addIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, String imageUrl, boolean isAnnual, List<ComicCharacter> characters) {
-        issueService.addIssue(currentSeries, issueNumber, overview, releaseDate, price, imageUrl, isAnnual, selectedCreators, characters);
-        showSuccess("Issue added!");
+        // Show appropriate success message
+        showSuccess(isNew ? "Issue added!" : "Issue updated successfully.");
     }
 
     /**

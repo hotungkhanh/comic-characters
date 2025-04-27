@@ -1,11 +1,12 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.IssueDaoImpl;
-import com.tuka.comiccharacters.model.*;
+import com.tuka.comiccharacters.model.ComicCharacter;
+import com.tuka.comiccharacters.model.Issue;
+import com.tuka.comiccharacters.model.IssueCreator;
+import com.tuka.comiccharacters.model.Series;
 import jakarta.persistence.EntityManager;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -16,31 +17,16 @@ public class IssueService extends AbstractService<Issue> {
         super(new IssueDaoImpl());
     }
 
-    public void addIssue(Series series, BigDecimal issueNumber, String overview, LocalDate releaseDate,
-                         BigDecimal priceUsd, String imageUrl, boolean isAnnual,
-                         List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
+    public void saveIssue(Issue issue, List<IssueCreator> issueCreators, List<ComicCharacter> characters) {
         try {
             executeInTransaction(em -> {
-                Issue issue = createBasicIssue(series, issueNumber, overview, releaseDate, priceUsd, imageUrl, isAnnual);
                 setIssueCreators(issue, issueCreators);
                 setIssueCharacters(em, issue, characters);
-                em.persist(issue);
+                save(issue);
             });
         } catch (Exception e) {
-            throw new RuntimeException("Error adding issue: " + e.getMessage(), e);
+            throw new RuntimeException("Error saving issue: " + e.getMessage(), e);
         }
-    }
-
-    private Issue createBasicIssue(Series series, BigDecimal issueNumber, String overview,
-                                   LocalDate releaseDate, BigDecimal priceUsd,
-                                   String imageUrl, boolean isAnnual) {
-        Issue issue = new Issue(series, issueNumber);
-        issue.setOverview(overview);
-        issue.setReleaseDate(releaseDate);
-        issue.setPriceUsd(priceUsd);
-        issue.setImageUrl(imageUrl);
-        issue.setAnnual(isAnnual);
-        return issue;
     }
 
     private void setIssueCreators(Issue issue, List<IssueCreator> issueCreators) {
@@ -66,76 +52,12 @@ public class IssueService extends AbstractService<Issue> {
         }
     }
 
-    public void updateIssue(Issue existingIssue) {
-        try {
-            executeInTransaction(em -> {
-                Issue managedIssue = findAndValidateIssue(em, existingIssue.getId());
-                updateBasicProperties(managedIssue, existingIssue);
-                updateIssueCreators(em, managedIssue, existingIssue.getIssueCreators());
-                updateIssueCharacters(em, managedIssue, existingIssue.getCharacters());
-            });
-        } catch (Exception e) {
-            throw new RuntimeException("Error updating issue: " + e.getMessage(), e);
-        }
-    }
-
     private Issue findAndValidateIssue(EntityManager em, Long issueId) {
         Issue managedIssue = em.find(Issue.class, issueId);
         if (managedIssue == null) {
             throw new IllegalArgumentException("Issue not found: " + issueId);
         }
         return managedIssue;
-    }
-
-    private void updateBasicProperties(Issue managedIssue, Issue sourceIssue) {
-        managedIssue.setIssueNumber(sourceIssue.getIssueNumber());
-        managedIssue.setOverview(sourceIssue.getOverview());
-        managedIssue.setReleaseDate(sourceIssue.getReleaseDate());
-        managedIssue.setPriceUsd(sourceIssue.getPriceUsd());
-        managedIssue.setImageUrl(sourceIssue.getImageUrl());
-        managedIssue.setAnnual(sourceIssue.getAnnual());
-    }
-
-    private void updateIssueCreators(EntityManager em, Issue managedIssue, Set<IssueCreator> updatedIssueCreators) {
-        // Remove old creators
-        Set<IssueCreator> oldCreators = new HashSet<>(managedIssue.getIssueCreators());
-        for (IssueCreator ic : oldCreators) {
-            managedIssue.getIssueCreators().remove(ic);
-            em.remove(ic);
-        }
-
-        // Add new creators
-        if (updatedIssueCreators != null) {
-            for (IssueCreator ic : updatedIssueCreators) {
-                IssueCreator newIc = new IssueCreator();
-                newIc.setIssue(managedIssue);
-                newIc.setCreator(em.find(Creator.class, ic.getCreator().getId()));
-                newIc.setRoles(ic.getRoles());
-                em.persist(newIc);
-                managedIssue.getIssueCreators().add(newIc);
-            }
-        }
-    }
-
-    private void updateIssueCharacters(EntityManager em, Issue managedIssue, Set<ComicCharacter> updatedCharacters) {
-        Set<ComicCharacter> existingCharacters = managedIssue.getCharacters();
-
-        // Remove issue from all existing characters
-        for (ComicCharacter character : existingCharacters) {
-            character.getIssues().remove(managedIssue);
-        }
-        existingCharacters.clear();
-
-        // Add the new characters
-        if (updatedCharacters != null) {
-            for (ComicCharacter character : updatedCharacters) {
-                ComicCharacter managedCharacter = em.find(ComicCharacter.class, character.getId());
-                if (managedCharacter != null) {
-                    managedCharacter.getIssues().add(managedIssue);
-                    existingCharacters.add(managedCharacter);
-                }
-            }
-        }
     }
 
     @Override
