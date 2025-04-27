@@ -214,8 +214,12 @@ public class IssueForm extends AbstractForm {
      */
     private void setupSubmitAction() {
         addSubmitListener(e -> {
-            saveOrUpdateIssue();
-            resetForm();
+            try {
+                saveIssue();
+                resetForm();
+            } catch (IllegalArgumentException ex) {
+                // Validation errors are already shown to the user
+            }
         });
     }
 
@@ -225,58 +229,44 @@ public class IssueForm extends AbstractForm {
     private void setupEditAction() {
         removeAllSubmitListeners();
         addSubmitListener(e -> {
-            saveOrUpdateIssue();
-            SwingUtilities.getWindowAncestor(this).dispose();
+            try {
+                saveIssue();
+                SwingUtilities.getWindowAncestor(this).dispose();
+            } catch (IllegalArgumentException ex) {
+                // Validation errors are already shown to the user
+            }
         });
     }
 
     /**
-     * Validates and saves or updates an issue
+     * Validates and saves an issue (either new or existing)
      */
-    private void saveOrUpdateIssue() {
+    private void saveIssue() {
         if (!validateForm()) {
             return;
         }
 
-        String issueText = issueNumberField.getText().trim();
-        String overview = overviewTextArea.getText().trim();
-        String releaseDateText = releaseDateField.getText().trim();
-        String priceText = priceField.getText().trim();
-        String imageUrl = imageUrlField.getText().trim();
-        boolean isAnnual = annualCheckBox.isSelected();
+        // Collect all form data
+        Issue issueData = collectFormData();
 
-        // Parse issue number
-        BigDecimal issueNumber;
-        try {
-            issueNumber = new BigDecimal(issueText);
-        } catch (NumberFormatException ex) {
-            showError("Issue number must be a number.");
-            issueNumberField.requestFocus();
-            return;
+        // Handle edit mode vs new mode
+        if (isEditMode && existingIssue != null) {
+            // In edit mode, copy data to the existing issue
+            existingIssue.setIssueNumber(issueData.getIssueNumber());
+            existingIssue.setOverview(issueData.getOverview());
+            existingIssue.setReleaseDate(issueData.getReleaseDate());
+            existingIssue.setPriceUsd(issueData.getPriceUsd());
+            existingIssue.setImageUrl(issueData.getImageUrl());
+            existingIssue.setAnnual(issueData.getAnnual());
+
+            // Save the issue
+            issueService.saveIssue(existingIssue, selectedCreators, getSelectedCharacters());
+            showSuccess("Issue updated successfully.");
+        } else {
+            // In new mode, use the new issue object directly
+            issueService.saveIssue(issueData, selectedCreators, getSelectedCharacters());
+            showSuccess("Issue added!");
         }
-
-        // Parse release date using the helper method from AbstractForm
-        LocalDate releaseDate = parseLocalDate(releaseDateText, "Release Date");
-        if (releaseDate == null && !releaseDateText.isEmpty()) {
-            releaseDateField.requestFocus();
-            return;
-        }
-
-        // Parse price
-        BigDecimal price = null;
-        if (!priceText.isEmpty()) {
-            try {
-                price = new BigDecimal(priceText);
-            } catch (NumberFormatException ex) {
-                showError("Price must be a number.");
-                priceField.requestFocus();
-                return;
-            }
-        }
-
-        List<ComicCharacter> charactersToAdd = getSelectedCharacters();
-
-        saveIssue(issueNumber, overview, releaseDate, price, imageUrl, isAnnual, charactersToAdd);
 
         // Execute callback
         if (callback != null) {
@@ -285,43 +275,60 @@ public class IssueForm extends AbstractForm {
     }
 
     /**
-     * Saves an issue (either new or existing) with the provided details
-     *
-     * @param issueNumber The issue number
-     * @param overview    The issue overview text
-     * @param releaseDate The release date
-     * @param price       The price in USD
-     * @param imageUrl    The URL to the issue's image
-     * @param isAnnual    Whether this is an annual issue
-     * @param characters  The list of characters in the issue
+     * Helper method to collect all form data into a single object
      */
-    private void saveIssue(BigDecimal issueNumber, String overview, LocalDate releaseDate, BigDecimal price, String imageUrl, boolean isAnnual, List<ComicCharacter> characters) {
-
-        Issue issue;
-        boolean isNew = false;
-
-        if (isEditMode && existingIssue != null) {
-            // Update existing issue
-            issue = existingIssue;
-        } else {
-            // Create new issue
-            issue = new Issue(currentSeries, issueNumber);
-            isNew = true;
+    private Issue collectFormData() {
+        // Parse issue number
+        BigDecimal issueNumber;
+        try {
+            issueNumber = new BigDecimal(issueNumberField.getText().trim());
+        } catch (NumberFormatException ex) {
+            showError("Issue number must be a number.");
+            issueNumberField.requestFocus();
+            throw new IllegalArgumentException("Invalid issue number");
         }
 
-        // Set common properties for both new and existing issues
-        issue.setIssueNumber(issueNumber);
-        issue.setOverview(overview);
-        issue.setReleaseDate(releaseDate);
-        issue.setPriceUsd(price);
+        // Create a new issue object with the required fields
+        Issue issue = new Issue(currentSeries, issueNumber);
+
+        // Parse and set optional fields
+
+        // Overview
+        String overview = overviewTextArea.getText().trim();
+        issue.setOverview(overview.isEmpty() ? null : overview);
+
+        // Release date
+        String releaseDateText = releaseDateField.getText().trim();
+        if (!releaseDateText.isEmpty()) {
+            LocalDate releaseDate = parseLocalDate(releaseDateText, "Release Date");
+            if (releaseDate == null) {
+                releaseDateField.requestFocus();
+                throw new IllegalArgumentException("Invalid release date");
+            }
+            issue.setReleaseDate(releaseDate);
+        }
+
+        // Price
+        String priceText = priceField.getText().trim();
+        if (!priceText.isEmpty()) {
+            try {
+                BigDecimal price = new BigDecimal(priceText);
+                issue.setPriceUsd(price);
+            } catch (NumberFormatException ex) {
+                showError("Price must be a number.");
+                priceField.requestFocus();
+                throw new IllegalArgumentException("Invalid price");
+            }
+        }
+
+        // Image URL
+        String imageUrl = imageUrlField.getText().trim();
         issue.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
-        issue.setAnnual(isAnnual);
 
-        // Save the issue
-        issueService.saveIssue(issue, selectedCreators, characters);
+        // Annual checkbox
+        issue.setAnnual(annualCheckBox.isSelected());
 
-        // Show appropriate success message
-        showSuccess(isNew ? "Issue added!" : "Issue updated successfully.");
+        return issue;
     }
 
     /**
