@@ -5,6 +5,8 @@ import com.tuka.comiccharacters.ui.details.AbstractDetails;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -40,10 +42,19 @@ public abstract class AbstractBrowser<T, S extends AbstractService<T>> extends J
         buttonPanel.add(addButton);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // List selection listener
-        entityList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && entityList.getSelectedValue() != null) {
-                showDetails(entityList.getSelectedValue());
+        // Mouse listener allows the same row to be clicked multiple times
+        entityList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 1) {
+                    int index = entityList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        T selectedEntity = entityList.getModel().getElementAt(index);
+                        if (selectedEntity != null) {
+                            showDetails(selectedEntity);
+                        }
+                    }
+                }
             }
         });
 
@@ -102,8 +113,12 @@ public abstract class AbstractBrowser<T, S extends AbstractService<T>> extends J
 
     // Abstract methods that must be implemented
     protected abstract boolean matchesQuery(T entity, String query);
+
     protected abstract Comparator<T> getComparator();
+
     protected abstract Long getEntityId(T entity);
+
     protected abstract JComponent createForm();
+
     protected abstract AbstractDetails<T> createDetailsDialog(T entity, Runnable refreshCallback);
 }

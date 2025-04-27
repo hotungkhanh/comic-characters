@@ -34,7 +34,7 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
 
     @Override
     public void showDetailsDialog() {
-        super.showDetailsDialog(750, 800, "Character");
+        super.showDetailsDialog(800, 800, "Character");
     }
 
     @Override

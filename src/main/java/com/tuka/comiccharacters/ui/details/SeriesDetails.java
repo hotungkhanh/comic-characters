@@ -89,6 +89,14 @@ public class SeriesDetails extends AbstractDetails<Series> {
         issuesPanel.add(issueScrollPane, BorderLayout.CENTER);
 
         // Add the "Add New Issues" button
+        JButton addIssueButton = getAddIssueButton();
+
+        issuesPanel.add(addIssueButton, BorderLayout.SOUTH);
+
+        return issuesPanel;
+    }
+
+    private JButton getAddIssueButton() {
         JButton addIssueButton = new JButton("Add New Issues");
         addIssueButton.addActionListener(_ -> {
             JDialog addIssueDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Add New Issues", true);
@@ -98,10 +106,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
             addIssueDialog.setLocationRelativeTo(parent);
             addIssueDialog.setVisible(true);
         });
-
-        issuesPanel.add(addIssueButton, BorderLayout.SOUTH);
-
-        return issuesPanel;
+        return addIssueButton;
     }
 
     private void navigateToIssue(Issue issue) {
