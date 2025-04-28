@@ -1,15 +1,15 @@
 package com.tuka.comiccharacters.ui.details;
 
 import com.tuka.comiccharacters.model.*;
-import com.tuka.comiccharacters.service.CharacterService;
-import com.tuka.comiccharacters.service.CreatorService;
-import com.tuka.comiccharacters.service.IssueService;
-import com.tuka.comiccharacters.service.PublisherService;
+import com.tuka.comiccharacters.service.*;
 import com.tuka.comiccharacters.ui.MainApp;
 import com.tuka.comiccharacters.ui.form.IssueForm;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,7 +40,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
         int row = 0;
 
         // Basic information
-        row = addLabelValue(infoPanel, "Issue:", entity.toString(), row);
+        row = addClickableSeries(infoPanel, row);
 
         // Publisher (if available)
         row = addClickablePublisher(infoPanel, row);
@@ -72,6 +72,80 @@ public class IssueDetails extends AbstractDetails<Issue> {
             JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
             mainPanel.add(new JScrollPane(infoPanel), BorderLayout.CENTER);
             return mainPanel;
+        }
+    }
+
+    private int addClickableSeries(JPanel panel, int row) {
+        if (entity.getSeries() != null) {
+            // Create the clickable series part
+            JLabel seriesLabel = new JLabel(entity.getSeries().toString());
+            seriesLabel.setForeground(Color.BLUE);
+            seriesLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            seriesLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    navigateToSeries(entity.getSeries());
+                }
+
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    seriesLabel.setText("<html><u>" + entity.getSeries().toString() + "</u></html>");
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    seriesLabel.setText(entity.getSeries().toString());
+                }
+            });
+
+            // Build the value with the issue number part
+            JPanel valuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            valuePanel.setOpaque(false);
+            valuePanel.add(seriesLabel);
+
+            // Add the issue number part
+            String issueNumberStr = "";
+            BigDecimal issueNumber = entity.getIssueNumber();
+            if (issueNumber != null) {
+                issueNumberStr = issueNumber.stripTrailingZeros().toString();
+            }
+
+            if (entity.getAnnual() != null && entity.getAnnual()) {
+                valuePanel.add(new JLabel(" Annual #" + issueNumberStr));
+            } else {
+                valuePanel.add(new JLabel(" #" + issueNumberStr));
+            }
+
+            // Add label and value directly to the main panel
+            GridBagConstraints labelConstraints = new GridBagConstraints();
+            labelConstraints.gridx = 0;
+            labelConstraints.gridy = row;
+            labelConstraints.anchor = GridBagConstraints.WEST;
+            labelConstraints.insets = new Insets(5, 5, 5, 5);
+            panel.add(new JLabel("Issue:"), labelConstraints);
+
+            GridBagConstraints valueConstraints = new GridBagConstraints();
+            valueConstraints.gridx = 1;
+            valueConstraints.gridy = row;
+            valueConstraints.anchor = GridBagConstraints.WEST;
+            valueConstraints.insets = new Insets(5, 5, 5, 5);
+            panel.add(valuePanel, valueConstraints);
+
+            return row + 1;
+        }
+
+        return addLabelValue(panel, "Issue:", entity.toString(), row);
+    }
+
+    private void navigateToSeries(Series series) {
+        if (series != null) {
+            Series fetched = new SeriesService().getByIdWithDetails(series.getId());
+            if (fetched != null) {
+                currentDialog.dispose();
+                new SeriesDetails(parent, fetched, refreshCallback).showDetailsDialog();
+            } else {
+                MainApp.showError("Could not load series details.");
+            }
         }
     }
 
