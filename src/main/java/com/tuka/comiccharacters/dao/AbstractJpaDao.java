@@ -16,9 +16,13 @@ public abstract class AbstractJpaDao<T> implements Dao<T> {
         this.entityClass = entityClass;
     }
 
+    protected EntityManager getEntityManager() {
+        return JPAUtil.getEntityManager();
+    }
+
     @Override
     public void save(T entity) {
-        try (EntityManager em = JPAUtil.getEntityManager()) {
+        try (EntityManager em = getEntityManager()) {
             EntityTransaction tx = em.getTransaction();
             try {
                 tx.begin();
@@ -33,14 +37,14 @@ public abstract class AbstractJpaDao<T> implements Dao<T> {
 
     @Override
     public T findById(Long id) {
-        try (EntityManager em = JPAUtil.getEntityManager()) {
+        try (EntityManager em = getEntityManager()) {
             return em.find(entityClass, id);
         }
     }
 
     @Override
     public Set<T> findAll() {
-        try (EntityManager em = JPAUtil.getEntityManager()) {
+        try (EntityManager em = getEntityManager()) {
             List<T> resultList = em.createQuery("FROM " + entityClass.getSimpleName(), entityClass)
                     .getResultList();
             return new HashSet<>(resultList);  // Convert to Set
@@ -50,7 +54,7 @@ public abstract class AbstractJpaDao<T> implements Dao<T> {
 
     @Override
     public void delete(T entity) {
-        try (EntityManager em = JPAUtil.getEntityManager()) {
+        try (EntityManager em = getEntityManager()) {
             EntityTransaction tx = em.getTransaction();
             try {
                 tx.begin();

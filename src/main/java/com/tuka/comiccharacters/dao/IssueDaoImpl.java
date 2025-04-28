@@ -4,8 +4,6 @@ import com.tuka.comiccharacters.model.Issue;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 
-import static com.tuka.comiccharacters.util.JPAUtil.getEntityManager;
-
 public class IssueDaoImpl extends AbstractJpaDao<Issue> {
     public IssueDaoImpl() {
         super(Issue.class);

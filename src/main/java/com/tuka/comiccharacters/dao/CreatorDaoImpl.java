@@ -3,8 +3,6 @@ package com.tuka.comiccharacters.dao;
 import com.tuka.comiccharacters.model.Creator;
 import jakarta.persistence.EntityManager;
 
-import static com.tuka.comiccharacters.util.JPAUtil.getEntityManager;
-
 public class CreatorDaoImpl extends AbstractJpaDao<Creator> {
     public CreatorDaoImpl() {
         super(Creator.class);
