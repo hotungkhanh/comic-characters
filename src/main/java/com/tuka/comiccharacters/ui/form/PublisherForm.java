@@ -52,7 +52,7 @@ public class PublisherForm extends AbstractForm {
             }
 
             String name = nameField.getText().trim();
-            publisherService.save(new Publisher(name));
+            addPublisher(name);
         });
     }
 
@@ -92,6 +92,18 @@ public class PublisherForm extends AbstractForm {
      */
     private void populateFields(Publisher publisher) {
         nameField.setText(publisher.getName());
+    }
+
+    /**
+     * Updates an existing publisher in the database
+     *
+     * @param name The updated name of the publisher
+     */
+    private void addPublisher(String name) {
+        Publisher publisher = new Publisher(name);
+        publisherService.save(publisher);
+        showSuccess("Publisher added!");
+        SwingUtilities.getWindowAncestor(this).dispose();
     }
 
     /**
