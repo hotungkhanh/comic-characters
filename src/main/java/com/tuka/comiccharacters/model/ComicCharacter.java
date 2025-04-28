@@ -18,6 +18,7 @@ public class ComicCharacter {
 
     @Column(nullable = false)
     private String name;
+
     private String alias;
 
     @ManyToOne(fetch = FetchType.LAZY)
