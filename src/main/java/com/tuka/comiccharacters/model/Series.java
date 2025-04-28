@@ -35,6 +35,11 @@ public class Series {
     public Series() {
     }
 
+    public Series(String title, Integer startYear) {
+        this.title = title;
+        this.startYear = startYear;
+    }
+
     public Series(String title, Integer startYear, Integer endYear, String overview, Publisher publisher) {
         this.title = title;
         this.startYear = startYear;
