@@ -11,22 +11,29 @@ public class ComicCharacter {
 
     @ManyToMany(mappedBy = "characters", fetch = FetchType.LAZY)
     private final Set<Issue> issues = new HashSet<>();
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(nullable = false)
     private String name;
     private String alias;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
+
     @Column(length = 1000)
     private String overview;
+
     @Column(length = 2083)
     private String imageUrl;
+
     @ManyToMany
     @JoinTable(name = "character_creators", joinColumns = @JoinColumn(name = "character_id"), inverseJoinColumns = @JoinColumn(name = "creator_id"))
     private Set<Creator> creators = new HashSet<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "first_appearance_issue_id")
     private Issue firstAppearance;
