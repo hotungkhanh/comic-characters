@@ -67,7 +67,7 @@ public class MainApp {
         frame.setVisible(true);
     }
 
-    private static void addPlaceholderText(JTextField textField, String placeholderText) {
+    static void addPlaceholderText(JTextField textField, String placeholderText) {
         textField.setForeground(Color.GRAY);
         textField.setText(placeholderText);
 
@@ -91,6 +91,10 @@ public class MainApp {
     }
 
     private static void setGlobalFont(Font font) {
+        if (font == null) {
+            throw new IllegalArgumentException("Font cannot be null");
+        }
+
         Enumeration<Object> keys = UIManager.getDefaults().keys();
         while (keys.hasMoreElements()) {
             Object key = keys.nextElement();
