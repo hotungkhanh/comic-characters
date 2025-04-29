@@ -86,6 +86,11 @@ public class Creator {
         return creditedCharacters;
     }
 
+    public void addCreditedCharacter(ComicCharacter character) {
+        creditedCharacters.add(character);
+        character.getCreators().add(this);
+    }
+
     @Override
     public String toString() {
         return name;
