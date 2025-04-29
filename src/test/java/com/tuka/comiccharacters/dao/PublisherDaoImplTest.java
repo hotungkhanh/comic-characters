@@ -1,6 +1,8 @@
 package com.tuka.comiccharacters.dao;
 
+import com.tuka.comiccharacters.model.ComicCharacter;
 import com.tuka.comiccharacters.model.Publisher;
+import com.tuka.comiccharacters.model.Series;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
@@ -13,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -23,15 +26,13 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PublisherDaoImplTest {
 
+    private final Long VALID_ID = 1L;
     @Mock
     private EntityManager entityManager;
-
     @Mock
     private TypedQuery<Publisher> typedQuery;
-
     private PublisherDaoImpl publisherDao;
     private Publisher testPublisher;
-    private final Long VALID_ID = 1L;
 
     @BeforeEach
     void setUp() {
@@ -79,6 +80,64 @@ class PublisherDaoImplTest {
                     Publisher.class);
             verify(typedQuery).setParameter("id", VALID_ID);
             verify(typedQuery).getResultStream();
+        }
+
+        @Test
+        @DisplayName("Given valid publisher with associations when delete called then associations are cleared and publisher is removed")
+        void givenValidPublisherWithAssociations_whenDeleteCalled_thenAssociationsClearedAndPublisherRemoved() {
+            // Given
+            EntityTransaction transaction = mock(EntityTransaction.class);
+            when(entityManager.getTransaction()).thenReturn(transaction);
+
+            // Create mock character and series
+            ComicCharacter character1 = mock(ComicCharacter.class);
+            ComicCharacter character2 = mock(ComicCharacter.class);
+            Series series1 = mock(Series.class);
+            Series series2 = mock(Series.class);
+
+            // Use real sets for easier verification
+            Set<ComicCharacter> characters = new HashSet<>(Arrays.asList(character1, character2));
+            Set<Series> series = new HashSet<>(Arrays.asList(series1, series2));
+
+            // Create a managed copy of the publisher
+            Publisher managedPublisher = spy(new Publisher("Marvel Comics"));
+            try {
+                java.lang.reflect.Field idField = Publisher.class.getDeclaredField("id");
+                idField.setAccessible(true);
+                idField.set(managedPublisher, VALID_ID);
+            } catch (Exception e) {
+                fail("Failed to set up test: " + e.getMessage());
+            }
+
+            // Set associations
+            managedPublisher.getPublisherCharacters().addAll(characters);
+            managedPublisher.getPublisherSeries().addAll(series);
+
+            // When entityManager.find(...) is called, return the managedPublisher
+            when(entityManager.find(Publisher.class, VALID_ID)).thenReturn(managedPublisher);
+
+            // When
+            publisherDao.delete(testPublisher);
+
+            // Then
+            verify(transaction).begin();
+
+            // Characters should be unlinked from publisher
+            for (ComicCharacter character : characters) {
+                verify(character).setPublisher(null);
+            }
+
+            assertTrue(managedPublisher.getPublisherCharacters().isEmpty(), "Publisher characters should be cleared");
+
+            // Series should be unlinked from publisher
+            for (Series s : series) {
+                verify(s).setPublisher(null);
+            }
+
+            assertTrue(managedPublisher.getPublisherSeries().isEmpty(), "Publisher series should be cleared");
+
+            verify(entityManager).remove(managedPublisher);
+            verify(transaction).commit();
         }
 
         @Test
@@ -176,24 +235,6 @@ class PublisherDaoImplTest {
             verify(typedQuery).getResultList();
             assertTrue(result.contains(publisher1), "Result should contain publisher1");
             assertTrue(result.contains(publisher2), "Result should contain publisher2");
-        }
-
-        @Test
-        @DisplayName("Given valid publisher when delete called then publisher is removed in a transaction")
-        void givenValidPublisher_whenDeleteCalled_thenPublisherIsRemovedInTransaction() {
-            // Given
-            EntityTransaction transaction = mock(EntityTransaction.class);
-            when(entityManager.getTransaction()).thenReturn(transaction);
-            when(entityManager.merge(testPublisher)).thenReturn(testPublisher);
-
-            // When
-            publisherDao.delete(testPublisher);
-
-            // Then
-            verify(transaction).begin();
-            verify(entityManager).merge(testPublisher);
-            verify(entityManager).remove(testPublisher);
-            verify(transaction).commit();
         }
     }
 }
