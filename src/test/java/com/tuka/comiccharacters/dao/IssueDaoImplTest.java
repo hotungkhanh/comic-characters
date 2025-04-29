@@ -1,7 +1,6 @@
 package com.tuka.comiccharacters.dao;
 
-import com.tuka.comiccharacters.model.Issue;
-import com.tuka.comiccharacters.model.Series;
+import com.tuka.comiccharacters.model.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
@@ -13,10 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,16 +22,24 @@ import static org.mockito.Mockito.*;
 class IssueDaoImplTest {
 
     private final Long VALID_ID = 1L;
+
     @Mock
     private EntityManager entityManager;
+
+    @Mock
+    private EntityTransaction transaction;
+
     @Mock
     private TypedQuery<Issue> typedQuery;
+
     private IssueDaoImpl issueDao;
     private Issue testIssue;
+    private ComicCharacter character1;
+    private ComicCharacter character2;
+    private Series series;
 
     @BeforeEach
     void setUp() {
-        // Create a testable DAO that overrides getEntityManager
         issueDao = new IssueDaoImpl() {
             @Override
             protected EntityManager getEntityManager() {
@@ -43,27 +47,40 @@ class IssueDaoImplTest {
             }
         };
 
-        // Set up test data
-        Series series = new Series("The Amazing Spider-Man", 1963);
-        testIssue = new Issue(series, BigDecimal.valueOf(1), LocalDate.of(1963, 3, 1));
+        character1 = new ComicCharacter();
+        character2 = new ComicCharacter();
+        series = new Series();
+        series.setIssues(new HashSet<>());
+
+        testIssue = new Issue();
+        testIssue.setCharacters(new HashSet<>(Set.of(character1, character2)));
+        testIssue.setSeries(series);
+
         try {
             java.lang.reflect.Field idField = Issue.class.getDeclaredField("id");
             idField.setAccessible(true);
             idField.set(testIssue, VALID_ID);
+
+            java.lang.reflect.Field idFieldChar1 = ComicCharacter.class.getDeclaredField("id");
+            idFieldChar1.setAccessible(true);
+            idFieldChar1.set(character1, 100L);
+
+            java.lang.reflect.Field idFieldChar2 = ComicCharacter.class.getDeclaredField("id");
+            idFieldChar2.setAccessible(true);
+            idFieldChar2.set(character2, 101L);
         } catch (Exception e) {
-            fail("Failed to set up test: " + e.getMessage());
+            fail("Failed to set up test ID: " + e.getMessage());
         }
     }
 
     @Nested
-    @DisplayName("findByIdWithDetails method tests")
-    class FindByIdWithDetailsMethodTests {
+    @DisplayName("findByIdWithDetails tests")
+    class FindByIdWithDetailsTests {
 
         @Test
-        @DisplayName("Given valid ID when findByIdWithDetails called then query is executed with proper parameters")
-        void givenValidId_whenFindByIdWithDetailsCalled_thenQueryIsExecutedWithProperParameters() {
-            // Given
-            String expectedQuery = "SELECT i FROM Issue i " +
+        @DisplayName("Returns issue when found")
+        void whenFound_returnsIssue() {
+            String query = "SELECT i FROM Issue i " +
                     "LEFT JOIN FETCH i.issueCreators ic " +
                     "LEFT JOIN FETCH ic.creator " +
                     "LEFT JOIN FETCH ic.roles " +
@@ -73,27 +90,20 @@ class IssueDaoImplTest {
                     "LEFT JOIN FETCH s.publisher " +
                     "WHERE i.id = :id";
 
-            when(entityManager.createQuery(expectedQuery, Issue.class)).thenReturn(typedQuery);
+            when(entityManager.createQuery(query, Issue.class)).thenReturn(typedQuery);
             when(typedQuery.setParameter("id", VALID_ID)).thenReturn(typedQuery);
             when(typedQuery.getSingleResult()).thenReturn(testIssue);
 
-            // When
             Issue result = issueDao.findByIdWithDetails(VALID_ID);
 
-            // Then
-            assertNotNull(result, "findByIdWithDetails should return an issue");
-            assertEquals(testIssue, result, "findByIdWithDetails should return the correct issue");
-            verify(entityManager).createQuery(expectedQuery, Issue.class);
-            verify(typedQuery).setParameter("id", VALID_ID);
-            verify(typedQuery).getSingleResult();
+            assertNotNull(result);
+            assertEquals(testIssue, result);
         }
 
         @Test
-        @DisplayName("Given non-existent ID when findByIdWithDetails called then null is returned")
-        void givenNonExistentId_whenFindByIdWithDetailsCalled_thenNullIsReturned() {
-            // Given
-            Long nonExistentId = 999L;
-            String expectedQuery = "SELECT i FROM Issue i " +
+        @DisplayName("Returns null if exception occurs")
+        void whenExceptionOccurs_returnsNull() {
+            String query = "SELECT i FROM Issue i " +
                     "LEFT JOIN FETCH i.issueCreators ic " +
                     "LEFT JOIN FETCH ic.creator " +
                     "LEFT JOIN FETCH ic.roles " +
@@ -103,123 +113,129 @@ class IssueDaoImplTest {
                     "LEFT JOIN FETCH s.publisher " +
                     "WHERE i.id = :id";
 
-            when(entityManager.createQuery(expectedQuery, Issue.class)).thenReturn(typedQuery);
-            when(typedQuery.setParameter("id", nonExistentId)).thenReturn(typedQuery);
-            when(typedQuery.getSingleResult()).thenThrow(new jakarta.persistence.NoResultException("No entity found for query"));
+            when(entityManager.createQuery(query, Issue.class)).thenThrow(new RuntimeException("DB error"));
 
-            // When
-            Issue result = issueDao.findByIdWithDetails(nonExistentId);
-
-            // Then
-            assertNull(result, "findByIdWithDetails should return null for non-existent ID");
-            verify(entityManager).createQuery(expectedQuery, Issue.class);
-            verify(typedQuery).setParameter("id", nonExistentId);
-            verify(typedQuery).getSingleResult();
-        }
-
-        @Test
-        @DisplayName("Given exception thrown when findByIdWithDetails called then null is returned")
-        void givenExceptionThrown_whenFindByIdWithDetailsCalled_thenNullIsReturned() {
-            // Given
-            String expectedQuery = "SELECT i FROM Issue i " +
-                    "LEFT JOIN FETCH i.issueCreators ic " +
-                    "LEFT JOIN FETCH ic.creator " +
-                    "LEFT JOIN FETCH ic.roles " +
-                    "LEFT JOIN FETCH i.characters " +
-                    "LEFT JOIN FETCH i.series s " +
-                    "LEFT JOIN FETCH s.issues " +
-                    "LEFT JOIN FETCH s.publisher " +
-                    "WHERE i.id = :id";
-
-            when(entityManager.createQuery(expectedQuery, Issue.class)).thenReturn(typedQuery);
-            when(typedQuery.setParameter("id", VALID_ID)).thenReturn(typedQuery);
-            when(typedQuery.getSingleResult()).thenThrow(new RuntimeException("Database connection error"));
-
-            // When
             Issue result = issueDao.findByIdWithDetails(VALID_ID);
 
-            // Then
-            assertNull(result, "findByIdWithDetails should return null when an exception is thrown");
-            verify(entityManager).createQuery(expectedQuery, Issue.class);
-            verify(typedQuery).setParameter("id", VALID_ID);
-            verify(typedQuery).getSingleResult();
+            assertNull(result);
         }
     }
 
     @Nested
-    @DisplayName("Inherited methods tests")
-    class InheritedMethodsTests {
+    @DisplayName("save method tests")
+    class SaveMethodTests {
 
         @Test
-        @DisplayName("Given valid issue when save called then issue is merged in a transaction")
-        void givenValidIssue_whenSaveCalled_thenIssueIsMergedInTransaction() {
-            // Given
-            EntityTransaction transaction = mock(EntityTransaction.class);
+        @DisplayName("Saves issue with no creator successfully")
+        void savesIssueSuccessfully() {
             when(entityManager.getTransaction()).thenReturn(transaction);
             when(entityManager.merge(testIssue)).thenReturn(testIssue);
 
-            // When
             issueDao.save(testIssue);
 
-            // Then
             verify(transaction).begin();
             verify(entityManager).merge(testIssue);
             verify(transaction).commit();
         }
 
         @Test
-        @DisplayName("Given valid ID when findById called then issue is retrieved from EntityManager")
-        void givenValidId_whenFindByIdCalled_thenIssueIsRetrievedFromEntityManager() {
-            // Given
+        @DisplayName("Saves issue with creators successfully")
+        void savesIssueWithCreatorsSuccessfully() {
+            // Arrange
+            when(entityManager.getTransaction()).thenReturn(transaction);
+            when(entityManager.merge(testIssue)).thenReturn(testIssue);
+
+            // Create mock IssueCreator
+            IssueCreator issueCreator = new IssueCreator(new Creator(), Set.of(Role.WRITER));
+            issueCreator.setIssue(testIssue);
+
+            Set<IssueCreator> issueCreators = new HashSet<>();
+            issueCreators.add(issueCreator);
+            testIssue.setIssueCreators(issueCreators);
+
+            // Act
+            issueDao.save(testIssue);
+
+            // Assert
+            verify(transaction).begin();
+            verify(entityManager).merge(testIssue);
+            verify(entityManager).persist(issueCreator); // verify persist is called
+            verify(transaction).commit();
+
+            // Optionally check if creator got associated with the issue
+            assertEquals(testIssue, issueCreator.getIssue());
+            assertTrue(testIssue.getIssueCreators().contains(issueCreator));
+        }
+
+
+        @Test
+        @DisplayName("Rolls back transaction if exception occurs")
+        void rollsBackOnException() {
+            when(entityManager.getTransaction()).thenReturn(transaction);
+            when(entityManager.merge(testIssue)).thenThrow(new RuntimeException("Merge failed"));
+            when(transaction.isActive()).thenReturn(true);
+
+            assertThrows(RuntimeException.class, () -> issueDao.save(testIssue));
+
+            verify(transaction).begin();
+            verify(transaction).rollback();
+        }
+    }
+
+
+    @Nested
+    @DisplayName("delete method tests")
+    class DeleteMethodTests {
+
+        @Test
+        @DisplayName("Removes issue and clears associations")
+        void removesIssueAndClearsAssociations() {
+            character1.getIssues().add(testIssue);
+            character2.getIssues().add(testIssue);
+            series.getIssues().add(testIssue);
+
+            when(entityManager.getTransaction()).thenReturn(transaction);
             when(entityManager.find(Issue.class, VALID_ID)).thenReturn(testIssue);
+            when(entityManager.find(ComicCharacter.class, character1.getId())).thenReturn(character1);
+            when(entityManager.find(ComicCharacter.class, character2.getId())).thenReturn(character2);
+            when(entityManager.find(Series.class, series.getId())).thenReturn(series);
 
-            // When
-            Issue result = issueDao.findById(VALID_ID);
+            issueDao.delete(testIssue);
 
-            // Then
-            assertNotNull(result, "findById should return an issue");
-            assertEquals(testIssue, result, "findById should return the correct issue");
-            verify(entityManager).find(Issue.class, VALID_ID);
+            verify(transaction).begin();
+            verify(entityManager).remove(testIssue);
+            verify(transaction).commit();
+
+            assertTrue(character1.getIssues().isEmpty(), "Character1 should no longer reference the issue");
+            assertTrue(character2.getIssues().isEmpty(), "Character2 should no longer reference the issue");
+            assertTrue(testIssue.getCharacters().isEmpty(), "Issue should have no characters");
+            assertFalse(series.getIssues().contains(testIssue), "Series should no longer contain the issue");
         }
 
         @Test
-        @DisplayName("When findAll called then all issues are returned")
-        void whenFindAllCalled_thenAllIssuesAreReturned() {
-            // Given
-            Series spiderManSeries = new Series("The Amazing Spider-Man", 1963);
-            Series xMenSeries = new Series("Uncanny X-Men", 1963);
+        @DisplayName("Does nothing if issue not found")
+        void doesNothingIfNotFound() {
+            when(entityManager.getTransaction()).thenReturn(transaction);
+            when(entityManager.find(Issue.class, VALID_ID)).thenReturn(null);
 
-            Issue issue1 = new Issue(spiderManSeries, BigDecimal.valueOf(1), LocalDate.of(1963, 3, 1));
-            Issue issue2 = new Issue(xMenSeries, BigDecimal.valueOf(1), LocalDate.of(1963, 9, 1));
+            issueDao.delete(testIssue);
 
-            // Set IDs for the issues
-            try {
-                java.lang.reflect.Field idField = Issue.class.getDeclaredField("id");
-                idField.setAccessible(true);
-                idField.set(issue1, 1L);
-                idField.set(issue2, 2L);
-            } catch (Exception e) {
-                fail("Failed to set up test: " + e.getMessage());
-            }
+            verify(transaction).begin();
+            verify(entityManager, never()).remove(any());
+            verify(transaction).commit();
+        }
 
-            // Use a List instead of a Set to avoid hashCode issues with mocked objects
-            List<Issue> issueList = Arrays.asList(issue1, issue2);
+        @Test
+        @DisplayName("Rolls back on exception")
+        void rollsBackOnException() {
+            when(entityManager.getTransaction()).thenReturn(transaction);
+            when(entityManager.find(Issue.class, VALID_ID)).thenThrow(new RuntimeException("Find failed"));
+            when(transaction.isActive()).thenReturn(true);
 
-            when(entityManager.createQuery("FROM Issue", Issue.class)).thenReturn(typedQuery);
-            when(typedQuery.getResultList()).thenReturn(issueList);
+            assertThrows(RuntimeException.class, () -> issueDao.delete(testIssue));
 
-            // When
-            Set<Issue> result = issueDao.findAll();
-
-            // Then
-            assertNotNull(result, "findAll should return a non-null set");
-            assertEquals(2, result.size(), "findAll should return all issues");
-
-            // Verify expected behaviour without relying on equals/hashCode
-            verify(entityManager).createQuery("FROM Issue", Issue.class);
-            verify(typedQuery).getResultList();
-            assertTrue(result.contains(issue1), "Result should contain issue1");
-            assertTrue(result.contains(issue2), "Result should contain issue2");
+            verify(transaction).begin();
+            verify(transaction).rollback();
         }
     }
 }

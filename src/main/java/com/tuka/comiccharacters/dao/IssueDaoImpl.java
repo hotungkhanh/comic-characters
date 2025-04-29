@@ -38,7 +38,9 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
     @Override
     public void save(Issue issue) {
         EntityTransaction transaction = null;
-        try (EntityManager em = getEntityManager()) {
+        EntityManager em = null; // Declare EntityManager outside the try block
+        try {
+            em = getEntityManager();
             transaction = em.getTransaction();
             transaction.begin();
 
@@ -57,10 +59,10 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
             }
 
             // Set and persist the IssueCreators (they require a non-null issue)
-            setIssueCreators(em, issue, detachedCreators);
+            setIssueCreators(em, issue, detachedCreators, em);
 
             // Associate Characters with the Issue
-            setIssueCharacters(em, issue, detachedCharacters);
+            setIssueCharacters(em, issue, detachedCharacters, em);
 
             transaction.commit();
         } catch (Exception e) {
@@ -71,23 +73,52 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
         }
     }
 
-    private void setIssueCreators(EntityManager em, Issue issue, Set<IssueCreator> issueCreators) {
-        if (issueCreators != null && !issueCreators.isEmpty()) {
-            for (IssueCreator ic : issueCreators) {
-                ic.setIssue(issue);
-                if (ic.getId() == null) {
-                    em.persist(ic);  // Persist new IssueCreator instances
+    private void setIssueCreators(EntityManager em, Issue issue, Set<IssueCreator> detachedCreators, EntityManager entityManager) {
+        // Use a map for efficient lookup of existing IssueCreators
+        Set<IssueCreator> managedCreators = new HashSet<>();
+
+        // Iterate through detachedCreators
+        for (IssueCreator detachedIc : detachedCreators) {
+            if (detachedIc.getId() == null) {
+                // New IssueCreator, persist it
+                detachedIc.setIssue(issue);
+                entityManager.persist(detachedIc);
+                managedCreators.add(detachedIc);
+            } else {
+                // Existing IssueCreator, merge it
+                IssueCreator managedIc = entityManager.find(IssueCreator.class, detachedIc.getId());
+                if (managedIc != null) {
+                    managedIc.setIssue(issue); //make sure issue is set
+                    entityManager.merge(detachedIc);
+                    managedCreators.add(managedIc);
+                } else {
+                    detachedIc.setIssue(issue);
+                    entityManager.persist(detachedIc);
+                    managedCreators.add(detachedIc);
                 }
             }
-            issue.setIssueCreators(new HashSet<>(issueCreators));
         }
+        //clear and add
+        issue.getIssueCreators().clear();
+        issue.getIssueCreators().addAll(managedCreators);
+
     }
 
-    private void setIssueCharacters(EntityManager em, Issue issue, Set<ComicCharacter> characters) {
-        if (characters != null && !characters.isEmpty()) {
+    private void setIssueCharacters(EntityManager em, Issue issue, Set<ComicCharacter> detachedCharacters, EntityManager entityManager) {
+        // Clear existing Characters
+        for (ComicCharacter existingCharacter : issue.getCharacters()) {
+            ComicCharacter managedCharacter = entityManager.find(ComicCharacter.class, existingCharacter.getId());
+            if (managedCharacter != null) {
+                managedCharacter.getIssues().remove(issue);
+            }
+        }
+        issue.getCharacters().clear();
+
+        // Add new Characters
+        if (detachedCharacters != null && !detachedCharacters.isEmpty()) {
             Set<ComicCharacter> characterSet = new HashSet<>();
-            for (ComicCharacter character : characters) {
-                ComicCharacter managedCharacter = em.find(ComicCharacter.class, character.getId());
+            for (ComicCharacter character : detachedCharacters) {
+                ComicCharacter managedCharacter = entityManager.find(ComicCharacter.class, character.getId());
                 if (managedCharacter != null) {
                     characterSet.add(managedCharacter);
                     managedCharacter.getIssues().add(issue);
@@ -100,7 +131,9 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
     @Override
     public void delete(Issue issue) {
         EntityTransaction transaction = null;
-        try (EntityManager em = getEntityManager()) {
+        EntityManager em = null;
+        try {
+            em = getEntityManager();
             transaction = em.getTransaction();
             transaction.begin();
 
@@ -117,6 +150,10 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
                 transaction.rollback();
             }
             throw new RuntimeException("Error deleting issue with ID " + issue.getId(), e);
+        } finally {
+            if (em != null) {
+                em.close();
+            }
         }
     }
 

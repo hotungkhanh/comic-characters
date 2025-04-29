@@ -260,6 +260,8 @@ public class IssueForm extends AbstractForm {
             existingIssue.setPriceUsd(issueData.getPriceUsd());
             existingIssue.setImageUrl(issueData.getImageUrl());
             existingIssue.setAnnual(issueData.getAnnual());
+            existingIssue.setCharacters(issueData.getCharacters());
+            existingIssue.setIssueCreators(issueData.getIssueCreators());
 
             // Save the issue
             issueService.save(existingIssue);
@@ -279,20 +281,25 @@ public class IssueForm extends AbstractForm {
      * Helper method to collect all form data into a single object
      */
     private Issue collectFormData() {
-        // Parse issue number
-        BigDecimal issueNumber;
-        try {
-            issueNumber = new BigDecimal(issueNumberField.getText().trim());
-        } catch (NumberFormatException ex) {
-            showError("Issue number must be a number.");
-            issueNumberField.requestFocus();
-            throw new IllegalArgumentException("Invalid issue number");
+        Issue issue;
+        if (existingIssue == null) {
+            // Parse issue number
+            BigDecimal issueNumber;
+            try {
+                issueNumber = new BigDecimal(issueNumberField.getText().trim());
+            } catch (NumberFormatException ex) {
+                showError("Issue number must be a number.");
+                issueNumberField.requestFocus();
+                throw new IllegalArgumentException("Invalid issue number");
+            }
+
+            // Create a new issue object with the required fields
+            issue = new Issue();
+            issue.setSeries(currentSeries);
+            issue.setIssueNumber(issueNumber);
+        } else {
+            issue = existingIssue;
         }
-
-        // Create a new issue object with the required fields
-        Issue issue = new Issue(currentSeries, issueNumber);
-
-        // Parse and set optional fields
 
         // Overview
         String overview = overviewTextArea.getText().trim();
@@ -464,9 +471,7 @@ public class IssueForm extends AbstractForm {
         }
 
         for (Creator creator : creatorsToAdd) {
-            IssueCreator issueCreator = new IssueCreator();
-            issueCreator.setCreator(creator);
-            issueCreator.setRoles(new HashSet<>(selectedRoles));
+            IssueCreator issueCreator = new IssueCreator(creator, new HashSet<>(selectedRoles));
 
             boolean alreadyAdded = selectedCreators.stream().anyMatch(ic -> ic.getCreator().equals(creator));
 

@@ -44,8 +44,7 @@ class IssueCreatorTest {
             assertNull(newIssueCreator.getId(), "Id should be null");
             assertNull(newIssueCreator.getIssue(), "Issue should be null");
             assertNull(newIssueCreator.getCreator(), "Creator should be null");
-            assertNotNull(newIssueCreator.getRoles(), "Roles should be initialized");
-            assertTrue(newIssueCreator.getRoles().isEmpty(), "Roles should be empty");
+            assertNull(newIssueCreator.getRoles(), "Roles should be null");
         }
     }
 

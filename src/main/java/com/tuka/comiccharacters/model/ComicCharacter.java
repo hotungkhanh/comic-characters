@@ -42,6 +42,10 @@ public class ComicCharacter {
     public ComicCharacter() {
     }
 
+    public ComicCharacter(String name) {
+        this.name = name;
+    }
+
     public ComicCharacter(String name, String alias, Publisher publisher, String overview) {
         this.name = name;
         this.alias = alias;

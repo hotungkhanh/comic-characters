@@ -2,7 +2,6 @@ package com.tuka.comiccharacters.model;
 
 import jakarta.persistence.*;
 
-import java.util.EnumSet;
 import java.util.Set;
 
 @Entity
@@ -26,9 +25,14 @@ public class IssueCreator {
             joinColumns = @JoinColumn(name = "issue_creator_id")
     )
     @Column(name = "role")
-    private Set<Role> roles = EnumSet.noneOf(Role.class);
+    private Set<Role> roles;
 
     public IssueCreator() {
+    }
+
+    public IssueCreator(Creator creator, Set<Role> roles) {
+        this.creator = creator;
+        this.roles = roles;
     }
 
     public Long getId() {
