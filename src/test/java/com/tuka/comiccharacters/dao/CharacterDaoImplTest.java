@@ -1,6 +1,8 @@
 package com.tuka.comiccharacters.dao;
 
 import com.tuka.comiccharacters.model.ComicCharacter;
+import com.tuka.comiccharacters.model.Creator;
+import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.Publisher;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
@@ -14,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -56,6 +59,51 @@ class CharacterDaoImplTest {
         } catch (Exception e) {
             fail("Failed to set up test: " + e.getMessage());
         }
+    }
+
+    @Test
+    @DisplayName("Given valid character when delete called then associations are removed and character is deleted in a transaction")
+    void givenValidCharacter_whenDeleteCalled_thenAssociationsAreRemovedAndCharacterIsDeletedInTransaction() {
+        // Given
+        EntityTransaction transaction = mock(EntityTransaction.class);
+        when(entityManager.getTransaction()).thenReturn(transaction);
+
+        // Create mock issues and creators
+        Issue issue1 = mock(Issue.class);
+        Issue issue2 = mock(Issue.class);
+        Creator creator1 = mock(Creator.class);
+        Creator creator2 = mock(Creator.class);
+
+        Set<Issue> issues = new HashSet<>(Arrays.asList(issue1, issue2));
+        Set<Creator> creators = new HashSet<>(Arrays.asList(creator1, creator2));
+
+        // Spy the character to allow real method calls on sets
+        ComicCharacter managedCharacter = spy(testCharacter);
+        when(managedCharacter.getIssues()).thenReturn(issues);
+        when(managedCharacter.getCreators()).thenReturn(creators);
+
+        when(entityManager.find(ComicCharacter.class, testCharacter.getId())).thenReturn(managedCharacter);
+
+        // When
+        characterDao.delete(testCharacter);
+
+        // Then
+        verify(transaction).begin();
+
+        // Verify character was found and associations updated
+        verify(entityManager).find(ComicCharacter.class, testCharacter.getId());
+        for (Issue issue : issues) {
+            verify(issue).getCharacters();
+        }
+        for (Creator creator : creators) {
+            verify(creator).getCreditedCharacters();
+        }
+
+        assertTrue(managedCharacter.getIssues().isEmpty());
+        assertTrue(managedCharacter.getCreators().isEmpty());
+
+        verify(entityManager).remove(managedCharacter);
+        verify(transaction).commit();
     }
 
     @Nested
@@ -192,24 +240,6 @@ class CharacterDaoImplTest {
             verify(typedQuery).getResultList();
             assertTrue(result.contains(character1), "Result should contain character1");
             assertTrue(result.contains(character2), "Result should contain character2");
-        }
-
-        @Test
-        @DisplayName("Given valid character when delete called then character is removed in a transaction")
-        void givenValidCharacter_whenDeleteCalled_thenCharacterIsRemovedInTransaction() {
-            // Given
-            EntityTransaction transaction = mock(EntityTransaction.class);
-            when(entityManager.getTransaction()).thenReturn(transaction);
-            when(entityManager.merge(testCharacter)).thenReturn(testCharacter);
-
-            // When
-            characterDao.delete(testCharacter);
-
-            // Then
-            verify(transaction).begin();
-            verify(entityManager).merge(testCharacter);
-            verify(entityManager).remove(testCharacter);
-            verify(transaction).commit();
         }
     }
 }
