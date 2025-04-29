@@ -16,6 +16,8 @@ public class PublisherDaoImpl extends AbstractJpaDao<Publisher> {
                     .getResultStream()
                     .findFirst()
                     .orElse(null);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

@@ -15,6 +15,8 @@ public class CharacterDaoImpl extends AbstractJpaDao<ComicCharacter> {
                     .getResultStream()
                     .findFirst()
                     .orElse(null);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

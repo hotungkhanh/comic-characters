@@ -15,6 +15,8 @@ public class CreatorDaoImpl extends AbstractJpaDao<Creator> {
                     .getResultStream()
                     .findFirst()
                     .orElse(null);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

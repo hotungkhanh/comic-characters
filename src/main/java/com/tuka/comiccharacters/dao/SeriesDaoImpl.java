@@ -20,6 +20,8 @@ public class SeriesDaoImpl extends AbstractJpaDao<Series> {
                     .getResultStream()
                     .findFirst()
                     .orElse(null);
+        } catch (Exception e) {
+            return null;
         }
     }
 }
