@@ -52,43 +52,6 @@ public class IssueService extends AbstractService<Issue> {
         }
     }
 
-    private Issue findAndValidateIssue(EntityManager em, Long issueId) {
-        Issue managedIssue = em.find(Issue.class, issueId);
-        if (managedIssue == null) {
-            throw new IllegalArgumentException("Issue not found: " + issueId);
-        }
-        return managedIssue;
-    }
-
-    @Override
-    public void delete(Long id) {
-        validateId(id);
-        try {
-            executeInTransaction(em -> {
-                Issue issue = findAndValidateIssue(em, id);
-                removeFromSeries(issue);
-                removeFromCharacters(issue);
-                em.remove(issue);
-            });
-        } catch (Exception e) {
-            throw new RuntimeException("Error deleting issue with ID " + id, e);
-        }
-    }
-
-    private void removeFromSeries(Issue issue) {
-        Series series = issue.getSeries();
-        if (series != null && series.getIssues() != null) {
-            series.getIssues().remove(issue);
-        }
-    }
-
-    private void removeFromCharacters(Issue issue) {
-        for (ComicCharacter character : new HashSet<>(issue.getCharacters())) {
-            character.getIssues().remove(issue);
-        }
-        issue.getCharacters().clear();
-    }
-
     @Override
     protected void validateEntity(Issue issue) {
         if (issue == null) {

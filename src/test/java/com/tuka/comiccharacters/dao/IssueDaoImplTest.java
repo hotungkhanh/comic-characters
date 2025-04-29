@@ -221,23 +221,5 @@ class IssueDaoImplTest {
             assertTrue(result.contains(issue1), "Result should contain issue1");
             assertTrue(result.contains(issue2), "Result should contain issue2");
         }
-
-        @Test
-        @DisplayName("Given valid issue when delete called then issue is removed in a transaction")
-        void givenValidIssue_whenDeleteCalled_thenIssueIsRemovedInTransaction() {
-            // Given
-            EntityTransaction transaction = mock(EntityTransaction.class);
-            when(entityManager.getTransaction()).thenReturn(transaction);
-            when(entityManager.merge(testIssue)).thenReturn(testIssue);
-
-            // When
-            issueDao.delete(testIssue);
-
-            // Then
-            verify(transaction).begin();
-            verify(entityManager).merge(testIssue);
-            verify(entityManager).remove(testIssue);
-            verify(transaction).commit();
-        }
     }
 }
