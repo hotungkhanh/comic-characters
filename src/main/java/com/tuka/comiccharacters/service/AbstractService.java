@@ -1,12 +1,8 @@
 package com.tuka.comiccharacters.service;
 
 import com.tuka.comiccharacters.dao.Dao;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
 
 import java.util.Set;
-
-import static com.tuka.comiccharacters.util.JPAUtil.getEntityManager;
 
 public abstract class AbstractService<T> {
 
@@ -50,29 +46,5 @@ public abstract class AbstractService<T> {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Invalid ID: " + id);
         }
-    }
-
-    // Helper method for transaction management
-    protected void executeInTransaction(TransactionCallback callback) throws Exception {
-        EntityTransaction transaction = null;
-        try (EntityManager em = getEntityManager()) {
-            transaction = em.getTransaction();
-            transaction.begin();
-
-            callback.execute(em);
-
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null && transaction.isActive()) {
-                transaction.rollback();
-            }
-            throw e;
-        }
-    }
-
-    // Functional interface for transaction callback
-    @FunctionalInterface
-    protected interface TransactionCallback {
-        void execute(EntityManager em) throws Exception;
     }
 }

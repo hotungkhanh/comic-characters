@@ -248,6 +248,8 @@ public class IssueForm extends AbstractForm {
 
         // Collect all form data
         Issue issueData = collectFormData();
+        issueData.setIssueCreators(new HashSet<>(selectedCreators));
+        issueData.setCharacters(new HashSet<>(getSelectedCharacters()));
 
         // Handle edit mode vs new mode
         if (isEditMode && existingIssue != null) {
@@ -260,11 +262,10 @@ public class IssueForm extends AbstractForm {
             existingIssue.setAnnual(issueData.getAnnual());
 
             // Save the issue
-            issueService.saveIssue(existingIssue, selectedCreators, getSelectedCharacters());
+            issueService.save(existingIssue);
             showSuccess("Issue updated successfully.");
         } else {
-            // In new mode, use the new issue object directly
-            issueService.saveIssue(issueData, selectedCreators, getSelectedCharacters());
+            issueService.save(issueData);
             showSuccess("Issue added!");
         }
 
