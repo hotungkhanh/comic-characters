@@ -57,6 +57,12 @@ public class Issue {
         this.issueCreators.addAll(issueCreators);
     }
 
+    public Issue(Series series, BigDecimal issueNumber, LocalDate releaseDate) {
+        this.series = series;
+        this.issueNumber = issueNumber;
+        this.releaseDate = releaseDate;
+    }
+
     public Long getId() {
         return id;
     }
