@@ -171,7 +171,7 @@ public class IssueForm extends AbstractForm {
 
         // Add creator button
         JButton addCreatorByRolesButton = new JButton("Add Creator(s) by Roles");
-        addCreatorByRolesButton.addActionListener(e -> addCreatorsByRoles());
+        addCreatorByRolesButton.addActionListener(_ -> addCreatorsByRoles());
         creatorInputPanel.add(addCreatorByRolesButton, BorderLayout.SOUTH);
 
         creatorsPanel.add(creatorInputPanel, BorderLayout.NORTH);
@@ -199,7 +199,7 @@ public class IssueForm extends AbstractForm {
         characterSearchField = createSearchField("Search for Characters...");
 
         // Create the search and results panel using the base class method
-        JPanel characterInputPanel = createSearchAndResultsPanel("Search Characters", characterSearchField, matchedCharactersList, "Add Character(s)", e -> addSelectedCharacters());
+        JPanel characterInputPanel = createSearchAndResultsPanel("Search Characters", characterSearchField, matchedCharactersList, "Add Character(s)", _ -> addSelectedCharacters());
 
         charactersPanel.add(characterInputPanel, BorderLayout.NORTH);
 
@@ -213,7 +213,7 @@ public class IssueForm extends AbstractForm {
      * Sets up the submit action for adding a new issue
      */
     private void setupSubmitAction() {
-        addSubmitListener(e -> {
+        addSubmitListener(_ -> {
             try {
                 saveIssue();
                 resetForm();
@@ -228,7 +228,7 @@ public class IssueForm extends AbstractForm {
      */
     private void setupEditAction() {
         removeAllSubmitListeners();
-        addSubmitListener(e -> {
+        addSubmitListener(_ -> {
             try {
                 saveIssue();
                 SwingUtilities.getWindowAncestor(this).dispose();
@@ -246,32 +246,32 @@ public class IssueForm extends AbstractForm {
             return;
         }
 
-        // Collect all form data
-        Issue issueData = collectFormData();
-        issueData.setIssueCreators(new HashSet<>(selectedCreators));
-        issueData.setCharacters(new HashSet<>(getSelectedCharacters()));
+        Issue issueToSave;
 
-        // Handle edit mode vs new mode
         if (isEditMode && existingIssue != null) {
-            // In edit mode, copy data to the existing issue
-            existingIssue.setIssueNumber(issueData.getIssueNumber());
-            existingIssue.setOverview(issueData.getOverview());
-            existingIssue.setReleaseDate(issueData.getReleaseDate());
-            existingIssue.setPriceUsd(issueData.getPriceUsd());
-            existingIssue.setImageUrl(issueData.getImageUrl());
-            existingIssue.setAnnual(issueData.getAnnual());
-            existingIssue.setCharacters(issueData.getCharacters());
-            existingIssue.setIssueCreators(issueData.getIssueCreators());
+            // Update fields on the existing issue
+            Issue formIssue = collectFormData();
+            existingIssue.setIssueNumber(formIssue.getIssueNumber());
+            existingIssue.setOverview(formIssue.getOverview());
+            existingIssue.setReleaseDate(formIssue.getReleaseDate());
+            existingIssue.setPriceUsd(formIssue.getPriceUsd());
+            existingIssue.setImageUrl(formIssue.getImageUrl());
+            existingIssue.setAnnual(formIssue.getAnnual());
+            existingIssue.setCharacters(new HashSet<>(getSelectedCharacters()));
+            existingIssue.setIssueCreators(new HashSet<>(selectedCreators));
 
-            // Save the issue
-            issueService.save(existingIssue);
+            issueToSave = existingIssue;
             showSuccess("Issue updated successfully.");
         } else {
-            issueService.save(issueData);
+            Issue newIssue = collectFormData();
+            newIssue.setCharacters(new HashSet<>(getSelectedCharacters()));
+            newIssue.setIssueCreators(new HashSet<>(selectedCreators));
+            issueToSave = newIssue;
             showSuccess("Issue added!");
         }
 
-        // Execute callback
+        issueService.save(issueToSave);
+
         if (callback != null) {
             callback.run();
         }
@@ -429,7 +429,7 @@ public class IssueForm extends AbstractForm {
                         creatorTable.setRowSelectionInterval(row, row);
                         JPopupMenu popupMenu = new JPopupMenu();
                         JMenuItem removeItem = new JMenuItem("Remove Creator");
-                        removeItem.addActionListener(event -> removeSelectedCreator());
+                        removeItem.addActionListener(_ -> removeSelectedCreator());
                         popupMenu.add(removeItem);
                         popupMenu.show(creatorTable, e.getX(), e.getY());
                     }
