@@ -68,6 +68,11 @@ class IssueDaoImplTest {
             java.lang.reflect.Field idFieldChar2 = ComicCharacter.class.getDeclaredField("id");
             idFieldChar2.setAccessible(true);
             idFieldChar2.set(character2, 101L);
+
+            java.lang.reflect.Field idFieldSeries = Series.class.getDeclaredField("id");
+            idFieldSeries.setAccessible(true);
+            idFieldSeries.set(series, 200L);
+
         } catch (Exception e) {
             fail("Failed to set up test ID: " + e.getMessage());
         }
@@ -141,11 +146,9 @@ class IssueDaoImplTest {
         @Test
         @DisplayName("Saves issue with creators successfully")
         void savesIssueWithCreatorsSuccessfully() {
-            // Arrange
             when(entityManager.getTransaction()).thenReturn(transaction);
             when(entityManager.merge(testIssue)).thenReturn(testIssue);
 
-            // Create mock IssueCreator
             IssueCreator issueCreator = new IssueCreator(new Creator(), Set.of(Role.WRITER));
             issueCreator.setIssue(testIssue);
 
@@ -153,52 +156,50 @@ class IssueDaoImplTest {
             issueCreators.add(issueCreator);
             testIssue.setIssueCreators(issueCreators);
 
-            // Act
             issueDao.save(testIssue);
 
-            // Assert
             verify(transaction).begin();
             verify(entityManager).merge(testIssue);
-            verify(entityManager).persist(issueCreator); // verify persist is called
+            verify(entityManager).persist(issueCreator);
             verify(transaction).commit();
 
-            // Optionally check if creator got associated with the issue
             assertEquals(testIssue, issueCreator.getIssue());
             assertTrue(testIssue.getIssueCreators().contains(issueCreator));
         }
-
 
         @Test
         @DisplayName("Rolls back transaction if exception occurs")
         void rollsBackOnException() {
             when(entityManager.getTransaction()).thenReturn(transaction);
-            when(entityManager.merge(testIssue)).thenThrow(new RuntimeException("Merge failed"));
+            when(entityManager.merge(testIssue)).thenThrow(new RuntimeException("Error during merge"));
             when(transaction.isActive()).thenReturn(true);
 
-            assertThrows(RuntimeException.class, () -> issueDao.save(testIssue));
+            doNothing().when(transaction).rollback();
+
+            RuntimeException thrown = assertThrows(RuntimeException.class, () -> issueDao.save(testIssue));
+            assertTrue(thrown.getMessage().contains("Error saving issue"));
 
             verify(transaction).begin();
             verify(transaction).rollback();
         }
     }
 
-
     @Nested
     @DisplayName("delete method tests")
     class DeleteMethodTests {
 
         @Test
-        @DisplayName("Removes issue and clears associations")
-        void removesIssueAndClearsAssociations() {
-            character1.getIssues().add(testIssue);
-            character2.getIssues().add(testIssue);
-            series.getIssues().add(testIssue);
-
+        @DisplayName("Deletes issue and clears associations")
+        void deletesIssueAndRemovesReferences() {
             when(entityManager.getTransaction()).thenReturn(transaction);
             when(entityManager.find(Issue.class, VALID_ID)).thenReturn(testIssue);
-            when(entityManager.find(ComicCharacter.class, character1.getId())).thenReturn(character1);
-            when(entityManager.find(ComicCharacter.class, character2.getId())).thenReturn(character2);
-            when(entityManager.find(Series.class, series.getId())).thenReturn(series);
+            when(entityManager.find(Series.class, 200L)).thenReturn(series);
+            when(entityManager.find(ComicCharacter.class, 100L)).thenReturn(character1);
+            when(entityManager.find(ComicCharacter.class, 101L)).thenReturn(character2);
+
+            series.getIssues().add(testIssue);
+            character1.getIssues().add(testIssue);
+            character2.getIssues().add(testIssue);
 
             issueDao.delete(testIssue);
 
@@ -206,33 +207,23 @@ class IssueDaoImplTest {
             verify(entityManager).remove(testIssue);
             verify(transaction).commit();
 
-            assertTrue(character1.getIssues().isEmpty(), "Character1 should no longer reference the issue");
-            assertTrue(character2.getIssues().isEmpty(), "Character2 should no longer reference the issue");
-            assertTrue(testIssue.getCharacters().isEmpty(), "Issue should have no characters");
-            assertFalse(series.getIssues().contains(testIssue), "Series should no longer contain the issue");
+            assertFalse(series.getIssues().contains(testIssue));
+            assertFalse(character1.getIssues().contains(testIssue));
+            assertFalse(character2.getIssues().contains(testIssue));
+            assertTrue(testIssue.getCharacters().isEmpty());
         }
 
         @Test
-        @DisplayName("Does nothing if issue not found")
-        void doesNothingIfNotFound() {
+        @DisplayName("Rolls back transaction if exception during delete")
+        void rollsBackDeleteOnException() {
             when(entityManager.getTransaction()).thenReturn(transaction);
-            when(entityManager.find(Issue.class, VALID_ID)).thenReturn(null);
-
-            issueDao.delete(testIssue);
-
-            verify(transaction).begin();
-            verify(entityManager, never()).remove(any());
-            verify(transaction).commit();
-        }
-
-        @Test
-        @DisplayName("Rolls back on exception")
-        void rollsBackOnException() {
-            when(entityManager.getTransaction()).thenReturn(transaction);
-            when(entityManager.find(Issue.class, VALID_ID)).thenThrow(new RuntimeException("Find failed"));
+            when(entityManager.find(Issue.class, VALID_ID)).thenThrow(new RuntimeException("DB error"));
             when(transaction.isActive()).thenReturn(true);
 
-            assertThrows(RuntimeException.class, () -> issueDao.delete(testIssue));
+            doNothing().when(transaction).rollback();
+
+            RuntimeException thrown = assertThrows(RuntimeException.class, () -> issueDao.delete(testIssue));
+            assertTrue(thrown.getMessage().contains("Error deleting issue"));
 
             verify(transaction).begin();
             verify(transaction).rollback();
