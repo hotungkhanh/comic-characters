@@ -56,7 +56,7 @@ public class CreatorForm extends AbstractForm {
      * Sets up the submit action for adding new creators
      */
     private void setupSubmitAction() {
-        addSubmitListener(e -> {
+        addSubmitListener(_ -> {
             if (!validateForm()) {
                 return;
             }
@@ -74,7 +74,7 @@ public class CreatorForm extends AbstractForm {
      */
     private void setupEditAction() {
         removeAllSubmitListeners();
-        addSubmitListener(e -> {
+        addSubmitListener(_ -> {
             if (!validateForm()) {
                 return;
             }
@@ -120,13 +120,13 @@ public class CreatorForm extends AbstractForm {
      * @param imageUrl The URL to the creator's image
      */
     private void addCreator(String name, String overview, String imageUrl) {
-        if (imageUrl.isEmpty()) {
-            creatorService.save(new Creator(name, overview));
-        } else {
+        try {
             creatorService.save(new Creator(name, overview, imageUrl));
+            showSuccess("Creator added!");
+            resetForm();
+        } catch (IllegalArgumentException e) {
+            showError(e.getMessage());
         }
-        showSuccess("Creator added!");
-        resetForm();
     }
 
     /**
@@ -137,12 +137,16 @@ public class CreatorForm extends AbstractForm {
      * @param imageUrl The URL to the creator's image
      */
     private void updateCreator(String name, String overview, String imageUrl) {
-        editingCreator.setName(name);
-        editingCreator.setOverview(overview);
-        editingCreator.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
-        creatorService.save(editingCreator);
-        showSuccess("Creator updated successfully.");
-        SwingUtilities.getWindowAncestor(this).dispose();
+        try {
+            editingCreator.setName(name);
+            editingCreator.setOverview(overview);
+            editingCreator.setImageUrl(imageUrl.isEmpty() ? null : imageUrl);
+            creatorService.save(editingCreator);
+            showSuccess("Creator updated successfully.");
+            SwingUtilities.getWindowAncestor(this).dispose();
+        } catch (IllegalArgumentException e) {
+        showError(e.getMessage());
+    }
     }
 
     @Override
