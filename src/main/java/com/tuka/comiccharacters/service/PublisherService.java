@@ -14,16 +14,22 @@ public class PublisherService extends AbstractService<Publisher> {
         if (publisher == null) {
             throw new IllegalArgumentException("Publisher cannot be null");
         }
-        if (publisher.getName() == null || publisher.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Publisher name cannot be empty");
+
+        String name = publisher.getName();
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Publisher name cannot be null or blank");
         }
 
-        // For existing publishers, also validate the ID
+        // Trim and set cleaned name
+        publisher.setName(name.trim());
+
+        // ID must be null (for new entities) or positive (for existing ones)
         if (publisher.getId() != null && publisher.getId() <= 0) {
-            throw new IllegalArgumentException("Invalid publisher ID");
+            throw new IllegalArgumentException("Publisher ID must be positive if present");
         }
 
-        // Ensure the name is properly trimmed
-        publisher.setName(publisher.getName().trim());
+        if (publisher.getName().length() > 255) {
+            throw new IllegalArgumentException("Publisher name must be 255 characters or fewer");
+        }
     }
 }

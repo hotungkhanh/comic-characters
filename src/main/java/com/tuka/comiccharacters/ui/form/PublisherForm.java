@@ -46,11 +46,7 @@ public class PublisherForm extends AbstractForm {
      * Sets up the submit action for adding new publishers
      */
     private void setupSubmitAction() {
-        addSubmitListener(e -> {
-            if (!validateForm()) {
-                return;
-            }
-
+        addSubmitListener(_ -> {
             String name = nameField.getText().trim();
             addPublisher(name);
         });
@@ -61,28 +57,10 @@ public class PublisherForm extends AbstractForm {
      */
     private void setupEditAction() {
         removeAllSubmitListeners();
-        addSubmitListener(e -> {
-            if (!validateForm()) {
-                return;
-            }
-
+        addSubmitListener(_ -> {
             String name = nameField.getText().trim();
             updatePublisher(name);
         });
-    }
-
-    /**
-     * Validates the form fields
-     *
-     * @return Whether the form is valid
-     */
-    private boolean validateForm() {
-        if (nameField.getText().trim().isEmpty()) {
-            showError("Publisher name is required.");
-            nameField.requestFocus();
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -100,10 +78,13 @@ public class PublisherForm extends AbstractForm {
      * @param name The updated name of the publisher
      */
     private void addPublisher(String name) {
-        Publisher publisher = new Publisher(name);
-        publisherService.save(publisher);
-        showSuccess("Publisher added!");
-        SwingUtilities.getWindowAncestor(this).dispose();
+        try {
+            publisherService.save(new Publisher(name));
+            showSuccess("Publisher added!");
+            SwingUtilities.getWindowAncestor(this).dispose();
+        } catch (IllegalArgumentException e) {
+            showError(e.getMessage());
+        }
     }
 
     /**
@@ -112,10 +93,14 @@ public class PublisherForm extends AbstractForm {
      * @param name The updated name of the publisher
      */
     private void updatePublisher(String name) {
-        editingPublisher.setName(name);
-        publisherService.save(editingPublisher);
-        showSuccess("Publisher updated!");
-        SwingUtilities.getWindowAncestor(this).dispose();
+        try {
+            editingPublisher.setName(name);
+            publisherService.save(editingPublisher);
+            showSuccess("Publisher updated!");
+            SwingUtilities.getWindowAncestor(this).dispose();
+        } catch (IllegalArgumentException e) {
+            showError(e.getMessage());
+        }
     }
 
     @Override
