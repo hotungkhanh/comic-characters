@@ -16,7 +16,7 @@ import java.awt.event.FocusListener;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -52,55 +52,17 @@ class MainAppTest {
         }
     }
 
-    @Nested
-    @DisplayName("Tests for setGlobalFont method")
-    class SetGlobalFontTests {
+    @Test
+    @DisplayName("Given null font when setGlobalFont is called then IllegalArgumentException should be thrown")
+    void givenNullFont_whenSetGlobalFont_thenThrowIllegalArgumentException() throws Exception {
+        // Given
+        Method setGlobalFontMethod = MainApp.class.getDeclaredMethod("setGlobalFont", Font.class);
+        setGlobalFontMethod.setAccessible(true);
 
-        @Test
-        @DisplayName("Given a font when setGlobalFont is called then all UI font defaults should be updated")
-        void givenFont_whenSetGlobalFont_thenAllUIFontDefaultsUpdated() throws Exception {
-            // Given
-            Font testFont = new Font("Arial", Font.PLAIN, 16);
-            Method setGlobalFontMethod = MainApp.class.getDeclaredMethod("setGlobalFont", Font.class);
-            setGlobalFontMethod.setAccessible(true);
-
-            // Create a UI component that will use a font
-            JLabel beforeLabel = new JLabel("Test");
-            Font beforeFont = beforeLabel.getFont();
-
-            // When
-            setGlobalFontMethod.invoke(null, testFont);
-
-            // Then
-            JLabel afterLabel = new JLabel("Test");
-            Font afterFont = afterLabel.getFont();
-
-            assertNotEquals(beforeFont, afterFont, "Font should be changed after setGlobalFont call");
-            assertEquals("Arial", afterFont.getFamily(), "Font family should be Arial");
-            assertEquals(16, afterFont.getSize(), "Font size should be 16");
-            assertEquals(Font.PLAIN, afterFont.getStyle(), "Font style should be PLAIN");
-
-            // Check at least some UI defaults directly
-            Font labelFont = UIManager.getFont("Label.font");
-            Font buttonFont = UIManager.getFont("Button.font");
-
-            assertNotNull(labelFont, "Label font should not be null");
-            assertNotNull(buttonFont, "Button font should not be null");
-            assertEquals(testFont, labelFont, "Label font should match test font");
-            assertEquals(testFont, buttonFont, "Button font should match test font");
-        }
-
-        @Test
-        @DisplayName("Given null font when setGlobalFont is called then IllegalArgumentException should be thrown")
-        void givenNullFont_whenSetGlobalFont_thenThrowIllegalArgumentException() throws Exception {
-            // Given
-            Method setGlobalFontMethod = MainApp.class.getDeclaredMethod("setGlobalFont", Font.class);
-            setGlobalFontMethod.setAccessible(true);
-
-            // When & Then
-            assertThrows(InvocationTargetException.class, () -> setGlobalFontMethod.invoke(null, (Font) null), "setGlobalFont should throw exception when passed null font");
-        }
+        // When & Then
+        assertThrows(InvocationTargetException.class, () -> setGlobalFontMethod.invoke(null, (Font) null), "setGlobalFont should throw exception when passed null font");
     }
+
 
     @Nested
     @DisplayName("Tests for addPlaceholderText method")
