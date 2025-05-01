@@ -19,7 +19,7 @@ public class Issue {
     @JoinColumn(name = "series_id", nullable = false)
     private Series series;
 
-    @Column(precision = 6, scale = 2, nullable = false)
+    @Column(precision = 7, scale = 2, nullable = false)
     private BigDecimal issueNumber;
 
     @Column(length = 1000)

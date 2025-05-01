@@ -217,8 +217,8 @@ public class IssueForm extends AbstractForm {
             try {
                 saveIssue();
                 resetForm();
-            } catch (IllegalArgumentException ex) {
-                // Validation errors are already shown to the user
+            } catch (IllegalArgumentException e) {
+                showError(e.getMessage());
             }
         });
     }
@@ -232,8 +232,8 @@ public class IssueForm extends AbstractForm {
             try {
                 saveIssue();
                 SwingUtilities.getWindowAncestor(this).dispose();
-            } catch (IllegalArgumentException ex) {
-                // Validation errors are already shown to the user
+            } catch (IllegalArgumentException e) {
+                showError(e.getMessage());
             }
         });
     }
@@ -245,8 +245,6 @@ public class IssueForm extends AbstractForm {
         if (!validateForm()) {
             return;
         }
-
-        Issue issueToSave;
 
         if (isEditMode && existingIssue != null) {
             // Update fields on the existing issue
@@ -260,17 +258,16 @@ public class IssueForm extends AbstractForm {
             existingIssue.setCharacters(new HashSet<>(getSelectedCharacters()));
             existingIssue.setIssueCreators(new HashSet<>(selectedCreators));
 
-            issueToSave = existingIssue;
+            issueService.save(existingIssue);
             showSuccess("Issue updated successfully.");
         } else {
             Issue newIssue = collectFormData();
             newIssue.setCharacters(new HashSet<>(getSelectedCharacters()));
             newIssue.setIssueCreators(new HashSet<>(selectedCreators));
-            issueToSave = newIssue;
+
+            issueService.save(newIssue);
             showSuccess("Issue added!");
         }
-
-        issueService.save(issueToSave);
 
         if (callback != null) {
             callback.run();
