@@ -9,6 +9,7 @@ import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class IssueDaoImpl extends AbstractJpaDao<Issue> {
@@ -38,7 +39,7 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
     @Override
     public void save(Issue issue) {
         EntityTransaction transaction = null;
-        EntityManager em = null; // Declare EntityManager outside the try block
+        EntityManager em;
         try {
             em = getEntityManager();
             transaction = em.getTransaction();
@@ -59,10 +60,10 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
             }
 
             // Set and persist the IssueCreators (they require a non-null issue)
-            setIssueCreators(em, issue, detachedCreators, em);
+            setIssueCreators(issue, detachedCreators, em);
 
             // Associate Characters with the Issue
-            setIssueCharacters(em, issue, detachedCharacters, em);
+            setIssueCharacters(issue, detachedCharacters, em);
 
             transaction.commit();
         } catch (Exception e) {
@@ -73,7 +74,7 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
         }
     }
 
-    private void setIssueCreators(EntityManager em, Issue issue, Set<IssueCreator> detachedCreators, EntityManager entityManager) {
+    private void setIssueCreators(Issue issue, Set<IssueCreator> detachedCreators, EntityManager entityManager) {
         // Use a map for efficient lookup of existing IssueCreators
         Set<IssueCreator> managedCreators = new HashSet<>();
 
@@ -104,7 +105,7 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
 
     }
 
-    private void setIssueCharacters(EntityManager em, Issue issue, Set<ComicCharacter> detachedCharacters, EntityManager entityManager) {
+    private void setIssueCharacters(Issue issue, Set<ComicCharacter> detachedCharacters, EntityManager entityManager) {
         // Clear existing Characters
         for (ComicCharacter existingCharacter : issue.getCharacters()) {
             ComicCharacter managedCharacter = entityManager.find(ComicCharacter.class, existingCharacter.getId());
@@ -131,14 +132,24 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
     @Override
     public void delete(Issue issue) {
         EntityTransaction transaction = null;
-        EntityManager em = null;
-        try {
-            em = getEntityManager();
+        try (EntityManager em = getEntityManager()) {
             transaction = em.getTransaction();
             transaction.begin();
 
             Issue managedIssue = em.find(Issue.class, issue.getId());
             if (managedIssue != null) {
+                // Remove references as firstAppearance from ComicCharacters
+                List<ComicCharacter> referencingCharacters = em.createQuery(
+                                "SELECT c FROM ComicCharacter c WHERE c.firstAppearance = :issue",
+                                ComicCharacter.class)
+                        .setParameter("issue", managedIssue)
+                        .getResultList();
+
+                for (ComicCharacter character : referencingCharacters) {
+                    character.setFirstAppearance(null);
+                }
+                em.flush(); // Ensure updates to characters are persisted
+
                 removeFromSeries(em, managedIssue);
                 removeFromCharacters(em, managedIssue);
                 em.remove(managedIssue);
@@ -150,10 +161,6 @@ public class IssueDaoImpl extends AbstractJpaDao<Issue> {
                 transaction.rollback();
             }
             throw new RuntimeException("Error deleting issue with ID " + issue.getId(), e);
-        } finally {
-            if (em != null) {
-                em.close();
-            }
         }
     }
 

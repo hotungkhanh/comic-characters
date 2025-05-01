@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -191,11 +192,22 @@ class IssueDaoImplTest {
         @Test
         @DisplayName("Deletes issue and clears associations")
         void deletesIssueAndRemovesReferences() {
+            TypedQuery<ComicCharacter> mockCharacterTypedQuery = (TypedQuery<ComicCharacter>) mock(TypedQuery.class);
+            List<ComicCharacter> emptyList = List.of();
+
             when(entityManager.getTransaction()).thenReturn(transaction);
             when(entityManager.find(Issue.class, VALID_ID)).thenReturn(testIssue);
             when(entityManager.find(Series.class, 200L)).thenReturn(series);
             when(entityManager.find(ComicCharacter.class, 100L)).thenReturn(character1);
             when(entityManager.find(ComicCharacter.class, 101L)).thenReturn(character2);
+
+            // Mock the query for referencing characters, even if it returns an empty list
+            when(entityManager.createQuery(
+                    "SELECT c FROM ComicCharacter c WHERE c.firstAppearance = :issue",
+                    ComicCharacter.class
+            )).thenReturn(mockCharacterTypedQuery);
+            when(mockCharacterTypedQuery.setParameter("issue", testIssue)).thenReturn(mockCharacterTypedQuery);
+            when(mockCharacterTypedQuery.getResultList()).thenReturn(emptyList);
 
             series.getIssues().add(testIssue);
             character1.getIssues().add(testIssue);
@@ -211,6 +223,43 @@ class IssueDaoImplTest {
             assertFalse(character1.getIssues().contains(testIssue));
             assertFalse(character2.getIssues().contains(testIssue));
             assertTrue(testIssue.getCharacters().isEmpty());
+        }
+
+        @Test
+        @DisplayName("Deletes issue and nullifies firstAppearance in referencing characters")
+        void deletesIssueAndNullifiesFirstAppearance() {
+            ComicCharacter characterWithFirstAppearance = new ComicCharacter();
+            try {
+                java.lang.reflect.Field idFieldChar = ComicCharacter.class.getDeclaredField("id");
+                idFieldChar.setAccessible(true);
+                idFieldChar.set(characterWithFirstAppearance, 300L);
+                characterWithFirstAppearance.setFirstAppearance(testIssue);
+            } catch (Exception e) {
+                fail("Failed to set up character with first appearance: " + e.getMessage());
+            }
+
+            List<ComicCharacter> referencingCharacters = List.of(characterWithFirstAppearance);
+
+            TypedQuery<ComicCharacter> mockCharacterTypedQuery = (TypedQuery<ComicCharacter>) mock(TypedQuery.class);
+
+            when(entityManager.getTransaction()).thenReturn(transaction);
+            when(entityManager.find(Issue.class, VALID_ID)).thenReturn(testIssue);
+            when(entityManager.createQuery(
+                    "SELECT c FROM ComicCharacter c WHERE c.firstAppearance = :issue",
+                    ComicCharacter.class
+            )).thenReturn(mockCharacterTypedQuery);
+
+            when(mockCharacterTypedQuery.setParameter("issue", testIssue)).thenReturn(mockCharacterTypedQuery);
+            when(mockCharacterTypedQuery.getResultList()).thenReturn(referencingCharacters);
+
+            issueDao.delete(testIssue);
+
+            verify(transaction).begin();
+            verify(entityManager).remove(testIssue);
+            verify(entityManager).flush(); // Verify that flush was called
+            verify(transaction).commit();
+
+            assertNull(characterWithFirstAppearance.getFirstAppearance());
         }
 
         @Test
