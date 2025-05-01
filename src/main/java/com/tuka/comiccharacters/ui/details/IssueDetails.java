@@ -107,7 +107,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
             String issueNumberStr = "";
             BigDecimal issueNumber = entity.getIssueNumber();
             if (issueNumber != null) {
-                issueNumberStr = issueNumber.stripTrailingZeros().toString();
+                issueNumberStr = issueNumber.stripTrailingZeros().toPlainString();
             }
 
             if (entity.getAnnual() != null && entity.getAnnual()) {

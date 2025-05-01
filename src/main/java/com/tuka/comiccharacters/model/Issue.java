@@ -148,7 +148,7 @@ public class Issue {
     public String toString() {
         String issueNumberStr;
         if (issueNumber != null) {
-            issueNumberStr = issueNumber.stripTrailingZeros().toString();
+            issueNumberStr = issueNumber.stripTrailingZeros().toPlainString();
         } else {
             issueNumberStr = "";
         }
