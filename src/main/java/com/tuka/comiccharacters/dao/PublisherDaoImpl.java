@@ -60,7 +60,7 @@ public class PublisherDaoImpl extends AbstractJpaDao<Publisher> {
             if (transaction != null && transaction.isActive()) {
                 transaction.rollback();
             }
-            throw new RuntimeException("Error deleting publisher: " + e.getMessage(), e); // Wrap for more context
+            throw new RuntimeException("Error deleting publisher " + publisher.toString() + " with error " + e.getMessage(), e);
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.tuka.comiccharacters.dao;
 
+import com.tuka.comiccharacters.model.ComicCharacter;
+import com.tuka.comiccharacters.model.Issue;
 import com.tuka.comiccharacters.model.Publisher;
 import com.tuka.comiccharacters.model.Series;
 import jakarta.persistence.EntityManager;
@@ -10,9 +12,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -29,8 +33,12 @@ class SeriesDaoImplTest {
     private EntityManager entityManager;
     @Mock
     private TypedQuery<Series> typedQuery;
+    @Mock
+    private TypedQuery<ComicCharacter> characterTypedQuery;
     private SeriesDaoImpl seriesDao;
     private Series testSeries;
+    private Issue testIssue;
+    private ComicCharacter testCharacter;
 
     @BeforeEach
     void setUp() {
@@ -47,13 +55,32 @@ class SeriesDaoImplTest {
         testSeries = new Series("X-Men", 1963);
         testSeries.setPublisher(publisher);
 
+        // Create a test issue
+        testIssue = new Issue(testSeries, new BigDecimal("1.0"));
+
+        // Create a test character
+        testCharacter = new ComicCharacter("Wolverine");
+        testCharacter.setFirstAppearance(testIssue);
+
+        // Set up relationship between issue and character
+        testIssue.addCharacter(testCharacter);
+        testSeries.getIssues().add(testIssue);
+
         try {
-            java.lang.reflect.Field idField = Series.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(testSeries, VALID_ID);
+            // Set IDs for all test objects
+            setPrivateField(testSeries, "id", VALID_ID);
+            setPrivateField(testIssue, "id", 100L);
+            setPrivateField(testCharacter, "id", 200L);
+            setPrivateField(publisher, "id", 300L);
         } catch (Exception e) {
             fail("Failed to set up test: " + e.getMessage());
         }
+    }
+
+    private void setPrivateField(Object obj, String fieldName, Object value) throws Exception {
+        java.lang.reflect.Field field = obj.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(obj, value);
     }
 
     @Nested
@@ -98,6 +125,131 @@ class SeriesDaoImplTest {
             verify(entityManager).createQuery(expectedQuery, Series.class);
             verify(typedQuery).setParameter("id", nonExistentId);
             verify(typedQuery).getResultStream();
+        }
+
+        @Test
+        @DisplayName("Given exception occurs when findByIdWithDetails called then null is returned")
+        void givenExceptionOccurs_whenFindByIdWithDetailsCalled_thenNullIsReturned() {
+            // Given
+            String expectedQuery = "SELECT s FROM Series s LEFT JOIN FETCH s.publisher LEFT JOIN FETCH s.issues WHERE s.id = :id";
+            when(entityManager.createQuery(expectedQuery, Series.class)).thenThrow(new RuntimeException("Test exception"));
+
+            // When
+            Series result = seriesDao.findByIdWithDetails(VALID_ID);
+
+            // Then
+            assertNull(result, "findByIdWithDetails should return null when exception occurs");
+        }
+    }
+
+    @Nested
+    @DisplayName("delete method tests")
+    class DeleteMethodTests {
+
+        @Mock
+        private EntityTransaction transaction;
+
+        @BeforeEach
+        void setupDeleteTest() {
+            when(entityManager.getTransaction()).thenReturn(transaction);
+        }
+
+        @Test
+        @DisplayName("Given series with issues that are firstAppearance references when deleted then references are properly handled")
+        void givenSeriesWithIssuesAsFirstAppearance_whenDeleted_thenReferencesAreProperlyHandled() {
+            // Given
+            String characterQuery = "SELECT c FROM ComicCharacter c WHERE c.firstAppearance.id = :issueId";
+            when(entityManager.createQuery(characterQuery, ComicCharacter.class)).thenReturn(characterTypedQuery);
+            when(characterTypedQuery.setParameter("issueId", testIssue.getId())).thenReturn(characterTypedQuery);
+            when(characterTypedQuery.getResultList()).thenReturn(List.of(testCharacter));
+            when(entityManager.merge(testSeries)).thenReturn(testSeries);
+            when(entityManager.merge(testIssue)).thenReturn(testIssue);
+
+            // When
+            seriesDao.delete(testSeries);
+
+            // Then
+            // Verify transaction management
+            verify(transaction).begin();
+            verify(transaction).commit();
+
+            // Verify character's firstAppearance is set to null
+            ArgumentCaptor<ComicCharacter> characterCaptor = ArgumentCaptor.forClass(ComicCharacter.class);
+            verify(entityManager).createQuery(characterQuery, ComicCharacter.class);
+            verify(characterTypedQuery).setParameter("issueId", testIssue.getId());
+
+            // Verify flush was called to ensure updates before removing issues
+            verify(entityManager).flush();
+
+            // Verify character sets are properly handled
+            assertTrue(testIssue.getCharacters().isEmpty(), "Issue's characters should be cleared");
+
+            // Verify series is removed at the end
+            verify(entityManager).remove(testSeries);
+        }
+
+        @Test
+        @DisplayName("Given transaction fails when delete called then transaction is rolled back")
+        void givenTransactionFails_whenDeleteCalled_thenTransactionIsRolledBack() {
+            // Given
+            String characterQuery = "SELECT c FROM ComicCharacter c WHERE c.firstAppearance.id = :issueId";
+            when(entityManager.createQuery(characterQuery, ComicCharacter.class)).thenReturn(characterTypedQuery);
+            when(entityManager.merge(testSeries)).thenReturn(testSeries);
+            when(characterTypedQuery.setParameter("issueId", testIssue.getId())).thenReturn(characterTypedQuery);
+
+            // Simulate exception during operation
+            doThrow(new RuntimeException("Test exception")).when(characterTypedQuery).getResultList();
+            when(transaction.isActive()).thenReturn(true);
+
+            // When/Then
+            RuntimeException exception = assertThrows(RuntimeException.class, () -> seriesDao.delete(testSeries));
+
+            // Verify transaction is rolled back
+            verify(transaction).begin();
+            verify(transaction).rollback();
+            assertTrue(exception.getMessage().contains("Error deleting series"), "Exception should contain error message");
+        }
+
+        @Test
+        @DisplayName("Given empty issues collection when delete called then series is deleted without issue processing")
+        void givenEmptyIssuesCollection_whenDeleteCalled_thenSeriesIsDeletedWithoutIssueProcessing() {
+            // Given
+            Series emptyIssuesSeries = new Series("Empty Series", 2000);
+            try {
+                setPrivateField(emptyIssuesSeries, "id", 500L);
+            } catch (Exception e) {
+                fail("Failed to set up test: " + e.getMessage());
+            }
+
+            when(entityManager.merge(emptyIssuesSeries)).thenReturn(emptyIssuesSeries);
+
+            // When
+            seriesDao.delete(emptyIssuesSeries);
+
+            // Then
+            verify(transaction).begin();
+            verify(entityManager).merge(emptyIssuesSeries);
+            verify(entityManager).remove(emptyIssuesSeries);
+            verify(transaction).commit();
+
+            // Verify no character queries were executed
+            verify(entityManager, never()).createQuery(anyString(), eq(ComicCharacter.class));
+        }
+
+        @Test
+        @DisplayName("Given null managedSeries when delete called then transaction is committed without operations")
+        void givenNullManagedSeries_whenDeleteCalled_thenTransactionIsCommittedWithoutOperations() {
+            // Given
+            when(entityManager.merge(testSeries)).thenReturn(null);
+
+            // When
+            seriesDao.delete(testSeries);
+
+            // Then
+            verify(transaction).begin();
+            verify(entityManager).merge(testSeries);
+            verify(transaction).commit();
+            verify(entityManager, never()).remove(any());
         }
     }
 
@@ -148,14 +300,12 @@ class SeriesDaoImplTest {
             series1.setPublisher(marvel);
 
             Series series2 = new Series("Avengers", 1963);
-            series2.setPublisher(marvel);
+            series2.setPublisher(dc);
 
             // Set IDs for the series
             try {
-                java.lang.reflect.Field idField = Series.class.getDeclaredField("id");
-                idField.setAccessible(true);
-                idField.set(series1, 1L);
-                idField.set(series2, 2L);
+                setPrivateField(series1, "id", 1L);
+                setPrivateField(series2, "id", 2L);
             } catch (Exception e) {
                 fail("Failed to set up test: " + e.getMessage());
             }
@@ -178,24 +328,6 @@ class SeriesDaoImplTest {
             verify(typedQuery).getResultList();
             assertTrue(result.contains(series1), "Result should contain series1");
             assertTrue(result.contains(series2), "Result should contain series2");
-        }
-
-        @Test
-        @DisplayName("Given valid series when delete called then series is removed in a transaction")
-        void givenValidSeries_whenDeleteCalled_thenSeriesIsRemovedInTransaction() {
-            // Given
-            EntityTransaction transaction = mock(EntityTransaction.class);
-            when(entityManager.getTransaction()).thenReturn(transaction);
-            when(entityManager.merge(testSeries)).thenReturn(testSeries);
-
-            // When
-            seriesDao.delete(testSeries);
-
-            // Then
-            verify(transaction).begin();
-            verify(entityManager).merge(testSeries);
-            verify(entityManager).remove(testSeries);
-            verify(transaction).commit();
         }
     }
 }
