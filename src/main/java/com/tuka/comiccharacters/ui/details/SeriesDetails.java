@@ -83,7 +83,20 @@ public class SeriesDetails extends AbstractDetails<Series> {
         issueList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         // Add double-click listener for navigation
-        issueList.addMouseListener(getListDoubleClickListener(sortedIssues, this::navigateToIssue));
+        issueList.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int index = issueList.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        Issue selectedIssue = issueList.getModel().getElementAt(index);
+                        if (selectedIssue != null) {
+                            navigateToIssue(selectedIssue);
+                        }
+                    }
+                }
+            }
+        });
 
         JScrollPane issueScrollPane = new JScrollPane(issueList);
         issuesPanel.add(issueScrollPane, BorderLayout.CENTER);
