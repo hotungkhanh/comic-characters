@@ -150,7 +150,7 @@ public class CharacterForm extends AbstractForm {
         contentPanel.add(issueDropdownPanel, gbc);
 
         // Add listener to update issues when series changes
-        seriesDropdown.addActionListener(e -> {
+        seriesDropdown.addActionListener(_ -> {
             Series selectedSeries = (Series) seriesDropdown.getSelectedItem();
             updateIssueDropdown(selectedSeries);
         });
@@ -200,15 +200,18 @@ public class CharacterForm extends AbstractForm {
      * Sets up the submit action for adding new characters
      */
     private void setupSubmitAction() {
-        addSubmitListener(e -> {
-            if (!validateForm()) {
+        addSubmitListener(_ -> {
+            if (invalidFirstAppearance()) {
                 return;
             }
-            ComicCharacter character = collectFormData();
-            // Save the character
-            characterService.save(character);
-            showSuccess("Character added!");
-            resetForm();
+            try {
+                ComicCharacter character = collectFormData();
+                characterService.save(character);
+                showSuccess("Character added!");
+                resetForm();
+            } catch (Exception e) {
+                showError("Error saving character: " + e.getMessage());
+            }
         });
     }
 
@@ -217,22 +220,26 @@ public class CharacterForm extends AbstractForm {
      */
     private void setupEditAction() {
         removeAllSubmitListeners();
-        addSubmitListener(e -> {
-            if (!validateForm()) {
+        addSubmitListener(_ -> {
+            if (invalidFirstAppearance()) {
                 return;
             }
-            ComicCharacter characterData = collectFormData();
-            editingCharacter.setName(characterData.getName());
-            editingCharacter.setAlias(characterData.getAlias());
-            editingCharacter.setPublisher(characterData.getPublisher());
-            editingCharacter.setOverview(characterData.getOverview());
-            editingCharacter.setImageUrl(characterData.getImageUrl().isEmpty() ? null : characterData.getImageUrl());
-            editingCharacter.setCreators(characterData.getCreators());
-            editingCharacter.setFirstAppearance(characterData.getFirstAppearance());
+            try {
+                ComicCharacter characterData = collectFormData();
+                editingCharacter.setName(characterData.getName());
+                editingCharacter.setAlias(characterData.getAlias());
+                editingCharacter.setPublisher(characterData.getPublisher());
+                editingCharacter.setOverview(characterData.getOverview());
+                editingCharacter.setImageUrl(characterData.getImageUrl().isEmpty() ? null : characterData.getImageUrl());
+                editingCharacter.setCreators(characterData.getCreators());
+                editingCharacter.setFirstAppearance(characterData.getFirstAppearance());
 
-            characterService.save(editingCharacter);
-            showSuccess("Character updated!");
-            SwingUtilities.getWindowAncestor(this).dispose();
+                characterService.save(editingCharacter);
+                showSuccess("Character updated!");
+                SwingUtilities.getWindowAncestor(this).dispose();
+            } catch (Exception e) {
+                showError("Error saving character: " + e.getMessage());
+            }
         });
     }
 
@@ -256,13 +263,7 @@ public class CharacterForm extends AbstractForm {
      *
      * @return Whether the form is valid
      */
-    private boolean validateForm() {
-        if (nameField.getText().trim().isEmpty()) {
-            showError("Character name is required.");
-            nameField.requestFocus();
-            return false;
-        }
-
+    private boolean invalidFirstAppearance() {
         // Validate first appearance - if series is selected, issue must also be selected
         Series selectedSeries = (Series) seriesDropdown.getSelectedItem();
         Issue selectedIssue = (Issue) issueDropdown.getSelectedItem();
@@ -270,10 +271,10 @@ public class CharacterForm extends AbstractForm {
         if (selectedSeries != null && selectedIssue == null) {
             showError("Please select an issue for the chosen series or clear the series selection.");
             issueDropdown.requestFocus();
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -375,7 +376,7 @@ public class CharacterForm extends AbstractForm {
 
             // Add event listeners
             addCreatorRemovalListener();
-            addCreatorButton.addActionListener(e -> addSelectedCreators());
+            addCreatorButton.addActionListener(_ -> addSelectedCreators());
             setupCreatorSearchListener();
         }
 

@@ -14,11 +14,30 @@ public class CharacterService extends AbstractService<ComicCharacter> {
         if (character == null) {
             throw new IllegalArgumentException("Character cannot be null.");
         }
-        if (character.getId() != null && character.getId() <= 0) {
-            throw new IllegalArgumentException("Invalid character ID.");
-        }
-        if (character.getName() == null || character.getName().trim().isEmpty()) {
+
+        String name = character.getName();
+        if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Character name cannot be empty.");
+        }
+        name = name.trim();
+        if (name.length() > 255) {
+            throw new IllegalArgumentException("Character name must be 255 characters or fewer.");
+        }
+        character.setName(name);
+
+        String alias = character.getAlias();
+        if (alias != null && alias.length() > 255) {
+            throw new IllegalArgumentException("Character alias must be 255 characters or fewer.");
+        }
+
+        String overview = character.getOverview();
+        if (overview != null && overview.length() > 1000) {
+            throw new IllegalArgumentException("Character overview must be 1000 characters or fewer.");
+        }
+
+        String imageUrl = character.getImageUrl();
+        if (imageUrl != null && imageUrl.length() > 2083) {
+            throw new IllegalArgumentException("Character image URL must be 2083 characters or fewer.");
         }
     }
 }
