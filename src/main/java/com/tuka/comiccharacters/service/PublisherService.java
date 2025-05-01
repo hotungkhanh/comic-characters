@@ -23,11 +23,6 @@ public class PublisherService extends AbstractService<Publisher> {
         // Trim and set cleaned name
         publisher.setName(name.trim());
 
-        // ID must be null (for new entities) or positive (for existing ones)
-        if (publisher.getId() != null && publisher.getId() <= 0) {
-            throw new IllegalArgumentException("Publisher ID must be positive if present");
-        }
-
         if (publisher.getName().length() > 255) {
             throw new IllegalArgumentException("Publisher name must be 255 characters or fewer");
         }
