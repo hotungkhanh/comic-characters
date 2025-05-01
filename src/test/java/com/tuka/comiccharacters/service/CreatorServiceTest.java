@@ -1,0 +1,117 @@
+package com.tuka.comiccharacters.service;
+
+import com.tuka.comiccharacters.model.Creator;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class CreatorServiceTest {
+
+    private final CreatorService service = new CreatorService();
+
+    @Nested
+    @DisplayName("validateEntity method tests")
+    class ValidateEntityTests {
+
+        @Test
+        @DisplayName("Given valid creator when validateEntity called then no exception is thrown")
+        void givenValidCreator_whenValidateEntityCalled_thenNoExceptionThrown() {
+            // Given
+            Creator validCreator = new Creator("Alan Moore", "Famous comic writer", "http://example.com/image.jpg");
+
+            // When/Then
+            assertDoesNotThrow(() -> service.validateEntity(validCreator));
+        }
+
+        @Test
+        @DisplayName("Given null creator when validateEntity called then IllegalArgumentException is thrown")
+        void givenNullCreator_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
+            // When/Then
+            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+        }
+
+        @Test
+        @DisplayName("Given null name when validateEntity called then IllegalArgumentException is thrown")
+        void givenNullName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
+            // Given
+            Creator creator = new Creator();
+            creator.setName(null);
+
+            // When/Then
+            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+        }
+
+        @Test
+        @DisplayName("Given blank name when validateEntity called then IllegalArgumentException is thrown")
+        void givenBlankName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
+            // Given
+            Creator creator = new Creator();
+            creator.setName("   ");
+
+            // When/Then
+            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+        }
+
+        @Test
+        @DisplayName("Given name over 255 characters when validateEntity called then IllegalArgumentException is thrown")
+        void givenLongName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
+            // Given
+            String longName = "a".repeat(256);
+            Creator creator = new Creator();
+            creator.setName(longName);
+
+            // When/Then
+            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+        }
+
+        @Test
+        @DisplayName("Given overview over 1000 characters when validateEntity called then IllegalArgumentException is thrown")
+        void givenLongOverview_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
+            // Given
+            Creator creator = new Creator();
+            creator.setName("Valid Name");
+            creator.setOverview("a".repeat(1001));
+
+            // When/Then
+            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+        }
+
+        @Test
+        @DisplayName("Given imageUrl over 2083 characters when validateEntity called then IllegalArgumentException is thrown")
+        void givenLongImageUrl_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
+            // Given
+            Creator creator = new Creator();
+            creator.setName("Valid Name");
+            creator.setImageUrl("http://example.com/" + "a".repeat(2083 - 18 + 1)); // total length > 2083
+
+            // When/Then
+            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+        }
+
+        @Test
+        @DisplayName("Given negative ID when validateEntity called then IllegalArgumentException is thrown")
+        void givenNegativeId_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
+            // Given
+            Creator creator = new Creator("Valid Name");
+            creator.setId(-5L);
+
+            // When/Then
+            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+        }
+
+        @Test
+        @DisplayName("Given name with extra whitespace when validateEntity called then name is trimmed")
+        void givenWhitespaceName_whenValidateEntityCalled_thenNameIsTrimmed() {
+            // Given
+            Creator creator = new Creator("  Alan Moore  ");
+
+            // When
+            service.validateEntity(creator);
+
+            // Then
+            assertEquals("Alan Moore", creator.getName());
+        }
+    }
+}
