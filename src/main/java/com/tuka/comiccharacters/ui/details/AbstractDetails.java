@@ -86,12 +86,12 @@ public abstract class AbstractDetails<T> {
         JButton editButton = new JButton("Edit " + entityString);
         JButton deleteButton = new JButton("Delete " + entityString);
 
-        editButton.addActionListener(_ -> {
+        editButton.addActionListener(e -> {
             dialog.dispose();
             showEditDialog();
         });
 
-        deleteButton.addActionListener(_ -> {
+        deleteButton.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(parent, getDeleteConfirmationMessage(), "Confirm Deletion", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 deleteEntity();

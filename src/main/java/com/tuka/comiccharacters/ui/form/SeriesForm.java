@@ -90,7 +90,7 @@ public class SeriesForm extends AbstractForm {
         // Sort by toString(), handling potential nulls safely
         publishers.sort(Comparator.comparing(Publisher::toString, Comparator.nullsLast(String::compareToIgnoreCase)));
 
-        publishers.addFirst(null); // add "None" at the top after sorting
+        publishers.add(0,null); // add "None" at the top after sorting
 
         return createNullableDropdown(publishers.toArray(new Publisher[0]), "None");
     }
@@ -101,7 +101,7 @@ public class SeriesForm extends AbstractForm {
      */
     private void setupSubmitAction() {
         removeAllSubmitListeners();
-        addSubmitListener(_ -> saveOrUpdateSeries());
+        addSubmitListener(e -> saveOrUpdateSeries());
     }
 
     /**

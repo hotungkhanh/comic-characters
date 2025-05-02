@@ -36,7 +36,7 @@ public abstract class AbstractBrowser<T, S extends AbstractService<T>> extends J
 
         // Add New button at the bottom
         JButton addButton = new JButton("Add New " + entityTypeName);
-        addButton.addActionListener(_ -> showAddForm());
+        addButton.addActionListener(e -> showAddForm());
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(addButton);

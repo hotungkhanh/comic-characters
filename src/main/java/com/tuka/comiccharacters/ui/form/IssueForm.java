@@ -171,7 +171,7 @@ public class IssueForm extends AbstractForm {
 
         // Add creator button
         JButton addCreatorByRolesButton = new JButton("Add Creator(s) by Roles");
-        addCreatorByRolesButton.addActionListener(_ -> addCreatorsByRoles());
+        addCreatorByRolesButton.addActionListener(e -> addCreatorsByRoles());
         creatorInputPanel.add(addCreatorByRolesButton, BorderLayout.SOUTH);
 
         creatorsPanel.add(creatorInputPanel, BorderLayout.NORTH);
@@ -199,7 +199,7 @@ public class IssueForm extends AbstractForm {
         characterSearchField = createSearchField("Search for Characters...");
 
         // Create the search and results panel using the base class method
-        JPanel characterInputPanel = createSearchAndResultsPanel("Search Characters", characterSearchField, matchedCharactersList, "Add Character(s)", _ -> addSelectedCharacters());
+        JPanel characterInputPanel = createSearchAndResultsPanel("Search Characters", characterSearchField, matchedCharactersList, "Add Character(s)", e -> addSelectedCharacters());
 
         charactersPanel.add(characterInputPanel, BorderLayout.NORTH);
 
@@ -213,12 +213,12 @@ public class IssueForm extends AbstractForm {
      * Sets up the submit action for adding a new issue
      */
     private void setupSubmitAction() {
-        addSubmitListener(_ -> {
+        addSubmitListener(e -> {
             try {
                 saveIssue();
                 resetForm();
-            } catch (IllegalArgumentException e) {
-                showError(e.getMessage());
+            } catch (IllegalArgumentException ex) {
+                showError(ex.getMessage());
             }
         });
     }
@@ -228,12 +228,12 @@ public class IssueForm extends AbstractForm {
      */
     private void setupEditAction() {
         removeAllSubmitListeners();
-        addSubmitListener(_ -> {
+        addSubmitListener(e -> {
             try {
                 saveIssue();
                 SwingUtilities.getWindowAncestor(this).dispose();
-            } catch (IllegalArgumentException e) {
-                showError(e.getMessage());
+            } catch (IllegalArgumentException ex) {
+                showError(ex.getMessage());
             }
         });
     }
@@ -426,7 +426,7 @@ public class IssueForm extends AbstractForm {
                         creatorTable.setRowSelectionInterval(row, row);
                         JPopupMenu popupMenu = new JPopupMenu();
                         JMenuItem removeItem = new JMenuItem("Remove Creator");
-                        removeItem.addActionListener(_ -> removeSelectedCreator());
+                        removeItem.addActionListener(ev -> removeSelectedCreator());
                         popupMenu.add(removeItem);
                         popupMenu.show(creatorTable, e.getX(), e.getY());
                     }

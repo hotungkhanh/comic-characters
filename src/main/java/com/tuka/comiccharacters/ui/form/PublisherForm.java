@@ -46,7 +46,7 @@ public class PublisherForm extends AbstractForm {
      * Sets up the submit action for adding new publishers
      */
     private void setupSubmitAction() {
-        addSubmitListener(_ -> {
+        addSubmitListener(e -> {
             String name = nameField.getText().trim();
             addPublisher(name);
         });
@@ -57,7 +57,7 @@ public class PublisherForm extends AbstractForm {
      */
     private void setupEditAction() {
         removeAllSubmitListeners();
-        addSubmitListener(_ -> {
+        addSubmitListener(e -> {
             String name = nameField.getText().trim();
             updatePublisher(name);
         });

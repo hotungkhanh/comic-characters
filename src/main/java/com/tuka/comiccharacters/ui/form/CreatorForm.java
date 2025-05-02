@@ -56,7 +56,7 @@ public class CreatorForm extends AbstractForm {
      * Sets up the submit action for adding new creators
      */
     private void setupSubmitAction() {
-        addSubmitListener(_ -> {
+        addSubmitListener(e -> {
             if (!validateForm()) {
                 return;
             }
@@ -74,7 +74,7 @@ public class CreatorForm extends AbstractForm {
      */
     private void setupEditAction() {
         removeAllSubmitListeners();
-        addSubmitListener(_ -> {
+        addSubmitListener(e -> {
             if (!validateForm()) {
                 return;
             }

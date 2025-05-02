@@ -150,7 +150,7 @@ public class CharacterForm extends AbstractForm {
         contentPanel.add(issueDropdownPanel, gbc);
 
         // Add listener to update issues when series changes
-        seriesDropdown.addActionListener(_ -> {
+        seriesDropdown.addActionListener(e -> {
             Series selectedSeries = (Series) seriesDropdown.getSelectedItem();
             updateIssueDropdown(selectedSeries);
         });
@@ -200,7 +200,7 @@ public class CharacterForm extends AbstractForm {
      * Sets up the submit action for adding new characters
      */
     private void setupSubmitAction() {
-        addSubmitListener(_ -> {
+        addSubmitListener(e -> {
             if (invalidFirstAppearance()) {
                 return;
             }
@@ -209,8 +209,8 @@ public class CharacterForm extends AbstractForm {
                 characterService.save(character);
                 showSuccess("Character added!");
                 resetForm();
-            } catch (Exception e) {
-                showError("Error saving character: " + e.getMessage());
+            } catch (Exception ex) {
+                showError("Error saving character: " + ex.getMessage());
             }
         });
     }
@@ -220,7 +220,7 @@ public class CharacterForm extends AbstractForm {
      */
     private void setupEditAction() {
         removeAllSubmitListeners();
-        addSubmitListener(_ -> {
+        addSubmitListener(e -> {
             if (invalidFirstAppearance()) {
                 return;
             }
@@ -237,8 +237,8 @@ public class CharacterForm extends AbstractForm {
                 characterService.save(editingCharacter);
                 showSuccess("Character updated!");
                 SwingUtilities.getWindowAncestor(this).dispose();
-            } catch (Exception e) {
-                showError("Error saving character: " + e.getMessage());
+            } catch (Exception ex) {
+                showError("Error saving character: " + ex.getMessage());
             }
         });
     }
@@ -376,7 +376,7 @@ public class CharacterForm extends AbstractForm {
 
             // Add event listeners
             addCreatorRemovalListener();
-            addCreatorButton.addActionListener(_ -> addSelectedCreators());
+            addCreatorButton.addActionListener(e -> addSelectedCreators());
             setupCreatorSearchListener();
         }
 

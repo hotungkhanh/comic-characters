@@ -111,7 +111,7 @@ public class SeriesDetails extends AbstractDetails<Series> {
 
     private JButton getAddIssueButton() {
         JButton addIssueButton = new JButton("Add New Issues");
-        addIssueButton.addActionListener(_ -> {
+        addIssueButton.addActionListener(e -> {
             JDialog addIssueDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Add New Issues", true);
             IssueForm issueForm = new IssueForm(entity, this::refreshDetails);
             addIssueDialog.setContentPane(issueForm);
