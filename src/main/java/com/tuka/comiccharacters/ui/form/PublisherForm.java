@@ -81,7 +81,7 @@ public class PublisherForm extends AbstractForm {
         try {
             publisherService.save(new Publisher(name));
             showSuccess("Publisher added!");
-            SwingUtilities.getWindowAncestor(this).dispose();
+            resetForm();
         } catch (IllegalArgumentException e) {
             showError(e.getMessage());
         }
