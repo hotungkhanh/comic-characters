@@ -7,6 +7,7 @@ import com.tuka.comiccharacters.service.SeriesService;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class SeriesForm extends AbstractForm {
@@ -28,7 +29,7 @@ public class SeriesForm extends AbstractForm {
     public SeriesForm() {
         super("Add New Series");
 
-        // Initialize publisher dropdown
+        // Initialise publisher dropdown
         publisherDropdown = createPublisherDropdown();
 
         buildUI();
@@ -40,7 +41,7 @@ public class SeriesForm extends AbstractForm {
      *
      * @param existingSeries  The series to edit
      * @param refreshCallback Callback to run after form submission
-     * @param parentDialog    The parent dialog to close after submission
+     * @param parentDialog    The parent dialogue to close after submission
      */
     public SeriesForm(Series existingSeries, Runnable refreshCallback, JDialog parentDialog) {
         super(existingSeries == null ? "Add New Series" : "Edit Series");
@@ -49,7 +50,7 @@ public class SeriesForm extends AbstractForm {
         this.refreshCallback = refreshCallback;
         this.parentDialog = parentDialog;
 
-        // Initialize publisher dropdown
+        // Initialise publisher dropdown
         publisherDropdown = createPublisherDropdown();
 
         if (existingSeries != null) {
@@ -83,13 +84,17 @@ public class SeriesForm extends AbstractForm {
      * @return The publisher dropdown
      */
     private JComboBox<Publisher> createPublisherDropdown() {
-        List<Publisher> publishers = new ArrayList<>();
-        publishers.add(null); // for "None"
         PublisherService publisherService = new PublisherService();
-        publishers.addAll(publisherService.getAllEntities());
+        List<Publisher> publishers = new ArrayList<>(publisherService.getAllEntities());
+
+        // Sort by toString(), handling potential nulls safely
+        publishers.sort(Comparator.comparing(Publisher::toString, Comparator.nullsLast(String::compareToIgnoreCase)));
+
+        publishers.addFirst(null); // add "None" at the top after sorting
 
         return createNullableDropdown(publishers.toArray(new Publisher[0]), "None");
     }
+
 
     /**
      * Sets up the submit action for the form
@@ -140,7 +145,7 @@ public class SeriesForm extends AbstractForm {
                 addSeries(title, startYear, endYear, overview, selectedPublisher);
             }
 
-            // Execute callback and close dialog if needed
+            // Execute callback and close dialogue if needed
             if (refreshCallback != null) refreshCallback.run();
             if (parentDialog != null) parentDialog.dispose();
 
