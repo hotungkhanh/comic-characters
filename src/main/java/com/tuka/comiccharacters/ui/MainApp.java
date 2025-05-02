@@ -63,7 +63,9 @@ public class MainApp {
 
         frame.add(topPanel, BorderLayout.CENTER);
 
-        frame.setExtendedState(JFrame.MAXIMIZED_BOTH); // Fullscreen
+        frame.setSize(1400, 600); // preferred small size
+        frame.setLocationRelativeTo(null); // center on screen
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH); // start with fullscreen
         frame.setVisible(true);
     }
 
