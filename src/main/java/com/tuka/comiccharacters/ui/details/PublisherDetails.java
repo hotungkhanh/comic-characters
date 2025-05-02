@@ -57,12 +57,12 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
 
         // Only add panels if they have content
         if (!sortedSeries.isEmpty()) {
-            JPanel seriesPanel = createClickableListPanel("Series", sortedSeries, Series::getTitle, this::navigateToSeries);
+            JPanel seriesPanel = createClickableListPanel("Series", sortedSeries, Series::toString, this::navigateToSeries);
             listsPanel.add(seriesPanel);
         }
 
         if (!sortedCharacters.isEmpty()) {
-            JPanel charactersPanel = createClickableListPanel("Characters", sortedCharacters, ComicCharacter::getName, this::navigateToCharacter);
+            JPanel charactersPanel = createClickableListPanel("Characters", sortedCharacters, ComicCharacter::toString, this::navigateToCharacter);
             listsPanel.add(charactersPanel);
         }
 
