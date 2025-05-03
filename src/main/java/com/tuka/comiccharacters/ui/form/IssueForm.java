@@ -306,10 +306,6 @@ public class IssueForm extends AbstractForm {
         String releaseDateText = releaseDateField.getText().trim();
         if (!releaseDateText.isEmpty()) {
             LocalDate releaseDate = parseLocalDate(releaseDateText, "Release Date");
-            if (releaseDate == null) {
-                releaseDateField.requestFocus();
-                throw new IllegalArgumentException("Invalid release date");
-            }
             issue.setReleaseDate(releaseDate);
         }
 
