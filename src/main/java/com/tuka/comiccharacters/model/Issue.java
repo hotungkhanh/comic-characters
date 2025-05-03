@@ -22,7 +22,7 @@ public class Issue {
     @Column(precision = 7, scale = 2, nullable = false)
     private BigDecimal issueNumber;
 
-    @Column(length = 1000)
+    @Column(length = 3000)
     private String overview;
 
     @Column(length = 2083)

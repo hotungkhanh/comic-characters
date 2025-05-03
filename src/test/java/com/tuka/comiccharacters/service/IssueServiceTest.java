@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class IssueServiceTest {
 
@@ -32,42 +31,46 @@ class IssueServiceTest {
         }
 
         @Test
-        @DisplayName("Given null issue when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null issue when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullIssue_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+            assertEquals("Issue cannot be null", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given null series when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null series when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullSeries_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             Issue issue = new Issue();
             issue.setSeries(null);
             issue.setIssueNumber(BigDecimal.ONE);
             issue.setAnnual(true);
 
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+            assertEquals("Issue must be associated with a series", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given null issueNumber when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null issueNumber when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullIssueNumber_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             Issue issue = new Issue();
             issue.setSeries(new Series());
             issue.setIssueNumber(null);
             issue.setAnnual(true);
 
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+            assertEquals("Issue number cannot be null", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given issueNumber over 999999.99 when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given issueNumber over 999999.99 when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenLargeIssueNumber_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             Issue issue = new Issue();
             issue.setSeries(new Series());
             issue.setIssueNumber(new BigDecimal("1000000.00"));
             issue.setAnnual(true);
 
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+            assertEquals("Issue number must be less than or equal to 999999.99", exception.getMessage());
         }
 
         @Test
@@ -82,7 +85,23 @@ class IssueServiceTest {
         }
 
         @Test
-        @DisplayName("Given price over 9999.99 when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given overview over 3000 characters when validateEntity called then IllegalArgumentException with correct message is thrown")
+        void givenLongOverview_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
+            // Given
+            Issue issue = new Issue();
+            issue.setSeries(new Series());
+            issue.setIssueNumber(BigDecimal.ONE);
+            issue.setOverview("a".repeat(3001));
+
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+
+            // Then
+            assertEquals("Issue overview must be 3000 characters or fewer.", exception.getMessage());
+        }
+
+        @Test
+        @DisplayName("Given price over 9999.99 when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenLargePrice_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             Issue issue = new Issue();
             issue.setSeries(new Series());
@@ -90,18 +109,20 @@ class IssueServiceTest {
             issue.setPriceUsd(new BigDecimal("10000.00"));
             issue.setAnnual(true);
 
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+            assertEquals("Price must be less than or equal to 9999.99", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given null annual flag when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null annual flag when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullAnnualFlag_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             Issue issue = new Issue();
             issue.setSeries(new Series());
             issue.setIssueNumber(BigDecimal.ONE);
             issue.setAnnual(null);
 
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(issue));
+            assertEquals("Annual flag cannot be null", exception.getMessage());
         }
 
         @Test

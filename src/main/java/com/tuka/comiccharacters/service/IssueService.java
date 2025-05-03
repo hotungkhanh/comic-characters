@@ -29,6 +29,11 @@ public class IssueService extends AbstractService<Issue> {
             throw new IllegalArgumentException("Issue number must be less than or equal to 999999.99");
         }
 
+        String overview = issue.getOverview();
+        if (overview != null && overview.length() > 3000) {
+            throw new IllegalArgumentException("Issue overview must be 3000 characters or fewer.");
+        }
+
         if (issue.getPriceUsd() != null) {
             BigDecimal maxPrice = new BigDecimal("9999.99");
             if (issue.getPriceUsd().abs().compareTo(maxPrice) > 0) {

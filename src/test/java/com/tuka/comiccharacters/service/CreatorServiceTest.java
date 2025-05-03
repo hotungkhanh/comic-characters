@@ -67,12 +67,12 @@ class CreatorServiceTest {
         }
 
         @Test
-        @DisplayName("Given overview over 1000 characters when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given overview over 3000 characters when validateEntity called then IllegalArgumentException is thrown")
         void givenLongOverview_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             // Given
             Creator creator = new Creator();
             creator.setName("Valid Name");
-            creator.setOverview("a".repeat(1001));
+            creator.setOverview("a".repeat(3001));
 
             // When/Then
             assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));

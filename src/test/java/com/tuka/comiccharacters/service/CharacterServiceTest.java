@@ -62,10 +62,10 @@ class CharacterServiceTest {
         }
 
         @Test
-        @DisplayName("Given overview over 1000 characters when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given overview over 3000 characters when validateEntity called then IllegalArgumentException is thrown")
         void givenLongOverview_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             ComicCharacter character = new ComicCharacter("Wonder Woman");
-            character.setOverview("a".repeat(1001));
+            character.setOverview("a".repeat(3001));
             assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
         }
 

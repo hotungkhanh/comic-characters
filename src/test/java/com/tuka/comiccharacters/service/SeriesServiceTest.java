@@ -43,56 +43,78 @@ class SeriesServiceTest {
         }
 
         @Test
-        @DisplayName("Given null series when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null series when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullSeries_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+            assertEquals("Series cannot be null", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given null title when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null title when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullTitle_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             Series series = new Series();
             series.setTitle(null);
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            assertEquals("Series title cannot be empty", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given blank title when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given blank title when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenBlankTitle_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             Series series = new Series();
             series.setTitle("   ");
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            assertEquals("Series title cannot be empty", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given invalid ID when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given invalid ID when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenInvalidId_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             Series series = new Series();
             series.setTitle("X-Men");
             setPrivateId(series, -5L);
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            assertEquals("Invalid series ID", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given start year out of valid range when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given start year out of valid range when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenInvalidStartYear_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             Series series = new Series();
             series.setTitle("Fantastic Four");
             series.setStartYear(999);
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            IllegalArgumentException exception1 = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            assertEquals("Series start year must be between 1000 and " + (Year.now().getValue() + 5), exception1.getMessage());
 
             series.setStartYear(Year.now().getValue() + 6);
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            IllegalArgumentException exception2 = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            assertEquals("Series start year must be between 1000 and " + (Year.now().getValue() + 5), exception2.getMessage());
         }
 
         @Test
-        @DisplayName("Given end year before start year when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given end year before start year when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenEndYearBeforeStartYear_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             Series series = new Series();
             series.setTitle("Hulk");
             series.setStartYear(2000);
             series.setEndYear(1999);
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+            assertEquals("Series end year must be after or equal to start year", exception.getMessage());
+        }
+
+        @Test
+        @DisplayName("Given overview over 3000 characters when validateEntity called then IllegalArgumentException with correct message is thrown")
+        void givenLongOverview_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
+            // Given
+            Series series = new Series();
+            series.setTitle("Long Title");
+            series.setOverview("a".repeat(3001));
+
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(series));
+
+            // Then
+            assertEquals("Series overview must be 3000 characters or fewer.", exception.getMessage());
         }
     }
 
@@ -120,17 +142,19 @@ class SeriesServiceTest {
         }
 
         @Test
-        @DisplayName("Given null series when getIssuesBySeries called then IllegalArgumentException is thrown")
+        @DisplayName("Given null series when getIssuesBySeries called then IllegalArgumentException with correct message is thrown")
         void givenNullSeries_whenGetIssuesBySeriesCalled_thenIllegalArgumentExceptionThrown() {
-            assertThrows(IllegalArgumentException.class, () -> service.getIssuesBySeries(null));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.getIssuesBySeries(null));
+            assertEquals("Invalid series provided.", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given series with null ID when getIssuesBySeries called then IllegalArgumentException is thrown")
+        @DisplayName("Given series with null ID when getIssuesBySeries called then IllegalArgumentException with correct message is thrown")
         void givenSeriesWithNullId_whenGetIssuesBySeriesCalled_thenIllegalArgumentExceptionThrown() {
             Series series = new Series();
             setPrivateId(series, null);
-            assertThrows(IllegalArgumentException.class, () -> service.getIssuesBySeries(series));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.getIssuesBySeries(series));
+            assertEquals("Invalid series provided.", exception.getMessage());
         }
     }
 }

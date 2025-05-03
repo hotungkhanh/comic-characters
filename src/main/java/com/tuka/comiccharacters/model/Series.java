@@ -22,7 +22,7 @@ public class Series {
 
     private Integer endYear;
 
-    @Column(length = 1000)
+    @Column(length = 3000)
     private String overview;
 
     @ManyToOne(fetch = FetchType.LAZY)

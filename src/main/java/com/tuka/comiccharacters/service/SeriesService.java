@@ -49,5 +49,10 @@ public class SeriesService extends AbstractService<Series> {
                 throw new IllegalArgumentException("Series end year must be after or equal to start year");
             }
         }
+
+        String overview = series.getOverview();
+        if (overview != null && overview.length() > 3000) {
+            throw new IllegalArgumentException("Series overview must be 3000 characters or fewer.");
+        }
     }
 }

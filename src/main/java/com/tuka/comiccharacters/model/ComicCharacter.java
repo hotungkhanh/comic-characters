@@ -25,7 +25,7 @@ public class ComicCharacter {
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    @Column(length = 1000)
+    @Column(length = 3000)
     private String overview;
 
     @Column(length = 2083)

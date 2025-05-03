@@ -16,7 +16,7 @@ public class Creator {
     @Column(nullable = false)
     private String name;
 
-    @Column(length = 1000)
+    @Column(length = 3000)
     private String overview;
 
     @Column(length = 2083)

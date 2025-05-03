@@ -31,8 +31,8 @@ public class CharacterService extends AbstractService<ComicCharacter> {
         }
 
         String overview = character.getOverview();
-        if (overview != null && overview.length() > 1000) {
-            throw new IllegalArgumentException("Character overview must be 1000 characters or fewer.");
+        if (overview != null && overview.length() > 3000) {
+            throw new IllegalArgumentException("Character overview must be 3000 characters or fewer.");
         }
 
         String imageUrl = character.getImageUrl();

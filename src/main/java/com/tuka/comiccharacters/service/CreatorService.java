@@ -26,8 +26,8 @@ public class CreatorService extends AbstractService<Creator> {
         }
         creator.setName(name);
 
-        if (creator.getOverview() != null && creator.getOverview().length() > 1000) {
-            throw new IllegalArgumentException("Overview must be 1000 characters or fewer");
+        if (creator.getOverview() != null && creator.getOverview().length() > 3000) {
+            throw new IllegalArgumentException("Overview must be 3000 characters or fewer");
         }
 
         if (creator.getImageUrl() != null && creator.getImageUrl().length() > 2083) {
