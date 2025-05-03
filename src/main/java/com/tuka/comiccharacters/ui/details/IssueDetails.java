@@ -11,6 +11,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -154,7 +155,10 @@ public class IssueDetails extends AbstractDetails<Issue> {
             return row;
         }
 
-        List<Creator> creators = entity.getIssueCreators().stream().map(IssueCreator::getCreator).collect(Collectors.toList());
+        List<Creator> creators = entity.getIssueCreators().stream()
+                .map(IssueCreator::getCreator)
+                .sorted(Comparator.comparing(Creator::toString))
+                .collect(Collectors.toList());
 
         return addNavigableListPanel(panel, "Creators", creators, this::getCreatorNameAndRoles, this::navigateToCreator, row);
     }
@@ -164,7 +168,9 @@ public class IssueDetails extends AbstractDetails<Issue> {
             return row;
         }
 
-        List<ComicCharacter> characters = List.copyOf(entity.getCharacters());
+        List<ComicCharacter> characters = entity.getCharacters().stream()
+                .sorted(Comparator.comparing(ComicCharacter::toString))
+                .collect(Collectors.toList());
 
         return addNavigableListPanel(panel, "Characters", characters, ComicCharacter::toString, this::navigateToCharacter, row);
     }
