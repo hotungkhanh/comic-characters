@@ -209,7 +209,7 @@ public class IssueDetails extends AbstractDetails<Issue> {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Edit Issue", true);
         IssueForm issueForm = new IssueForm(entity, refreshCallback);
         dialog.setContentPane(issueForm);
-        dialog.pack();
+        dialog.setSize(700, 900);
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
     }
