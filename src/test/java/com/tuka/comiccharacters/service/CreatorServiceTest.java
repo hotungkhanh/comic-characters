@@ -26,79 +26,100 @@ class CreatorServiceTest {
         }
 
         @Test
-        @DisplayName("Given null creator when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null creator when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullCreator_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+
+            // Then
+            assertEquals("Creator cannot be null", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given null name when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null name when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             // Given
             Creator creator = new Creator();
             creator.setName(null);
 
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+
+            // Then
+            assertEquals("Creator name cannot be null or blank", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given blank name when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given blank name when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenBlankName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             // Given
             Creator creator = new Creator();
             creator.setName("   ");
 
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+
+            // Then
+            assertEquals("Creator name cannot be null or blank", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given name over 255 characters when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given name over 255 characters when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenLongName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             // Given
             String longName = "a".repeat(256);
             Creator creator = new Creator();
             creator.setName(longName);
 
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+
+            // Then
+            assertEquals("Creator name must be 255 characters or fewer", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given overview over 3000 characters when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given overview over 3000 characters when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenLongOverview_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             // Given
             Creator creator = new Creator();
             creator.setName("Valid Name");
             creator.setOverview("a".repeat(3001));
 
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+
+            // Then
+            assertEquals("Overview must be 3000 characters or fewer", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given imageUrl over 2083 characters when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given imageUrl over 2083 characters when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenLongImageUrl_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             // Given
             Creator creator = new Creator();
             creator.setName("Valid Name");
             creator.setImageUrl("http://example.com/" + "a".repeat(2083 - 18 + 1)); // total length > 2083
 
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+
+            // Then
+            assertEquals("Image URL must be 2083 characters or fewer", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given negative ID when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given negative ID when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNegativeId_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             // Given
             Creator creator = new Creator("Valid Name");
             creator.setId(-5L);
 
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(creator));
+
+            // Then
+            assertEquals("Invalid creator ID", exception.getMessage());
         }
 
         @Test

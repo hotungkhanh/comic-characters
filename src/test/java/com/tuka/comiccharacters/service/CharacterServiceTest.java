@@ -23,58 +23,65 @@ class CharacterServiceTest {
         }
 
         @Test
-        @DisplayName("Given null character when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null character when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullCharacter_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+            assertEquals("Character cannot be null.", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given null name when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null name when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             ComicCharacter character = new ComicCharacter();
             character.setName(null);
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            assertEquals("Character name cannot be empty.", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given blank name when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given blank name when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenBlankName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             ComicCharacter character = new ComicCharacter();
             character.setName("   ");
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            assertEquals("Character name cannot be empty.", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given name over 255 characters when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given name over 255 characters when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenLongName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             String longName = "a".repeat(256);
             ComicCharacter character = new ComicCharacter();
             character.setName(longName);
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            assertEquals("Character name must be 255 characters or fewer.", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given alias over 255 characters when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given alias over 255 characters when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenLongAlias_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             ComicCharacter character = new ComicCharacter("Superman");
             character.setAlias("a".repeat(256));
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            assertEquals("Character alias must be 255 characters or fewer.", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given overview over 3000 characters when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given overview over 3000 characters when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenLongOverview_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             ComicCharacter character = new ComicCharacter("Wonder Woman");
             character.setOverview("a".repeat(3001));
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            assertEquals("Character overview must be 3000 characters or fewer.", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given imageUrl over 2083 characters when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given imageUrl over 2083 characters when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenLongImageUrl_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             ComicCharacter character = new ComicCharacter("Flash");
             character.setImageUrl("a".repeat(2084));
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(character));
+            assertEquals("Character image URL must be 2083 characters or fewer.", exception.getMessage());
         }
 
         @Test

@@ -26,44 +26,56 @@ class PublisherServiceTest {
         }
 
         @Test
-        @DisplayName("Given null publisher when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null publisher when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullPublisher_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(null));
+
+            // Then
+            assertEquals("Publisher cannot be null", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given null name when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given null name when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenNullName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             // Given
             Publisher publisher = new Publisher();
             publisher.setName(null);
 
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(publisher));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(publisher));
+
+            // Then
+            assertEquals("Publisher name cannot be null or blank", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given blank name when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given blank name when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenBlankName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             // Given
             Publisher publisher = new Publisher();
             publisher.setName("   ");
 
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(publisher));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(publisher));
+
+            // Then
+            assertEquals("Publisher name cannot be null or blank", exception.getMessage());
         }
 
         @Test
-        @DisplayName("Given name over 255 characters when validateEntity called then IllegalArgumentException is thrown")
+        @DisplayName("Given name over 255 characters when validateEntity called then IllegalArgumentException with correct message is thrown")
         void givenLongName_whenValidateEntityCalled_thenIllegalArgumentExceptionThrown() {
             // Given
             String longName = "a".repeat(256);
             Publisher publisher = new Publisher();
             publisher.setName(longName);
 
-            // When/Then
-            assertThrows(IllegalArgumentException.class, () -> service.validateEntity(publisher));
+            // When
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.validateEntity(publisher));
+
+            // Then
+            assertEquals("Publisher name must be 255 characters or fewer", exception.getMessage());
         }
 
         @Test
