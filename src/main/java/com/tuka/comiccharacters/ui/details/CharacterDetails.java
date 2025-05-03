@@ -117,13 +117,8 @@ public class CharacterDetails extends AbstractDetails<ComicCharacter> {
 
     @Override
     protected void showEditDialog() {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Edit Character", true);
         CharacterForm panel = new CharacterForm(entity);
-        dialog.setContentPane(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(parent);
-        dialog.setVisible(true);
-        refreshCallback.run();
+        showEditDialog(parent, "Edit Character", panel, null, refreshCallback);
     }
 
     @Override

@@ -156,12 +156,8 @@ public class SeriesDetails extends AbstractDetails<Series> {
 
     @Override
     protected void showEditDialog() {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Edit Series", true);
-        SeriesForm panel = new SeriesForm(entity, refreshCallback, dialog);
-        dialog.setContentPane(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(parent);
-        dialog.setVisible(true);
+        SeriesForm panel = new SeriesForm(entity, refreshCallback);
+        showEditDialog(parent, "Edit Series", panel, null, refreshCallback);
     }
 
     @Override

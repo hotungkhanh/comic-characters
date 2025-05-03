@@ -21,7 +21,6 @@ public class SeriesForm extends AbstractForm {
 
     private Series existingSeries;
     private Runnable refreshCallback;
-    private JDialog parentDialog;
 
     /**
      * Creates a form for adding a new series
@@ -41,14 +40,12 @@ public class SeriesForm extends AbstractForm {
      *
      * @param existingSeries  The series to edit
      * @param refreshCallback Callback to run after form submission
-     * @param parentDialog    The parent dialogue to close after submission
      */
-    public SeriesForm(Series existingSeries, Runnable refreshCallback, JDialog parentDialog) {
+    public SeriesForm(Series existingSeries, Runnable refreshCallback) {
         super(existingSeries == null ? "Add New Series" : "Edit Series");
 
         this.existingSeries = existingSeries;
         this.refreshCallback = refreshCallback;
-        this.parentDialog = parentDialog;
 
         // Initialise publisher dropdown
         publisherDropdown = createPublisherDropdown();
@@ -90,7 +87,7 @@ public class SeriesForm extends AbstractForm {
         // Sort by toString(), handling potential nulls safely
         publishers.sort(Comparator.comparing(Publisher::toString, Comparator.nullsLast(String::compareToIgnoreCase)));
 
-        publishers.add(0,null); // add "None" at the top after sorting
+        publishers.add(0, null); // add "None" at the top after sorting
 
         return createNullableDropdown(publishers.toArray(new Publisher[0]), "None");
     }
@@ -141,13 +138,13 @@ public class SeriesForm extends AbstractForm {
 
             if (isEditMode && existingSeries != null) {
                 updateSeries(title, startYear, endYear, overview, selectedPublisher);
+                SwingUtilities.getWindowAncestor(this).dispose();
             } else {
                 addSeries(title, startYear, endYear, overview, selectedPublisher);
             }
 
             // Execute callback and close dialogue if needed
             if (refreshCallback != null) refreshCallback.run();
-            if (parentDialog != null) parentDialog.dispose();
 
         } catch (NumberFormatException ex) {
             showError("Start and end year must be valid numbers.");

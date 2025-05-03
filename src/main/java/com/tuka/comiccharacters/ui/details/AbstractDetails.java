@@ -63,10 +63,7 @@ public abstract class AbstractDetails<T> {
         return errorPanel;
     }
 
-    public void showDetailsDialog() {
-        // Override in child classes to set custom window size
-        showDetailsDialog(400, 300, "");
-    }
+    public abstract void showDetailsDialog();
 
     public void showDetailsDialog(int windowWidth, int windowHeight, String entityString) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), getTitle(), true);
@@ -134,7 +131,23 @@ public abstract class AbstractDetails<T> {
 
     protected abstract void showEditDialog();
 
-    // ===== Common UI Component Methods =====
+    protected void showEditDialog(Component parent, String title, JPanel formPanel, Dimension preferredSize, Runnable refreshCallback) {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), title, true);
+        dialog.setContentPane(formPanel);
+
+        if (preferredSize != null) {
+            dialog.setSize(preferredSize);
+        } else {
+            dialog.pack(); // fallback to pack if no size specified
+        }
+
+        dialog.setLocationRelativeTo(parent);
+        dialog.setVisible(true);
+
+        if (refreshCallback != null) {
+            refreshCallback.run();
+        }
+    }
 
     protected abstract void deleteEntity();
 

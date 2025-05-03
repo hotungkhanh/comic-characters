@@ -93,13 +93,8 @@ public class PublisherDetails extends AbstractDetails<Publisher> {
 
     @Override
     protected void showEditDialog() {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Edit Publisher", true);
         PublisherForm panel = new PublisherForm(entity);
-        dialog.setContentPane(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(parent);
-        dialog.setVisible(true);
-        refreshCallback.run();
+        showEditDialog(parent, "Edit Publisher", panel, null, refreshCallback);
     }
 
     @Override

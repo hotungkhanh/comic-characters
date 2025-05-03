@@ -206,12 +206,8 @@ public class IssueDetails extends AbstractDetails<Issue> {
 
     @Override
     protected void showEditDialog() {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Edit Issue", true);
-        IssueForm issueForm = new IssueForm(entity, refreshCallback);
-        dialog.setContentPane(issueForm);
-        dialog.setSize(700, 900);
-        dialog.setLocationRelativeTo(parent);
-        dialog.setVisible(true);
+        IssueForm panel = new IssueForm(entity, refreshCallback);
+        showEditDialog(parent, "Edit Issue", panel, new Dimension(700, 900), refreshCallback);
     }
 
     @Override

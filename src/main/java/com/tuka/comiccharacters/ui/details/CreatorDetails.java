@@ -68,13 +68,8 @@ public class CreatorDetails extends AbstractDetails<Creator> {
 
     @Override
     protected void showEditDialog() {
-        JDialog editDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), "Edit Creator", true);
         CreatorForm editPanel = new CreatorForm(entity);
-        editDialog.setContentPane(editPanel);
-        editDialog.pack();
-        editDialog.setLocationRelativeTo(parent);
-        editDialog.setVisible(true);
-        refreshCallback.run();
+        showEditDialog(parent, "Edit Creator", editPanel, null, refreshCallback);
     }
 
     @Override
