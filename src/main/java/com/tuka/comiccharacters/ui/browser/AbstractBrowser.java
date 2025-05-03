@@ -69,7 +69,7 @@ public abstract class AbstractBrowser<T, S extends AbstractService<T>> extends J
     public void refreshEntities() {
         allEntities.clear();
         allEntities.addAll(getEntities());
-        allEntities.sort(getComparator());
+        allEntities.sort(Comparator.comparing(T::toString, String.CASE_INSENSITIVE_ORDER));
         updateListModel();
     }
 
@@ -113,8 +113,6 @@ public abstract class AbstractBrowser<T, S extends AbstractService<T>> extends J
 
     // Abstract methods that must be implemented
     protected abstract boolean matchesQuery(T entity, String query);
-
-    protected abstract Comparator<T> getComparator();
 
     protected abstract Long getEntityId(T entity);
 

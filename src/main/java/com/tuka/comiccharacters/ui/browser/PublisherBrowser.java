@@ -7,7 +7,6 @@ import com.tuka.comiccharacters.ui.details.PublisherDetails;
 import com.tuka.comiccharacters.ui.form.PublisherForm;
 
 import javax.swing.*;
-import java.util.Comparator;
 
 public class PublisherBrowser extends AbstractBrowser<Publisher, PublisherService> {
 
@@ -18,11 +17,6 @@ public class PublisherBrowser extends AbstractBrowser<Publisher, PublisherServic
     @Override
     protected boolean matchesQuery(Publisher publisher, String query) {
         return matchesNameField(publisher.getName(), query);
-    }
-
-    @Override
-    protected Comparator<Publisher> getComparator() {
-        return Comparator.comparing(Publisher::getName);
     }
 
     @Override

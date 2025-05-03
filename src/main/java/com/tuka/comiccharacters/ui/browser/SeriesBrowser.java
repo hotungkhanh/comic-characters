@@ -7,7 +7,6 @@ import com.tuka.comiccharacters.ui.details.SeriesDetails;
 import com.tuka.comiccharacters.ui.form.SeriesForm;
 
 import javax.swing.*;
-import java.util.Comparator;
 
 public class SeriesBrowser extends AbstractBrowser<Series, SeriesService> {
 
@@ -18,11 +17,6 @@ public class SeriesBrowser extends AbstractBrowser<Series, SeriesService> {
     @Override
     protected boolean matchesQuery(Series series, String query) {
         return matchesNameField(series.getTitle(), query);
-    }
-
-    @Override
-    protected Comparator<Series> getComparator() {
-        return Comparator.comparing(s -> s.getTitle().toLowerCase());
     }
 
     @Override

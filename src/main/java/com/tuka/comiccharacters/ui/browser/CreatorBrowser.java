@@ -7,7 +7,6 @@ import com.tuka.comiccharacters.ui.details.CreatorDetails;
 import com.tuka.comiccharacters.ui.form.CreatorForm;
 
 import javax.swing.*;
-import java.util.Comparator;
 
 public class CreatorBrowser extends AbstractBrowser<Creator, CreatorService> {
 
@@ -18,11 +17,6 @@ public class CreatorBrowser extends AbstractBrowser<Creator, CreatorService> {
     @Override
     protected boolean matchesQuery(Creator creator, String query) {
         return matchesNameField(creator.getName(), query);
-    }
-
-    @Override
-    protected Comparator<Creator> getComparator() {
-        return Comparator.comparing(c -> c.getName().toLowerCase());
     }
 
     @Override
