@@ -70,7 +70,12 @@ class CreatorDaoImplTest {
         @Test
         @DisplayName("Returns creator when found")
         void whenFound_returnsCreator() {
-            String query = "SELECT c FROM Creator c LEFT JOIN FETCH c.creditedCharacters LEFT JOIN FETCH c.issueCreators ic LEFT JOIN FETCH ic.issue WHERE c.id = :id";
+            String query = "SELECT DISTINCT c FROM Creator c " +
+                    "LEFT JOIN FETCH c.creditedCharacters " +
+                    "LEFT JOIN FETCH c.issueCreators ic " +
+                    "LEFT JOIN FETCH ic.issue i " +
+                    "LEFT JOIN FETCH i.series " +
+                    "WHERE c.id = :id";
 
             when(entityManager.createQuery(query, Creator.class)).thenReturn(typedQuery);
             when(typedQuery.setParameter("id", VALID_ID)).thenReturn(typedQuery);
@@ -86,7 +91,12 @@ class CreatorDaoImplTest {
         @Test
         @DisplayName("Returns null if not found")
         void whenNotFound_returnsNull() {
-            String query = "SELECT c FROM Creator c LEFT JOIN FETCH c.creditedCharacters LEFT JOIN FETCH c.issueCreators ic LEFT JOIN FETCH ic.issue WHERE c.id = :id";
+            String query = "SELECT DISTINCT c FROM Creator c " +
+                    "LEFT JOIN FETCH c.creditedCharacters " +
+                    "LEFT JOIN FETCH c.issueCreators ic " +
+                    "LEFT JOIN FETCH ic.issue i " +
+                    "LEFT JOIN FETCH i.series " +
+                    "WHERE c.id = :id";
 
             when(entityManager.createQuery(query, Creator.class)).thenReturn(typedQuery);
             when(typedQuery.setParameter("id", VALID_ID)).thenReturn(typedQuery);
@@ -100,7 +110,12 @@ class CreatorDaoImplTest {
         @Test
         @DisplayName("Returns null if exception occurs")
         void whenExceptionOccurs_returnsNull() {
-            String query = "SELECT c FROM Creator c LEFT JOIN FETCH c.creditedCharacters LEFT JOIN FETCH c.issueCreators ic LEFT JOIN FETCH ic.issue WHERE c.id = :id";
+            String query = "SELECT DISTINCT c FROM Creator c " +
+                    "LEFT JOIN FETCH c.creditedCharacters " +
+                    "LEFT JOIN FETCH c.issueCreators ic " +
+                    "LEFT JOIN FETCH ic.issue i " +
+                    "LEFT JOIN FETCH i.series " +
+                    "WHERE c.id = :id";
 
             when(entityManager.createQuery(query, Creator.class)).thenThrow(new RuntimeException("DB error"));
 

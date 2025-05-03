@@ -114,7 +114,7 @@ class CharacterDaoImplTest {
         @DisplayName("Given valid ID when findByIdWithDetails called then query is executed with proper parameters")
         void givenValidId_whenFindByIdWithDetailsCalled_thenQueryIsExecutedWithProperParameters() {
             // Given
-            String expectedQuery = "SELECT c FROM ComicCharacter c LEFT JOIN FETCH c.creators LEFT JOIN FETCH c.issues LEFT JOIN FETCH c.firstAppearance LEFT JOIN FETCH c.publisher WHERE c.id = :id";
+            String expectedQuery = "SELECT DISTINCT c FROM ComicCharacter c LEFT JOIN FETCH c.creators LEFT JOIN FETCH c.issues i LEFT JOIN FETCH i.series LEFT JOIN FETCH c.firstAppearance LEFT JOIN FETCH c.publisher WHERE c.id = :id";
             when(entityManager.createQuery(expectedQuery, ComicCharacter.class)).thenReturn(typedQuery);
             when(typedQuery.setParameter("id", VALID_ID)).thenReturn(typedQuery);
             when(typedQuery.getResultStream()).thenReturn(Stream.of(testCharacter));
@@ -135,7 +135,7 @@ class CharacterDaoImplTest {
         void givenNonExistentId_whenFindByIdWithDetailsCalled_thenNullIsReturned() {
             // Given
             Long nonExistentId = 999L;
-            String expectedQuery = "SELECT c FROM ComicCharacter c LEFT JOIN FETCH c.creators LEFT JOIN FETCH c.issues LEFT JOIN FETCH c.firstAppearance LEFT JOIN FETCH c.publisher WHERE c.id = :id";
+            String expectedQuery = "SELECT DISTINCT c FROM ComicCharacter c LEFT JOIN FETCH c.creators LEFT JOIN FETCH c.issues i LEFT JOIN FETCH i.series LEFT JOIN FETCH c.firstAppearance LEFT JOIN FETCH c.publisher WHERE c.id = :id";
             when(entityManager.createQuery(expectedQuery, ComicCharacter.class)).thenReturn(typedQuery);
             when(typedQuery.setParameter("id", nonExistentId)).thenReturn(typedQuery);
             when(typedQuery.getResultStream()).thenReturn(Stream.empty());
@@ -154,7 +154,7 @@ class CharacterDaoImplTest {
         @DisplayName("Given exception during query when findByIdWithDetails called then null is returned")
         void givenExceptionDuringQuery_whenFindByIdWithDetailsCalled_thenNullIsReturned() {
             // Given
-            String expectedQuery = "SELECT c FROM ComicCharacter c LEFT JOIN FETCH c.creators LEFT JOIN FETCH c.issues LEFT JOIN FETCH c.firstAppearance LEFT JOIN FETCH c.publisher WHERE c.id = :id";
+            String expectedQuery = "SELECT DISTINCT c FROM ComicCharacter c LEFT JOIN FETCH c.creators LEFT JOIN FETCH c.issues i LEFT JOIN FETCH i.series LEFT JOIN FETCH c.firstAppearance LEFT JOIN FETCH c.publisher WHERE c.id = :id";
             when(entityManager.createQuery(expectedQuery, ComicCharacter.class)).thenThrow(new RuntimeException("Database error"));
 
             // When

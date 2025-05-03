@@ -16,7 +16,12 @@ public class CreatorDaoImpl extends AbstractJpaDao<Creator> {
     public Creator findByIdWithDetails(Long id) {
         try (EntityManager em = getEntityManager()) {
             return em.createQuery(
-                            "SELECT c FROM Creator c LEFT JOIN FETCH c.creditedCharacters LEFT JOIN FETCH c.issueCreators ic LEFT JOIN FETCH ic.issue WHERE c.id = :id",
+                            "SELECT DISTINCT c FROM Creator c " +
+                                    "LEFT JOIN FETCH c.creditedCharacters " +
+                                    "LEFT JOIN FETCH c.issueCreators ic " +
+                                    "LEFT JOIN FETCH ic.issue i " +
+                                    "LEFT JOIN FETCH i.series " +
+                                    "WHERE c.id = :id",
                             Creator.class)
                     .setParameter("id", id)
                     .getResultStream()
