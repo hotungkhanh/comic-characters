@@ -16,7 +16,7 @@ public class MainApp {
     public static void main(String[] args) {
         setGlobalFont(new Font("Comic Sans MS", Font.BOLD, 20));
 
-        JFrame frame = new JFrame("Tuka's Comic Book Database");
+        JFrame frame = new JFrame("Tuka's Comic Book Characters Manager");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout(10, 10));
 
