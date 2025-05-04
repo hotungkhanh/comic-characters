@@ -203,7 +203,7 @@ Click the button to save.
 </details>
 
 
-### Search Bar
+### 🔍 Search Bar
 
 Once entries have been added to the database, users can quickly locate them using the search bar in the main UI.  
 The search queries across all Publishers, Creators, Series, and Characters.  
@@ -216,3 +216,17 @@ Clicking on a search result opens the relevant [Details Pop-Up](#details-pop-up)
 
 ## Documentation
 
+<details>
+  <summary><strong>🗂️ Application Layers</strong></summary>
+  <img src="src/docs/architecture/application-layers.png" alt="Application Layers Diagram" width="400"/><br/>
+</details>
+
+<details>
+  <summary><strong>📦 Domain Model</strong></summary>
+  <img src="src/docs/architecture/domain-model.png" alt="Domain Model Diagram" width="700"/><br/>
+</details>
+
+<details>
+  <summary><strong>📘 Class Diagram</strong></summary>
+  <img src="src/docs/architecture/class-diagram.png" alt="Class Diagram" width="700"/><br/>
+</details>
