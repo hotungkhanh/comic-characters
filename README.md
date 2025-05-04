@@ -97,7 +97,7 @@ Each section also includes an **"Add New"** button that launches a [Form Pop-Up]
 ### [Details Pop-Up](#details-pop-up)
 
 Each pop-up provides detailed information for a specific entity (publisher, creator, series, issue, or character).  
-Use the **Edit** and **Delete** buttons to update or remove the entry.
+Use the **Edit** and **Delete** buttons to update with the [Form Pop-Up](#form-pop-up) or remove the entry from the database.
 
 <details>
   <summary><strong><a id="publisher-details">Publisher Details</a></strong></summary>
@@ -148,7 +148,7 @@ Links navigate to [Publisher Details](#publisher-details), [Creator Details](#cr
 ### [Form Pop-Up](#form-pop-up)
 
 Clicking **"Add New"** opens a blank form for creating entries. Adding new entries does not close the form, allowing multiple submissions.  
-When editing, the form is auto-filled and closes after saving.
+Clicking **"Edit"** auto-fills the form with the existing entry's information and closes after saving.
 
 <details>
   <summary><strong><a id="publisher-form">Publisher Form</a></strong></summary>
@@ -203,10 +203,16 @@ Click the button to save.
 </details>
 
 
-### Search bar
+### Search Bar
+
+Once entries have been added to the database, users can quickly locate them using the search bar in the main UI.  
+The search queries across all Publishers, Creators, Series, and Characters.  
+Clicking on a search result opens the relevant [Details Pop-Up](#details-pop-up) for that entry.
+
+<img src="src/docs/assets/search-bar.png" alt="Search Bar screenshot" width="700"/>
 
 
-
+---
 
 ## Documentation
 
