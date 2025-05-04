@@ -28,7 +28,12 @@ Ensure the following tools are installed to build and run the project:
 
 ## Installation Guide
 
-### 1. Clone the repository
+### 1. Download the Source Code
+
+Choose one of the following methods:
+
+<details>
+<summary><strong>Option A: Clone the repository</strong></summary>
 
 ```
 git clone https://github.com/hotungkhanh/comic-characters.git
@@ -36,8 +41,16 @@ git clone https://github.com/hotungkhanh/comic-characters.git
 ```
 cd comic-characters
 ```
+</details>
 
-### 2. Configure database connection
+<details>
+<summary><strong>Option B: Download the Release</strong></summary>
+
+Download and extract the [latest release](https://github.com/hotungkhanh/comic-characters/releases/latest), then navigate to the project root directory.
+
+</details>
+
+### 2. Configure the Database
 
 Create a `.env` file in the project root directory:
 
@@ -47,7 +60,7 @@ DB_USERNAME={your PostgreSQL username}
 DB_PASSWORD={your PostgreSQL password}
 ```
 
-### 3. Run the application
+### 3. Run the Application
 
 Choose one of the following methods:
 
@@ -78,7 +91,7 @@ java -jar target/comic-characters-1.0-SNAPSHOT.jar
    <img src="src/docs/assets/main-app.png" alt="MainApp.java screenshot"/>
 </details>
 
-### 4. Verify installation
+### 4. Verify Installation
 
 The application should launch displaying the main user interface. You're now ready to manage your comic character collection!
 
